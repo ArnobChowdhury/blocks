@@ -1,12 +1,10 @@
-import { Typography } from '@mui/material';
 import { HabitTracker } from '../widgets';
+import { PageHeader } from '../components';
 
 function Tracker() {
   return (
     <>
-      <Typography variant="h4" component="h1" fontWeight="bold" mt={5}>
-        Habit Tracker
-      </Typography>
+      <PageHeader>Habit Tracker</PageHeader>
       {/* <Habit /> */}
       <HabitTracker />
     </>

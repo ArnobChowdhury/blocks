@@ -1,7 +1,7 @@
-import { Typography } from '@mui/material';
+import { PageHeader } from '../components';
 
 function Inbox() {
-  return <Typography paragraph>This is the inbox.</Typography>;
+  return <PageHeader>Inbox</PageHeader>;
 }
 
 export default Inbox;

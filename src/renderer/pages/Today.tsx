@@ -17,7 +17,7 @@ import {
 import Plus from '../icons/Plus';
 import { AddTask } from '../widgets';
 import { ITask } from '../types';
-import { TaskScoring } from '../components';
+import { TaskScoring, PageHeader } from '../components';
 
 const SmallCheckbox = styled(Checkbox)(({ theme }) => ({
   padding: theme.spacing(0.5), // Adjust the padding as needed
@@ -67,15 +67,7 @@ function Today() {
 
   return (
     <>
-      <Typography
-        variant="h4"
-        component="h1"
-        gutterBottom
-        marginTop={5}
-        fontWeight="bold"
-      >
-        Today
-      </Typography>
+      <PageHeader>Today</PageHeader>
       <List>
         {tasks.map((task, index) => (
           <Fragment key={task.id}>

@@ -1,4 +1,4 @@
-import CommitGraph from './CommitGraph';
 import TaskScoring from './TaskScoring';
+import PageHeader from './PageHeader';
 
-export { CommitGraph, TaskScoring };
+export { TaskScoring, PageHeader };
