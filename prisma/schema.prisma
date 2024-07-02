@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Task {
+  id                  Int              @id @default(autoincrement())
+  isActive            Boolean          @default(true)
+  title               String
+  schedule            String
+  monday              Boolean?
+  tuesday             Boolean?
+  wednesday           Boolean?
+  thursday            Boolean?
+  friday              Boolean?
+  saturday            Boolean?
+  sunday              Boolean?
+  shouldBeScored      Boolean?
+  DailyTaskEntry      DailyTaskEntry[]
+  lastEntryUpdateDate DateTime?
+  createdAt           DateTime
+  lastModifiedAt      DateTime
+}
+
+model DailyTaskEntry {
+  id               Int      @id @default(autoincrement())
+  task             Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId           Int
+  completionStatus String
+  dueDate          DateTime
+  score            Int?
+  createdAt        DateTime
+  lastModifiedAt   DateTime
+
+  @@unique([taskId, dueDate])
+}
