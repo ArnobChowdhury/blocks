@@ -51,4 +51,5 @@ export enum ChannelsEnum {
   REQUEST_TASKS_OVERDUE = 'request-tasks-overdue',
   RESPONSE_TASKS_OVERDUE = 'response-tasks-overdue',
   REQUEST_TASK_FAILURE = 'request-task-failure',
+  REQUEST_TASK_RESCHEDULE = 'request_task_reschedule',
 }

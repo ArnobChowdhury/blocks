@@ -18,7 +18,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Dayjs } from 'dayjs';
 import CustomChip from '../components/CustomChip';
 import CalendarIcon from '../icons/Calendar';
-import { TaskScheduleTypeEnum, DaysInAWeek } from '../types';
+import { TaskScheduleTypeEnum, DaysInAWeek, ChannelsEnum } from '../types';
 
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
@@ -88,7 +88,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       shouldBeScored,
     };
 
-    window.electron.ipcRenderer.sendMessage('create-task', task);
+    window.electron.ipcRenderer.sendMessage(ChannelsEnum.CREATE_TASK, task);
     widgetCloseFunc(false);
   };
 

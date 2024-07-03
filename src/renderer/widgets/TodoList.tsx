@@ -10,6 +10,8 @@ import {
   Button,
   Box,
 } from '@mui/material';
+import { Dayjs } from 'dayjs';
+
 import { ITask, TaskScheduleTypeEnum, ChannelsEnum } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
 
@@ -88,25 +90,45 @@ function TodoList() {
     handleTaskRefresh();
   };
 
+  const handleTaskReSchedule = (taskId: number, rescheduledTime: Dayjs) => {
+    const dueDate = rescheduledTime.toISOString();
+
+    window.electron.ipcRenderer.sendMessage(
+      ChannelsEnum.REQUEST_TASK_RESCHEDULE,
+      {
+        id: taskId,
+        dueDate,
+      },
+    );
+    handleTaskRefresh();
+  };
+
   return (
     <>
-      <Typography variant="h6" mt={2}>
-        Overdue
-      </Typography>
-      <List>
-        {tasksOverdue.map((task, index) => (
-          <React.Fragment key={task.id}>
-            <TodoListItem
-              isCompleted={task.completionStatus === 'COMPLETE'}
-              onChange={(e) => handleTaskToggle(e, task)}
-              taskTitle={task.title}
-              showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
-              onFail={() => handleTaskFailure(task.id)}
-            />
-            {index !== tasksToday.length - 1 && <Divider />}
-          </React.Fragment>
-        ))}
-      </List>
+      {tasksOverdue.length > 0 && (
+        <>
+          <Typography variant="h6" mt={2}>
+            Overdue
+          </Typography>
+          <List>
+            {tasksOverdue.map((task, index) => (
+              <React.Fragment key={task.id}>
+                <TodoListItem
+                  isCompleted={task.completionStatus === 'COMPLETE'}
+                  onChange={(e) => handleTaskToggle(e, task)}
+                  taskTitle={task.title}
+                  showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
+                  onFail={() => handleTaskFailure(task.id)}
+                  onReschedule={(rescheduledTime) =>
+                    handleTaskReSchedule(task.id, rescheduledTime)
+                  }
+                />
+                {index !== tasksToday.length - 1 && <Divider />}
+              </React.Fragment>
+            ))}
+          </List>
+        </>
+      )}
       <Typography variant="h6" mt={2}>
         Today
       </Typography>
@@ -119,6 +141,9 @@ function TodoList() {
               taskTitle={task.title}
               showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
               onFail={() => handleTaskFailure(task.id)}
+              onReschedule={(rescheduledTime) =>
+                handleTaskReSchedule(task.id, rescheduledTime)
+              }
             />
             {index !== tasksToday.length - 1 && <Divider />}
           </React.Fragment>

@@ -361,6 +361,21 @@ ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
 });
 
 ipcMain.on(
+  ChannelsEnum.REQUEST_TASK_RESCHEDULE,
+  async (event, { id, dueDate }) => {
+    // todo add a check that the task is not a Daily task. We don't allow rescheduling for Daily tasks
+    await prisma.dailyTaskEntry.update({
+      where: {
+        id,
+      },
+      data: {
+        dueDate,
+      },
+    });
+  },
+);
+
+ipcMain.on(
   ChannelsEnum.REQUEST_MONTHLY_REPORT,
   async (event, { monthIndex }) => {
     const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();
