@@ -48,6 +48,13 @@ function HabitTracker() {
   const dates = [...Array(daysInCurrentMonth).keys()].map((day) => day + 1);
   const dateToday = new Date().getDay();
 
+  /**
+   * 1. Needs to be typed
+   * 2. Logic needs to be checked and simplified - same logic written for DAILY and WEEKLY tasks
+   * 3. Mapped values need to have key props (check console log)
+   * 4. Syntactic error in using table elements - (check console errors)
+   */
+
   return (
     <>
       <Box display="flex" mt={3} mb={1} justifyContent="center">

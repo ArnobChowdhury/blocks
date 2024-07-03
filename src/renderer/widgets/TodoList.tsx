@@ -10,7 +10,7 @@ import {
   Button,
   Box,
 } from '@mui/material';
-import { ITask } from '../types';
+import { ITask, TaskScheduleTypeEnum } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
 
 function TodoList() {
@@ -85,6 +85,7 @@ function TodoList() {
               isCompleted={task.completionStatus === 'COMPLETE'}
               onChange={(e) => handleTaskToggle(e, task)}
               taskTitle={task.title}
+              showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
             />
             {index !== tasksToday.length - 1 && <Divider />}
           </React.Fragment>
@@ -100,6 +101,7 @@ function TodoList() {
               isCompleted={task.completionStatus === 'COMPLETE'}
               onChange={(e) => handleTaskToggle(e, task)}
               taskTitle={task.title}
+              showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
             />
             {index !== tasksToday.length - 1 && <Divider />}
           </React.Fragment>

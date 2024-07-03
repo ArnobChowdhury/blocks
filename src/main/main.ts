@@ -277,6 +277,7 @@ ipcMain.on('request-tasks-today', async (event) => {
           select: {
             title: true,
             shouldBeScored: true,
+            schedule: true,
           },
         },
       },
@@ -310,6 +311,7 @@ ipcMain.on('request-tasks-overdue', async (event) => {
         select: {
           title: true,
           shouldBeScored: true,
+          schedule: true,
         },
       },
     },

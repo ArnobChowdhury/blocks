@@ -31,6 +31,7 @@ export interface ITask {
   completionStatus: 'INCOMPLETE' | 'COMPLETE' | 'POSTPONED';
   score?: number;
   shouldBeScored?: boolean;
+  schedule: TaskScheduleTypeEnum;
 }
 
 export enum TaskCompletionStatusEnum {

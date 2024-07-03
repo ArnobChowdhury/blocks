@@ -2,6 +2,7 @@ interface ITaskFromDB {
   task: {
     title: string;
     shouldBeScored: boolean | null;
+    schedule: string;
   };
   id: number;
   dueDate: Date;
@@ -20,10 +21,10 @@ export const flattenTasksForToday = (tasks: ITaskFromDB[]) => {
 
   tasks.forEach((taskToday) => {
     const {
-      task: { title, shouldBeScored },
+      task: { title, shouldBeScored, schedule },
       ...rest
     } = taskToday;
-    const newTask = { ...rest, title, shouldBeScored };
+    const newTask = { ...rest, title, shouldBeScored, schedule };
     flattenedTasksForToday.push(newTask);
   });
 
