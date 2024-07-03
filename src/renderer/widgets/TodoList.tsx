@@ -73,6 +73,13 @@ function TodoList() {
     setScore(null);
   };
 
+  const handleTaskFailure = (taskId: number) => {
+    window.electron.ipcRenderer.sendMessage('request-task-failure', {
+      id: taskId,
+    });
+    handleTaskRefresh();
+  };
+
   return (
     <>
       <Typography variant="h6" mt={2}>
@@ -86,6 +93,7 @@ function TodoList() {
               onChange={(e) => handleTaskToggle(e, task)}
               taskTitle={task.title}
               showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
+              onFail={() => handleTaskFailure(task.id)}
             />
             {index !== tasksToday.length - 1 && <Divider />}
           </React.Fragment>
@@ -102,6 +110,7 @@ function TodoList() {
               onChange={(e) => handleTaskToggle(e, task)}
               taskTitle={task.title}
               showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
+              onFail={() => handleTaskFailure(task.id)}
             />
             {index !== tasksToday.length - 1 && <Divider />}
           </React.Fragment>

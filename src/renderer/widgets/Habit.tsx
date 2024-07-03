@@ -107,25 +107,26 @@ function HabitTracker() {
                   }
                   if (
                     entry.completionStatus ===
-                      TaskCompletionStatusEnum.INCOMPLETE &&
+                      TaskCompletionStatusEnum.FAILED &&
                     dateToday > date
                   ) {
                     return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
                   }
-                }
-
-                // logic for specific tasks in a week
-                if (
-                  entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
-                ) {
-                  return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
-                }
-                if (
-                  entry.completionStatus ===
-                    TaskCompletionStatusEnum.INCOMPLETE &&
-                  dateToday > date
-                ) {
-                  return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
+                } else {
+                  // logic for specific tasks in a week
+                  if (
+                    entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
+                  ) {
+                    return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
+                  }
+                  if (
+                    entry.completionStatus ===
+                      TaskCompletionStatusEnum.FAILED &&
+                    dateToday > date
+                  ) {
+                    return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
+                  }
+                  return <StyledTd />;
                 }
                 return <StyledTd />;
               })}

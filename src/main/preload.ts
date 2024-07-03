@@ -2,6 +2,10 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
+/**
+ * Todo for channels
+ * 1. Move the types to types/index.ts or somewhere appropriate as enums
+ */
 export type Channels =
   | 'ipc-example'
   | 'create-task'
@@ -11,7 +15,8 @@ export type Channels =
   | 'request-monthly-report'
   | 'response-monthly-report'
   | 'request-tasks-overdue'
-  | 'response-tasks-overdue';
+  | 'response-tasks-overdue'
+  | 'request-task-failure';
 
 const electronHandler = {
   ipcRenderer: {

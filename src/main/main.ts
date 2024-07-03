@@ -127,6 +127,11 @@ const createWindow = async () => {
  * Add event listeners...
  */
 
+/**
+ * todo for ipc events
+ * 1. Error handling
+ */
+
 ipcMain.on('create-task', async (_event, task: ITaskIPC) => {
   const { title, schedule, dueDate, days, shouldBeScored } = task;
   let monday;
@@ -267,6 +272,9 @@ ipcMain.on('request-tasks-today', async (event) => {
           gte: todayStart,
           lte: todayEnd,
         },
+        completionStatus: {
+          not: TaskCompletionStatusEnum.FAILED,
+        },
       },
       select: {
         id: true,
@@ -339,6 +347,17 @@ ipcMain.on(
     });
   },
 );
+
+ipcMain.on('request-task-failure', async (event, { id }) => {
+  await prisma.dailyTaskEntry.update({
+    where: {
+      id,
+    },
+    data: {
+      completionStatus: TaskCompletionStatusEnum.FAILED,
+    },
+  });
+});
 
 ipcMain.on('request-monthly-report', async (event, { monthIndex }) => {
   const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();

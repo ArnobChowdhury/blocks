@@ -37,4 +37,5 @@ export interface ITask {
 export enum TaskCompletionStatusEnum {
   INCOMPLETE = 'INCOMPLETE',
   COMPLETE = 'COMPLETE',
+  FAILED = 'FAILED',
 }

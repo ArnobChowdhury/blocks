@@ -17,6 +17,7 @@ interface ITodoListItemProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   taskTitle: string;
   showClock: boolean;
+  onFail: () => void;
 }
 
 function TodoListItem({
@@ -24,6 +25,7 @@ function TodoListItem({
   onChange,
   taskTitle,
   showClock = true,
+  onFail,
 }: ITodoListItemProps) {
   const [showOptions, setShowOptions] = useState(false);
 
@@ -88,7 +90,7 @@ function TodoListItem({
                 },
               }}
             >
-              <IconButton size="small">
+              <IconButton size="small" onClick={onFail}>
                 <Close />
               </IconButton>
             </Tooltip>
