@@ -38,7 +38,6 @@ function HabitTracker() {
     });
     window.electron.ipcRenderer.on('response-monthly-report', (response) => {
       setHabits(response as unknown[]);
-      console.log(response);
     });
   }, []);
 
@@ -79,8 +78,6 @@ function HabitTracker() {
             const day = taskEntry.dueDate.getDay();
             entriesByDate[day] = taskEntry;
           });
-
-          console.log(entriesByDate);
 
           return (
             <tr>

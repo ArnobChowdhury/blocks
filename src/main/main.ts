@@ -128,7 +128,6 @@ const createWindow = async () => {
  */
 
 ipcMain.on('create-task', async (_event, task: ITaskIPC) => {
-  console.log(task);
   const { title, schedule, dueDate, days, shouldBeScored } = task;
   let monday;
   let tuesday;
@@ -325,7 +324,7 @@ ipcMain.on(
   'request-toggle-task-completion-status',
   async (event, { id, checked, score }) => {
     // todo: need to make the one-off task in active
-    const updatedEntry = await prisma.dailyTaskEntry.update({
+    await prisma.dailyTaskEntry.update({
       where: {
         id,
       },
@@ -336,7 +335,6 @@ ipcMain.on(
         score,
       },
     });
-    console.log(updatedEntry);
   },
 );
 
