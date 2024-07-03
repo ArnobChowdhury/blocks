@@ -10,7 +10,7 @@ import {
   Button,
   Box,
 } from '@mui/material';
-import { ITask, TaskScheduleTypeEnum } from '../types';
+import { ITask, TaskScheduleTypeEnum, ChannelsEnum } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
 
 function TodoList() {
@@ -20,22 +20,30 @@ function TodoList() {
   const [score, setScore] = useState<number | null>(null);
 
   const handleTaskRefresh = () => {
-    window.electron.ipcRenderer.sendMessage('request-tasks-today');
-    window.electron.ipcRenderer.sendMessage('request-tasks-overdue');
+    window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_TODAY);
+    // window.electron.ipcRenderer.sendMessage('request-tasks-today');
+    // window.electron.ipcRenderer.sendMessage('request-tasks-overdue');
+    window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_OVERDUE);
   };
 
   useEffect(() => {
     // todo channel names should be enum
     handleTaskRefresh();
 
-    window.electron.ipcRenderer.on('response-tasks-today', (response) => {
-      // todo need error handling
-      setTasksToday(response as ITask[]);
-    });
-    window.electron.ipcRenderer.on('response-tasks-overdue', (response) => {
-      // todo need error handling
-      setTasksOverdue(response as ITask[]);
-    });
+    window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TASKS_TODAY,
+      (response) => {
+        // todo need error handling
+        setTasksToday(response as ITask[]);
+      },
+    );
+    window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TASKS_OVERDUE,
+      (response) => {
+        // todo need error handling
+        setTasksOverdue(response as ITask[]);
+      },
+    );
   }, []);
 
   const onTaskCompletionChange = (
@@ -44,7 +52,7 @@ function TodoList() {
     taskScore?: number | null,
   ) => {
     window.electron.ipcRenderer.sendMessage(
-      'request-toggle-task-completion-status',
+      ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
       {
         id,
         checked,
@@ -74,7 +82,7 @@ function TodoList() {
   };
 
   const handleTaskFailure = (taskId: number) => {
-    window.electron.ipcRenderer.sendMessage('request-task-failure', {
+    window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASK_FAILURE, {
       id: taskId,
     });
     handleTaskRefresh();

@@ -1,7 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Typography, styled, Box } from '@mui/material';
 import dayjs from 'dayjs';
-import { TaskScheduleTypeEnum, TaskCompletionStatusEnum } from '../types';
+import {
+  TaskScheduleTypeEnum,
+  TaskCompletionStatusEnum,
+  ChannelsEnum,
+} from '../types';
 import { scoreColors } from '../constants';
 
 const StyledTh = styled('th')({
@@ -33,12 +37,18 @@ function HabitTracker() {
 
   useEffect(() => {
     const monthIndex = dayjs().month();
-    window.electron.ipcRenderer.sendMessage('request-monthly-report', {
-      monthIndex,
-    });
-    window.electron.ipcRenderer.on('response-monthly-report', (response) => {
-      setHabits(response as unknown[]);
-    });
+    window.electron.ipcRenderer.sendMessage(
+      ChannelsEnum.REQUEST_MONTHLY_REPORT,
+      {
+        monthIndex,
+      },
+    );
+    window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_MONTHLY_REPORT,
+      (response) => {
+        setHabits(response as unknown[]);
+      },
+    );
   }, []);
 
   const daysInCurrentMonth = useMemo(() => {

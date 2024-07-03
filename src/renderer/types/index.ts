@@ -39,3 +39,16 @@ export enum TaskCompletionStatusEnum {
   COMPLETE = 'COMPLETE',
   FAILED = 'FAILED',
 }
+
+export enum ChannelsEnum {
+  IPC_EXAMPLE = 'ipc-example',
+  CREATE_TASK = 'create-task',
+  REQUEST_TASKS_TODAY = 'request-tasks-today',
+  RESPONSE_TASKS_TODAY = 'response-tasks-today',
+  REQUEST_TOGGLE_TASK_COMPLETION_STATUS = 'request-toggle-task-completion-status',
+  REQUEST_MONTHLY_REPORT = 'request-monthly-report',
+  RESPONSE_MONTHLY_REPORT = 'response-monthly-report',
+  REQUEST_TASKS_OVERDUE = 'request-tasks-overdue',
+  RESPONSE_TASKS_OVERDUE = 'response-tasks-overdue',
+  REQUEST_TASK_FAILURE = 'request-task-failure',
+}

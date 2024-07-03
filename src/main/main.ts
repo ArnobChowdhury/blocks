@@ -21,6 +21,7 @@ import {
   TaskScheduleTypeEnum,
   TaskCompletionStatusEnum,
   DaysInAWeek,
+  ChannelsEnum,
 } from '../renderer/types';
 import { flattenTasksForToday } from './helpers';
 
@@ -132,7 +133,7 @@ const createWindow = async () => {
  * 1. Error handling
  */
 
-ipcMain.on('create-task', async (_event, task: ITaskIPC) => {
+ipcMain.on(ChannelsEnum.CREATE_TASK, async (_event, task: ITaskIPC) => {
   const { title, schedule, dueDate, days, shouldBeScored } = task;
   let monday;
   let tuesday;
@@ -226,7 +227,7 @@ ipcMain.on('create-task', async (_event, task: ITaskIPC) => {
   }
 });
 
-ipcMain.on('request-tasks-today', async (event) => {
+ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
   let today: number | DaysInAWeek = new Date().getDay();
   today = Object.values(DaysInAWeek)[today];
 
@@ -293,13 +294,13 @@ ipcMain.on('request-tasks-today', async (event) => {
 
     const flattenedTasksForToday = flattenTasksForToday(tasksForToday);
 
-    event.reply('response-tasks-today', flattenedTasksForToday);
+    event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, flattenedTasksForToday);
   } catch (err) {
     console.log(err);
   }
 });
 
-ipcMain.on('request-tasks-overdue', async (event) => {
+ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
   const dateToday = new Date();
   const todayStart = new Date(dateToday.setHours(0, 0, 0, 0)).toISOString();
 
@@ -327,11 +328,11 @@ ipcMain.on('request-tasks-overdue', async (event) => {
 
   const flattenedTasksOverdue = flattenTasksForToday(tasksOverdue);
 
-  event.reply('response-tasks-overdue', flattenedTasksOverdue);
+  event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, flattenedTasksOverdue);
 });
 
 ipcMain.on(
-  'request-toggle-task-completion-status',
+  ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
   async (event, { id, checked, score }) => {
     // todo: need to make the one-off task in active
     await prisma.dailyTaskEntry.update({
@@ -348,7 +349,7 @@ ipcMain.on(
   },
 );
 
-ipcMain.on('request-task-failure', async (event, { id }) => {
+ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
   await prisma.dailyTaskEntry.update({
     where: {
       id,
@@ -359,43 +360,46 @@ ipcMain.on('request-task-failure', async (event, { id }) => {
   });
 });
 
-ipcMain.on('request-monthly-report', async (event, { monthIndex }) => {
-  const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();
-  const endOfMonth = dayjs().month(monthIndex).endOf('month').toDate();
+ipcMain.on(
+  ChannelsEnum.REQUEST_MONTHLY_REPORT,
+  async (event, { monthIndex }) => {
+    const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();
+    const endOfMonth = dayjs().month(monthIndex).endOf('month').toDate();
 
-  const tasks = await prisma.task.findMany({
-    where: {
-      isActive: true,
-      schedule: {
-        in: [
-          TaskScheduleTypeEnum.Daily,
-          TaskScheduleTypeEnum.SpecificDaysInAWeek,
-        ],
+    const tasks = await prisma.task.findMany({
+      where: {
+        isActive: true,
+        schedule: {
+          in: [
+            TaskScheduleTypeEnum.Daily,
+            TaskScheduleTypeEnum.SpecificDaysInAWeek,
+          ],
+        },
       },
-    },
-    include: {
-      DailyTaskEntry: {
-        orderBy: {
-          dueDate: 'asc',
-        },
-        select: {
-          id: true,
-          completionStatus: true,
-          dueDate: true,
-          score: true,
-        },
-        where: {
-          dueDate: {
-            gte: startOfMonth,
-            lte: endOfMonth,
+      include: {
+        DailyTaskEntry: {
+          orderBy: {
+            dueDate: 'asc',
+          },
+          select: {
+            id: true,
+            completionStatus: true,
+            dueDate: true,
+            score: true,
+          },
+          where: {
+            dueDate: {
+              gte: startOfMonth,
+              lte: endOfMonth,
+            },
           },
         },
       },
-    },
-  });
+    });
 
-  event.reply('response-monthly-report', tasks);
-});
+    event.reply(ChannelsEnum.RESPONSE_MONTHLY_REPORT, tasks);
+  },
+);
 
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
