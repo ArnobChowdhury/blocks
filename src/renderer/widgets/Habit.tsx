@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Typography, styled, Box } from '@mui/material';
+import { Typography, styled, Box, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import {
   TaskScheduleTypeEnum,
@@ -34,6 +34,9 @@ const StyledTd = styled('td')({
 
 function HabitTracker() {
   const [habits, setHabits] = useState<unknown[]>();
+  const [hoveredHabit, setHoveredHabit] = useState<unknown>(null);
+
+  const theme = useTheme();
 
   useEffect(() => {
     const monthIndex = dayjs().month();
@@ -63,6 +66,7 @@ function HabitTracker() {
    * 2. Logic needs to be checked and simplified - same logic written for DAILY and WEEKLY tasks
    * 3. Mapped values need to have key props (check console log)
    * 4. Syntactic error in using table elements - (check console errors)
+   * 5. Can the graph building algorithm's time complexity be improved?
    */
 
   return (
@@ -70,7 +74,7 @@ function HabitTracker() {
       <Box display="flex" mt={3} mb={1} justifyContent="center">
         <Typography variant="h6">{dayjs().format('MMMM')}</Typography>
       </Box>
-      <table style={{ borderSpacing: '4px' }}>
+      <table style={{ borderSpacing: '6px' }}>
         <tr>
           {dates.map((date) => {
             return (
@@ -91,13 +95,17 @@ function HabitTracker() {
         {habits?.map((habit) => {
           const entriesByDate = {};
 
+          // todo  can its time complexity be improved?
           habit?.DailyTaskEntry.forEach((taskEntry) => {
             const day = taskEntry.dueDate.getDay();
             entriesByDate[day] = taskEntry;
           });
 
           return (
-            <tr>
+            <tr
+              onMouseEnter={() => setHoveredHabit(habit)}
+              onMouseLeave={() => setHoveredHabit(null)}
+            >
               {dates.map((date) => {
                 const entry = entriesByDate[date];
                 if (!entry) {
@@ -144,13 +152,19 @@ function HabitTracker() {
               <StyledTd
                 style={{
                   minWidth: '150px',
-                  fontSize: '12px',
+                  fontSize: '13px',
                   backgroundColor: 'white',
                   border: '1px solid transparent',
                   textAlign: 'left',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
+                  color:
+                    hoveredHabit?.id === habit?.id
+                      ? theme.palette.primary.main
+                      : 'inherit',
+                  fontWeight: hoveredHabit?.id === habit?.id ? 'bold' : 400,
+                  transition: 'all ease-in 0.1s',
                 }}
               >
                 {habit?.title}

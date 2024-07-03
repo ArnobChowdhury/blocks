@@ -10,7 +10,7 @@ import {
   Button,
   Box,
 } from '@mui/material';
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 import { ITask, TaskScheduleTypeEnum, ChannelsEnum } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
@@ -103,6 +103,8 @@ function TodoList() {
     handleTaskRefresh();
   };
 
+  const todayFormatted = dayjs().format('MMMM D, YYYY');
+
   return (
     <>
       {tasksOverdue.length > 0 && (
@@ -130,7 +132,7 @@ function TodoList() {
         </>
       )}
       <Typography variant="h6" mt={2}>
-        Today
+        {todayFormatted}
       </Typography>
       <List>
         {tasksToday.map((task, index) => (
