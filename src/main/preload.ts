@@ -9,7 +9,9 @@ export type Channels =
   | 'response-tasks-today'
   | 'request-toggle-task-completion-status'
   | 'request-monthly-report'
-  | 'response-monthly-report';
+  | 'response-monthly-report'
+  | 'request-tasks-overdue'
+  | 'response-tasks-overdue';
 
 const electronHandler = {
   ipcRenderer: {

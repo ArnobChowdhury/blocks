@@ -22,6 +22,7 @@ import {
   TaskCompletionStatusEnum,
   DaysInAWeek,
 } from '../renderer/types';
+import { flattenTasksForToday } from './helpers';
 
 const prisma = new PrismaClient();
 
@@ -222,10 +223,7 @@ ipcMain.on('create-task', async (_event, task: ITaskIPC) => {
 });
 
 ipcMain.on('request-tasks-today', async (event) => {
-  console.log('request-tasks-today');
   let today: number | DaysInAWeek = new Date().getDay();
-  console.log('today', today);
-  console.log(Object.values(DaysInAWeek));
   today = Object.values(DaysInAWeek)[today];
 
   const dateToday = new Date();
@@ -285,21 +283,42 @@ ipcMain.on('request-tasks-today', async (event) => {
       },
     });
 
-    const flattenedTasksForToday: { [key: string]: any }[] = [];
-
-    tasksForToday.forEach((taskToday) => {
-      const {
-        task: { title, shouldBeScored },
-        ...rest
-      } = taskToday;
-      const newTask = { ...rest, title, shouldBeScored };
-      flattenedTasksForToday.push(newTask);
-    });
+    const flattenedTasksForToday = flattenTasksForToday(tasksForToday);
 
     event.reply('response-tasks-today', flattenedTasksForToday);
   } catch (err) {
     console.log(err);
   }
+});
+
+ipcMain.on('request-tasks-overdue', async (event) => {
+  const dateToday = new Date();
+  const todayStart = new Date(dateToday.setHours(0, 0, 0, 0)).toISOString();
+
+  const tasksOverdue = await prisma.dailyTaskEntry.findMany({
+    where: {
+      dueDate: {
+        lt: todayStart,
+      },
+      completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+    },
+    select: {
+      id: true,
+      dueDate: true,
+      completionStatus: true,
+      score: true,
+      task: {
+        select: {
+          title: true,
+          shouldBeScored: true,
+        },
+      },
+    },
+  });
+
+  const flattenedTasksOverdue = flattenTasksForToday(tasksOverdue);
+
+  event.reply('response-tasks-overdue', flattenedTasksOverdue);
 });
 
 ipcMain.on(
