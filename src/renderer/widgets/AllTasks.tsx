@@ -1,9 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
 import {
-  Accordion,
-  AccordionSummary,
+  List,
+  ListItem,
+  ListItemText,
   Typography,
+  Divider,
   Chip,
+  Box,
   useTheme,
 } from '@mui/material';
 import dayjs from 'dayjs';
@@ -13,7 +16,6 @@ import {
   TaskScheduleTypeEnum,
   DaysInAWeek,
 } from '../types';
-import ArrowDownIcon from '../icons/ArrowDown';
 import { CalendarChip } from '../components';
 
 function AllTasks() {
@@ -67,37 +69,50 @@ function AllTasks() {
               <Typography mt={index === 0 ? 0 : 5} mb={2} variant="h6">
                 {schedule}
               </Typography>
-              {tasksSorted[schedule].map((task) => {
-                let days: DaysInAWeek[] = [];
-                if (task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek)
-                  days = Object.values(DaysInAWeek).filter((day) => task[day]);
+              <List>
+                {tasksSorted[schedule].map((task) => {
+                  let days: DaysInAWeek[] = [];
+                  if (
+                    task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek
+                  )
+                    days = Object.values(DaysInAWeek).filter(
+                      (day) => task[day],
+                    );
 
-                return (
-                  <Accordion key={task.id}>
-                    <AccordionSummary expandIcon={<ArrowDownIcon />}>
-                      <Typography variant="body2">{task.title}</Typography>
-                      {task.schedule === TaskScheduleTypeEnum.Once && (
-                        <CalendarChip
-                          sx={{ ml: 2 }}
-                          date={dayjs(task.dueDate)}
-                          size="small"
-                        />
-                      )}
-                      {days.map((day) => (
-                        <Chip
-                          sx={{
-                            ml: 2,
-                            textTransform: 'capitalize',
-                            color: theme.palette.primary.main,
-                          }}
-                          label={day}
-                          size="small"
-                        />
-                      ))}
-                    </AccordionSummary>
-                  </Accordion>
-                );
-              })}
+                  return (
+                    <>
+                      <ListItem key={task.id}>
+                        <ListItemText>
+                          <Box display="flex">
+                            <Typography variant="body2">
+                              {task.title}
+                            </Typography>
+                            {task.schedule === TaskScheduleTypeEnum.Once && (
+                              <CalendarChip
+                                sx={{ ml: 2 }}
+                                date={dayjs(task.dueDate)}
+                                size="small"
+                              />
+                            )}
+                            {days.map((day) => (
+                              <Chip
+                                sx={{
+                                  ml: 2,
+                                  textTransform: 'capitalize',
+                                  color: theme.palette.primary.main,
+                                }}
+                                label={day}
+                                size="small"
+                              />
+                            ))}
+                          </Box>
+                        </ListItemText>
+                      </ListItem>
+                      <Divider />
+                    </>
+                  );
+                })}
+              </List>
             </>
           );
         })}
