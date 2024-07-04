@@ -124,9 +124,7 @@ function HabitTracker() {
                     return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
                   }
                   if (
-                    entry.completionStatus ===
-                      TaskCompletionStatusEnum.FAILED &&
-                    dateToday > date
+                    entry.completionStatus === TaskCompletionStatusEnum.FAILED
                   ) {
                     return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
                   }
@@ -138,9 +136,7 @@ function HabitTracker() {
                     return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
                   }
                   if (
-                    entry.completionStatus ===
-                      TaskCompletionStatusEnum.FAILED &&
-                    dateToday > date
+                    entry.completionStatus === TaskCompletionStatusEnum.FAILED
                   ) {
                     return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
                   }

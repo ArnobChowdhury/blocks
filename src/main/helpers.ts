@@ -1,4 +1,10 @@
-interface ITaskFromDB {
+import {
+  IAllTask,
+  IFlattenedAllTask,
+  TaskScheduleTypeEnum,
+} from '../renderer/types';
+
+interface ITodayTaskFromDB {
   task: {
     title: string;
     shouldBeScored: boolean | null;
@@ -10,13 +16,13 @@ interface ITaskFromDB {
   score: number | null;
 }
 
-interface IFlattenedTask extends Omit<ITaskFromDB, 'task'> {
+interface IFlattenedTask extends Omit<ITodayTaskFromDB, 'task'> {
   title: string;
   shouldBeScored: boolean | null;
 }
 
 // eslint-disable-next-line import/prefer-default-export
-export const flattenTasksForToday = (tasks: ITaskFromDB[]) => {
+export const flattenTasksForToday = (tasks: ITodayTaskFromDB[]) => {
   const flattenedTasksForToday: IFlattenedTask[] = [];
 
   tasks.forEach((taskToday) => {
@@ -29,4 +35,21 @@ export const flattenTasksForToday = (tasks: ITaskFromDB[]) => {
   });
 
   return flattenedTasksForToday;
+};
+
+export const flattenAllTasks = (tasks: IAllTask[]) => {
+  const flattenedTasks: IFlattenedAllTask[] = [];
+
+  tasks.forEach((task) => {
+    const { DailyTaskEntry, ...rest } = task;
+    let dueDate = null;
+    if (task.schedule === TaskScheduleTypeEnum.Once) {
+      const { dueDate: dueDateFromDB } = DailyTaskEntry[0];
+      dueDate = dueDateFromDB;
+    }
+    const newTask = { ...rest, dueDate };
+    flattenedTasks.push(newTask);
+  });
+
+  return flattenedTasks;
 };

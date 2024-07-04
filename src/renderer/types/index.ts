@@ -34,6 +34,38 @@ export interface ITask {
   schedule: TaskScheduleTypeEnum;
 }
 
+export interface IDailyTaskEntry {
+  id: number;
+  taskId: number;
+  completionStatus: string;
+  dueDate: Date;
+  score: number | null;
+  createdAt: Date;
+  lastModifiedAt: Date;
+}
+export interface IAllTask {
+  id: number;
+  isActive: boolean;
+  title: string;
+  schedule: string;
+  monday: boolean | null;
+  tuesday: boolean | null;
+  wednesday: boolean | null;
+  thursday: boolean | null;
+  friday: boolean | null;
+  saturday: boolean | null;
+  sunday: boolean | null;
+  shouldBeScored: boolean | null;
+  DailyTaskEntry: IDailyTaskEntry[];
+  lastEntryUpdateDate: Date | null;
+  createdAt: Date;
+  lastModifiedAt: Date;
+}
+
+export interface IFlattenedAllTask extends Omit<IAllTask, 'DailyTaskEntry'> {
+  dueDate: Date | null;
+}
+
 export enum TaskCompletionStatusEnum {
   INCOMPLETE = 'INCOMPLETE',
   COMPLETE = 'COMPLETE',
@@ -52,4 +84,6 @@ export enum ChannelsEnum {
   RESPONSE_TASKS_OVERDUE = 'response-tasks-overdue',
   REQUEST_TASK_FAILURE = 'request-task-failure',
   REQUEST_TASK_RESCHEDULE = 'request_task_reschedule',
+  REQUEST_ALL_ACTIVE_TASKS = 'request_all_active_tasks',
+  RESPONSE_ALL_ACTIVE_TASKS = 'response_all_active_tasks',
 }

@@ -23,7 +23,7 @@ import {
   DaysInAWeek,
   ChannelsEnum,
 } from '../renderer/types';
-import { flattenTasksForToday } from './helpers';
+import { flattenTasksForToday, flattenAllTasks } from './helpers';
 
 const prisma = new PrismaClient();
 
@@ -360,10 +360,37 @@ ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
   });
 });
 
+ipcMain.on(ChannelsEnum.REQUEST_ALL_ACTIVE_TASKS, async (event) => {
+  console.log('fetching all tasks');
+  const tasks = await prisma.task.findMany({
+    where: {
+      isActive: true,
+    },
+    include: {
+      DailyTaskEntry: {
+        orderBy: {
+          dueDate: 'desc',
+        },
+        take: 1,
+      },
+    },
+  });
+
+  const flattenedAllTasks = flattenAllTasks(tasks);
+
+  event.reply(ChannelsEnum.RESPONSE_ALL_ACTIVE_TASKS, flattenedAllTasks);
+});
+
 ipcMain.on(
   ChannelsEnum.REQUEST_TASK_RESCHEDULE,
   async (event, { id, dueDate }) => {
-    // todo add a check that the task is not a Daily task. We don't allow rescheduling for Daily tasks
+    /**
+     * Todos for rescheduling
+     * 1. todo add a check that the task is not a Daily task. We don't allow rescheduling for Daily tasks
+     * 2. in case of rescheduling a weekly task, we need to create a new dailyTaskEntry for the new dueDate
+     * and mark the previous one as failed. That way our habit tracker will show the right representation.
+     *   */
+
     await prisma.dailyTaskEntry.update({
       where: {
         id,
