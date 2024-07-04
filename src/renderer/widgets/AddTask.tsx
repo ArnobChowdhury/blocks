@@ -17,7 +17,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Dayjs } from 'dayjs';
 import CustomChip from '../components/CustomChip';
-import CalendarIcon from '../icons/Calendar';
+import { CalendarChip } from '../components';
 import { TaskScheduleTypeEnum, DaysInAWeek, ChannelsEnum } from '../types';
 
 interface IAddTaskProps {
@@ -180,10 +180,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
         {selectedScheduleType === TaskScheduleTypeEnum.Once && selectedDate && (
           <>
             <Divider sx={{ my: 2 }} />
-            <CustomChip
-              label={`${selectedDate.date()} ${selectedDate.format('MMMM')}`}
-              icon={<CalendarIcon />}
-            />
+            <CalendarChip date={selectedDate} />
           </>
         )}
 

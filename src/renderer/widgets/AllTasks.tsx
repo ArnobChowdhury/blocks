@@ -1,14 +1,24 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Accordion, AccordionSummary, Typography } from '@mui/material';
+import {
+  Accordion,
+  AccordionSummary,
+  Typography,
+  Chip,
+  useTheme,
+} from '@mui/material';
+import dayjs from 'dayjs';
 import {
   ChannelsEnum,
   IFlattenedAllTask,
   TaskScheduleTypeEnum,
+  DaysInAWeek,
 } from '../types';
 import ArrowDownIcon from '../icons/ArrowDown';
+import { CalendarChip } from '../components';
 
 function AllTasks() {
   const [allTasks, setAllTasks] = useState<IFlattenedAllTask[]>([]);
+  const theme = useTheme();
 
   useEffect(() => {
     window.electron.ipcRenderer.sendMessage(
@@ -57,13 +67,37 @@ function AllTasks() {
               <Typography mt={index === 0 ? 0 : 5} mb={2} variant="h6">
                 {schedule}
               </Typography>
-              {tasksSorted[schedule].map((task) => (
-                <Accordion key={task.id}>
-                  <AccordionSummary expandIcon={<ArrowDownIcon />}>
-                    {task.title}
-                  </AccordionSummary>
-                </Accordion>
-              ))}
+              {tasksSorted[schedule].map((task) => {
+                let days: DaysInAWeek[] = [];
+                if (task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek)
+                  days = Object.values(DaysInAWeek).filter((day) => task[day]);
+
+                return (
+                  <Accordion key={task.id}>
+                    <AccordionSummary expandIcon={<ArrowDownIcon />}>
+                      <Typography variant="body2">{task.title}</Typography>
+                      {task.schedule === TaskScheduleTypeEnum.Once && (
+                        <CalendarChip
+                          sx={{ ml: 2 }}
+                          date={dayjs(task.dueDate)}
+                          size="small"
+                        />
+                      )}
+                      {days.map((day) => (
+                        <Chip
+                          sx={{
+                            ml: 2,
+                            textTransform: 'capitalize',
+                            color: theme.palette.primary.main,
+                          }}
+                          label={day}
+                          size="small"
+                        />
+                      ))}
+                    </AccordionSummary>
+                  </Accordion>
+                );
+              })}
             </>
           );
         })}

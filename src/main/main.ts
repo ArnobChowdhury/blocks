@@ -391,7 +391,6 @@ ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
 
 ipcMain.on(ChannelsEnum.REQUEST_ALL_ACTIVE_TASKS, async (event) => {
   await makeCompletedOneOffTasksInactive();
-  console.log('fetching all tasks');
   const tasks = await prisma.task.findMany({
     where: {
       isActive: true,
