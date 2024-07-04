@@ -23,7 +23,12 @@ import {
   DaysInAWeek,
   ChannelsEnum,
 } from '../renderer/types';
-import { flattenTasksForToday, flattenAllTasks } from './helpers';
+import {
+  flattenTasksForToday,
+  flattenAllTasks,
+  getTodayStart,
+  getTodayEnd,
+} from './helpers';
 
 const prisma = new PrismaClient();
 
@@ -131,7 +136,33 @@ const createWindow = async () => {
 /**
  * todo for ipc events
  * 1. Error handling
+ * 2. DB calls should be moved to a separate service
  */
+
+/**
+ * DBs
+ */
+const makeCompletedOneOffTasksInactive = async () => {
+  const todayStart = getTodayStart();
+
+  await prisma.task.updateMany({
+    where: {
+      isActive: true,
+      schedule: TaskScheduleTypeEnum.Once,
+      DailyTaskEntry: {
+        every: {
+          dueDate: {
+            lt: todayStart,
+          },
+          completionStatus: TaskCompletionStatusEnum.COMPLETE,
+        },
+      },
+    },
+    data: {
+      isActive: false,
+    },
+  });
+};
 
 ipcMain.on(ChannelsEnum.CREATE_TASK, async (_event, task: ITaskIPC) => {
   const { title, schedule, dueDate, days, shouldBeScored } = task;
@@ -231,9 +262,8 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
   let today: number | DaysInAWeek = new Date().getDay();
   today = Object.values(DaysInAWeek)[today];
 
-  const dateToday = new Date();
-  const todayStart = new Date(dateToday.setHours(0, 0, 0, 0)).toISOString();
-  const todayEnd = new Date(dateToday.setHours(23, 59, 59, 999)).toISOString();
+  const todayStart = getTodayStart();
+  const todayEnd = getTodayEnd();
 
   const repetitiveTaskQuery: { [key: string | DaysInAWeek]: boolean } = {
     isActive: true,
@@ -301,8 +331,7 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
-  const dateToday = new Date();
-  const todayStart = new Date(dateToday.setHours(0, 0, 0, 0)).toISOString();
+  const todayStart = getTodayStart();
 
   const tasksOverdue = await prisma.dailyTaskEntry.findMany({
     where: {
@@ -361,6 +390,7 @@ ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_ALL_ACTIVE_TASKS, async (event) => {
+  await makeCompletedOneOffTasksInactive();
   console.log('fetching all tasks');
   const tasks = await prisma.task.findMany({
     where: {
