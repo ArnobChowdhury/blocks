@@ -103,7 +103,7 @@ function TodoList() {
     handleTaskRefresh();
   };
 
-  const todayFormatted = dayjs().format('MMMM D, YYYY');
+  const todayFormatted = dayjs().format('dddd, MMMM D, YYYY');
 
   return (
     <>

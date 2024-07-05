@@ -97,7 +97,7 @@ function TodoListItem({
                       size="small"
                       onClick={(e) => setDateAnchorEl(e.currentTarget)}
                     >
-                      <Clock />
+                      <Clock isGrey />
                     </IconButton>
                   </Tooltip>
 

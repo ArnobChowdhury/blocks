@@ -3,22 +3,6 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { ChannelsEnum } from '../renderer/types';
 
-/**
- * Todo for channels
- * 1. Move the types to types/index.ts or somewhere appropriate as enums
- */
-// export type Channels =
-//   | 'ipc-example'
-//   | 'create-task'
-//   | 'request-tasks-today'
-//   | 'response-tasks-today'
-//   | 'request-toggle-task-completion-status'
-//   | 'request-monthly-report'
-//   | 'response-monthly-report'
-//   | 'request-tasks-overdue'
-//   | 'response-tasks-overdue'
-//   | 'request-task-failure';
-
 const electronHandler = {
   ipcRenderer: {
     sendMessage(channel: ChannelsEnum, ...args: unknown[]) {
