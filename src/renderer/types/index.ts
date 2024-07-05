@@ -43,6 +43,13 @@ export interface IDailyTaskEntry {
   createdAt: Date;
   lastModifiedAt: Date;
 }
+
+export enum TaskCompletionStatusEnum {
+  INCOMPLETE = 'INCOMPLETE',
+  COMPLETE = 'COMPLETE',
+  FAILED = 'FAILED',
+}
+
 export interface IAllTask {
   id: number;
   isActive: boolean;
@@ -64,12 +71,7 @@ export interface IAllTask {
 
 export interface IFlattenedAllTask extends Omit<IAllTask, 'DailyTaskEntry'> {
   dueDate: Date | null;
-}
-
-export enum TaskCompletionStatusEnum {
-  INCOMPLETE = 'INCOMPLETE',
-  COMPLETE = 'COMPLETE',
-  FAILED = 'FAILED',
+  completionStatus: TaskCompletionStatusEnum;
 }
 
 export enum ChannelsEnum {

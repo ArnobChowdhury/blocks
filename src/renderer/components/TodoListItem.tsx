@@ -15,12 +15,15 @@ import { Dayjs } from 'dayjs';
 import SmallCheckbox from './SmallCheckbox';
 import Clock from '../icons/Clock';
 import Close from '../icons/Close';
+import { TaskScheduleTypeEnum } from '../types';
 
 interface ITodoListItemProps {
   isCompleted: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   taskTitle: string;
   showClock: boolean;
+  // eslint-disable-next-line react/require-default-props
+  schedule?: TaskScheduleTypeEnum;
   onFail: () => void;
   onReschedule: (rescheduledTime: Dayjs) => void;
 }
@@ -30,10 +33,16 @@ function TodoListItem({
   onChange,
   taskTitle,
   showClock = true,
+  schedule,
   onFail,
   onReschedule,
 }: ITodoListItemProps) {
-  const [showOptions, setShowOptions] = useState(false);
+  const isAHabit =
+    schedule === TaskScheduleTypeEnum.Daily ||
+    schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek;
+  const [showOptions, setShowOptions] = useState(
+    Boolean(schedule) && !isAHabit,
+  );
 
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLButtonElement | null>(
     null,
@@ -45,10 +54,14 @@ function TodoListItem({
   const datePopOverId = showDate ? 'datepicker-reschedule-popover' : undefined;
 
   const handleMouseEnter = () => {
-    if (!isCompleted) setShowOptions(true);
+    if (schedule) return;
+    if (!isCompleted && !isAHabit) {
+      setShowOptions(true);
+    }
   };
 
   const handleMouseLeave = () => {
+    if (schedule) return;
     if (!isCompleted) setShowOptions(false);
   };
 
@@ -57,23 +70,26 @@ function TodoListItem({
       {/* todo we may not need LocalizationProvider everywhere, wrapping it at the top should do it   */}
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Box display="flex" justifyContent="space-between" width="100%">
-          <FormControlLabel
-            control={
-              <SmallCheckbox checked={isCompleted} onChange={onChange} />
-            }
-            label={
-              <Typography
-                sx={{
-                  textDecoration: isCompleted ? 'line-through' : 'none',
-                }}
-                variant="body2"
-              >
-                {taskTitle}
-              </Typography>
-            }
-          />
-          <Fade in={showOptions} timeout={500}>
-            <Box>
+          {isAHabit && <Typography variant="body2">{taskTitle}</Typography>}
+          {!isAHabit && (
+            <FormControlLabel
+              control={
+                <SmallCheckbox checked={isCompleted} onChange={onChange} />
+              }
+              label={
+                <Typography
+                  sx={{
+                    textDecoration: isCompleted ? 'line-through' : 'none',
+                  }}
+                  variant="body2"
+                >
+                  {taskTitle}
+                </Typography>
+              }
+            />
+          )}
+          <Fade in={showOptions} timeout={200}>
+            <Box display="flex">
               {showClock && (
                 <>
                   <Tooltip
@@ -97,7 +113,7 @@ function TodoListItem({
                       size="small"
                       onClick={(e) => setDateAnchorEl(e.currentTarget)}
                     >
-                      <Clock isGrey />
+                      <Clock />
                     </IconButton>
                   </Tooltip>
 

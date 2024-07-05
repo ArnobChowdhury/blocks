@@ -2,6 +2,7 @@ import {
   IAllTask,
   IFlattenedAllTask,
   TaskScheduleTypeEnum,
+  TaskCompletionStatusEnum,
 } from '../renderer/types';
 
 interface ITodayTaskFromDB {
@@ -43,11 +44,17 @@ export const flattenAllTasks = (tasks: IAllTask[]) => {
   tasks.forEach((task) => {
     const { DailyTaskEntry, ...rest } = task;
     let dueDate = null;
+    let completionStatus = TaskCompletionStatusEnum.INCOMPLETE;
     if (task.schedule === TaskScheduleTypeEnum.Once) {
-      const { dueDate: dueDateFromDB } = DailyTaskEntry[0];
+      const {
+        dueDate: dueDateFromDB,
+        completionStatus: completionStatusFromDb,
+      } = DailyTaskEntry[0];
       dueDate = dueDateFromDB;
+      completionStatus = completionStatusFromDb as TaskCompletionStatusEnum;
     }
-    const newTask = { ...rest, dueDate };
+
+    const newTask = { ...rest, dueDate, completionStatus };
     flattenedTasks.push(newTask);
   });
 
