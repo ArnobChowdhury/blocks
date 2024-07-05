@@ -9,7 +9,7 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, IpcMainEvent } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { PrismaClient } from '@prisma/client';
@@ -163,8 +163,75 @@ const makeCompletedOneOffTasksInactive = async () => {
     },
   });
 };
+const sendTodaysTasks = async (event: IpcMainEvent) => {
+  let today: number | DaysInAWeek = new Date().getDay();
+  today = Object.values(DaysInAWeek)[today];
 
-ipcMain.on(ChannelsEnum.CREATE_TASK, async (_event, task: ITaskIPC) => {
+  const todayStart = getTodayStart();
+  const todayEnd = getTodayEnd();
+
+  const repetitiveTaskQuery: { [key: string | DaysInAWeek]: boolean } = {
+    isActive: true,
+  };
+  repetitiveTaskQuery[today] = true;
+
+  // first create task entries for repetitive tasks
+  const todaysRepetitiveTasks = await prisma.task.findMany({
+    where: repetitiveTaskQuery,
+  });
+
+  await Promise.all(
+    todaysRepetitiveTasks.map(async (task) => {
+      await prisma.dailyTaskEntry.upsert({
+        where: {
+          taskId_dueDate: {
+            taskId: task.id,
+            dueDate: todayStart,
+          },
+        },
+        create: {
+          taskId: task.id,
+          completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+          dueDate: todayStart,
+          createdAt: new Date(),
+          lastModifiedAt: new Date(),
+        },
+        update: {},
+      });
+    }),
+  );
+
+  const tasksForToday = await prisma.dailyTaskEntry.findMany({
+    where: {
+      dueDate: {
+        gte: todayStart,
+        lte: todayEnd,
+      },
+      completionStatus: {
+        not: TaskCompletionStatusEnum.FAILED,
+      },
+    },
+    select: {
+      id: true,
+      dueDate: true,
+      completionStatus: true,
+      score: true,
+      task: {
+        select: {
+          title: true,
+          shouldBeScored: true,
+          schedule: true,
+        },
+      },
+    },
+  });
+
+  const flattenedTasksForToday = flattenTasksForToday(tasksForToday);
+
+  event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, flattenedTasksForToday);
+};
+
+ipcMain.on(ChannelsEnum.CREATE_TASK, async (event, task: ITaskIPC) => {
   const { title, schedule, dueDate, days, shouldBeScored } = task;
   let monday;
   let tuesday;
@@ -253,81 +320,14 @@ ipcMain.on(ChannelsEnum.CREATE_TASK, async (_event, task: ITaskIPC) => {
         },
       });
     }
+    await sendTodaysTasks(event);
   } catch (err) {
     console.log(err);
   }
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
-  let today: number | DaysInAWeek = new Date().getDay();
-  today = Object.values(DaysInAWeek)[today];
-
-  const todayStart = getTodayStart();
-  const todayEnd = getTodayEnd();
-
-  const repetitiveTaskQuery: { [key: string | DaysInAWeek]: boolean } = {
-    isActive: true,
-  };
-  repetitiveTaskQuery[today] = true;
-
-  try {
-    // first create task entries for repetitive tasks
-    const todaysRepetitiveTasks = await prisma.task.findMany({
-      where: repetitiveTaskQuery,
-    });
-
-    await Promise.all(
-      todaysRepetitiveTasks.map(async (task) => {
-        await prisma.dailyTaskEntry.upsert({
-          where: {
-            taskId_dueDate: {
-              taskId: task.id,
-              dueDate: todayStart,
-            },
-          },
-          create: {
-            taskId: task.id,
-            completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-            dueDate: todayStart,
-            createdAt: new Date(),
-            lastModifiedAt: new Date(),
-          },
-          update: {},
-        });
-      }),
-    );
-
-    const tasksForToday = await prisma.dailyTaskEntry.findMany({
-      where: {
-        dueDate: {
-          gte: todayStart,
-          lte: todayEnd,
-        },
-        completionStatus: {
-          not: TaskCompletionStatusEnum.FAILED,
-        },
-      },
-      select: {
-        id: true,
-        dueDate: true,
-        completionStatus: true,
-        score: true,
-        task: {
-          select: {
-            title: true,
-            shouldBeScored: true,
-            schedule: true,
-          },
-        },
-      },
-    });
-
-    const flattenedTasksForToday = flattenTasksForToday(tasksForToday);
-
-    event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, flattenedTasksForToday);
-  } catch (err) {
-    console.log(err);
-  }
+  await sendTodaysTasks(event);
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
