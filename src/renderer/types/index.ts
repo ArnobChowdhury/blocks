@@ -74,11 +74,6 @@ export interface IAllTask {
   lastModifiedAt: Date;
 }
 
-export interface IFlattenedAllTask extends Omit<IAllTask, 'DailyTaskEntry'> {
-  dueDate: Date | null;
-  completionStatus: TaskCompletionStatusEnum;
-}
-
 export enum ChannelsEnum {
   IPC_EXAMPLE = 'ipc-example',
 
@@ -101,8 +96,21 @@ export enum ChannelsEnum {
 
   REQUEST_TASK_RESCHEDULE = 'request_task_reschedule',
 
-  REQUEST_ALL_ACTIVE_TASKS = 'request_all_active_tasks',
-  RESPONSE_ALL_ACTIVE_TASKS = 'response_all_active_tasks',
+  REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS = 'request_all_unscheduled_active_tasks',
+  RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS = 'response_all_unscheduled_active_tasks',
+  ERROR_ALL_UNSCHEDULED_ACTIVE_TASKS = 'error_all_unscheduled_active_tasks',
+
+  REQUEST_ALL_ONE_OFF_ACTIVE_TASKS = 'request_all_one_off_active_tasks',
+  RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS = 'response_all_one_off_active_tasks',
+  ERROR_ALL_ONE_OFF_ACTIVE_TASKS = 'error_all_one_off_active_tasks',
+
+  REQUEST_ALL_DAILY_ACTIVE_TASKS = 'request_all_daily_active_tasks',
+  RESPONSE_ALL_DAILY_ACTIVE_TASKS = 'response_all_daily_active_tasks',
+  ERROR_ALL_DAILY_ACTIVE_TASKS = 'error_all_daily_active_tasks',
+
+  REQUEST_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS = 'request_all_specific_days_in_a_week_active_tasks',
+  RESPONSE_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS = 'response_all_specific_days_in_a_week_active_tasks',
+  ERROR_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS = 'error_all_specific_days_in_a_week_active_tasks',
 }
 
 export enum IPCEventsResponseEnum {

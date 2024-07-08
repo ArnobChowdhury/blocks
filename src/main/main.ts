@@ -419,25 +419,83 @@ ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
   });
 });
 
-/**
- * todos
- * 1. add error handling
- * 2. Separate function for repetitive tasks
- */
-ipcMain.on(ChannelsEnum.REQUEST_ALL_ACTIVE_TASKS, async (event) => {
-  await makeCompletedOneOffTasksInactive();
-  const tasks = await prisma.task.findMany({
-    where: {
-      isActive: true,
-      OR: [
-        { schedule: TaskScheduleTypeEnum.Once },
-        { schedule: TaskScheduleTypeEnum.Unscheduled },
-      ],
-    },
-  });
+ipcMain.on(ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS, async (event) => {
+  try {
+    await makeCompletedOneOffTasksInactive();
+    const tasks = await prisma.task.findMany({
+      where: {
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.Once,
+      },
+    });
 
-  event.reply(ChannelsEnum.RESPONSE_ALL_ACTIVE_TASKS, tasks);
+    event.reply(ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS, tasks);
+  } catch {
+    event.reply(ChannelsEnum.ERROR_ALL_ONE_OFF_ACTIVE_TASKS, {
+      message: IPCEventsResponseEnum.ERROR,
+    });
+  }
 });
+
+ipcMain.on(ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS, async (event) => {
+  try {
+    await makeCompletedOneOffTasksInactive();
+    const tasks = await prisma.task.findMany({
+      where: {
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.Unscheduled,
+      },
+    });
+
+    event.reply(ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS, tasks);
+  } catch {
+    event.reply(ChannelsEnum.ERROR_ALL_UNSCHEDULED_ACTIVE_TASKS, {
+      message: IPCEventsResponseEnum.ERROR,
+    });
+  }
+});
+
+ipcMain.on(ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS, async (event) => {
+  try {
+    await makeCompletedOneOffTasksInactive();
+    const tasks = await prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.Daily,
+      },
+    });
+
+    event.reply(ChannelsEnum.RESPONSE_ALL_DAILY_ACTIVE_TASKS, tasks);
+  } catch {
+    event.reply(ChannelsEnum.ERROR_ALL_DAILY_ACTIVE_TASKS, {
+      message: IPCEventsResponseEnum.ERROR,
+    });
+  }
+});
+
+ipcMain.on(
+  ChannelsEnum.REQUEST_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
+  async (event) => {
+    try {
+      await makeCompletedOneOffTasksInactive();
+      const tasks = await prisma.repetitiveTaskTemplate.findMany({
+        where: {
+          isActive: true,
+          schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+        },
+      });
+
+      event.reply(
+        ChannelsEnum.RESPONSE_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
+        tasks,
+      );
+    } catch {
+      event.reply(ChannelsEnum.ERROR_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS, {
+        message: IPCEventsResponseEnum.ERROR,
+      });
+    }
+  },
+);
 
 /**
  * todos

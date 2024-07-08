@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 import React, { useState } from 'react';
 import {
   ListItem,
@@ -8,6 +9,8 @@ import {
   Fade,
   Tooltip,
   Popover,
+  Chip,
+  useTheme,
 } from '@mui/material';
 import { LocalizationProvider, StaticDatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -15,15 +18,15 @@ import { Dayjs } from 'dayjs';
 import SmallCheckbox from './SmallCheckbox';
 import Clock from '../icons/Clock';
 import Close from '../icons/Close';
-import { TaskScheduleTypeEnum } from '../types';
+import { TaskScheduleTypeEnum, DaysInAWeek } from '../types';
 
 interface ITodoListItemProps {
-  isCompleted: boolean;
+  isCompleted?: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   taskTitle: string;
   showClock: boolean;
-  // eslint-disable-next-line react/require-default-props
   schedule?: TaskScheduleTypeEnum;
+  dayLabels?: DaysInAWeek[];
   onFail: () => void;
   onReschedule: (rescheduledTime: Dayjs) => void;
 }
@@ -34,6 +37,7 @@ function TodoListItem({
   taskTitle,
   showClock = true,
   schedule,
+  dayLabels,
   onFail,
   onReschedule,
 }: ITodoListItemProps) {
@@ -65,29 +69,51 @@ function TodoListItem({
     if (!isCompleted) setShowOptions(false);
   };
 
+  const theme = useTheme();
+
   return (
     <ListItem onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       {/* todo we may not need LocalizationProvider everywhere, wrapping it at the top should do it   */}
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Box display="flex" justifyContent="space-between" width="100%">
-          {isAHabit && <Typography variant="body2">{taskTitle}</Typography>}
-          {!isAHabit && (
-            <FormControlLabel
-              control={
-                <SmallCheckbox checked={isCompleted} onChange={onChange} />
-              }
-              label={
-                <Typography
-                  sx={{
-                    textDecoration: isCompleted ? 'line-through' : 'none',
-                  }}
-                  variant="body2"
-                >
-                  {taskTitle}
-                </Typography>
-              }
-            />
-          )}
+          <Box display="flex" alignItems="center">
+            {isAHabit && <Typography variant="body2">{taskTitle}</Typography>}
+            {!isAHabit && (
+              <FormControlLabel
+                control={
+                  <SmallCheckbox checked={isCompleted} onChange={onChange} />
+                }
+                label={
+                  <Typography
+                    sx={{
+                      textDecoration: isCompleted ? 'line-through' : 'none',
+                    }}
+                    variant="body2"
+                  >
+                    {taskTitle}
+                  </Typography>
+                }
+              />
+            )}
+
+            {dayLabels && dayLabels.length > 0 && (
+              <Box ml={2}>
+                {dayLabels.map((day) => (
+                  <Chip
+                    key={day}
+                    label={day}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      mr: 1,
+                      color: theme.palette.primary.main,
+                      textTransform: 'capitalize',
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
           <Fade in={showOptions} timeout={200}>
             <Box display="flex">
               {showClock && (

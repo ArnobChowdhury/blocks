@@ -1,98 +1,192 @@
-import { useEffect, useState, useMemo, Fragment } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { List, Typography, Divider } from '@mui/material';
+import { Task, RepetitiveTaskTemplate } from '@prisma/client';
 import {
   ChannelsEnum,
-  IFlattenedAllTask,
   TaskScheduleTypeEnum,
   DaysInAWeek,
   TaskCompletionStatusEnum,
 } from '../types';
 import { TodoListItem } from '../components';
 
-function AllTasks() {
-  const [allTasks, setAllTasks] = useState<IFlattenedAllTask[]>([]);
+interface IAllTasksProps {
+  refreshAllTasks: () => void;
+}
+
+function AllTasks({ refreshAllTasks }: IAllTasksProps) {
+  const [unscheduledTasks, setUnscheduledTasks] = useState<Task[]>([]);
+  const [oneOffTasks, setOneOffTasks] = useState<Task[]>([]);
+  const [dailyTasks, setDailyTasks] = useState<RepetitiveTaskTemplate[]>([]);
+  const [specificDaysInAWeekTasks, setSpecificDaysInAWeekTasks] = useState<
+    RepetitiveTaskTemplate[]
+  >([]);
 
   useEffect(() => {
-    window.electron.ipcRenderer.sendMessage(
-      ChannelsEnum.REQUEST_ALL_ACTIVE_TASKS,
-    );
-    window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_ALL_ACTIVE_TASKS,
+    refreshAllTasks();
+  }, [refreshAllTasks]);
+
+  useEffect(() => {
+    const unsubscribeUnscheduledActiveTasks = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS,
       (response) => {
-        setAllTasks(response as IFlattenedAllTask[]);
+        setUnscheduledTasks(response as Task[]);
       },
     );
+
+    return unsubscribeUnscheduledActiveTasks;
   }, []);
 
-  const tasksSorted = useMemo(() => {
-    const taskSortedBySchedule: { [key: string]: IFlattenedAllTask[] } = {};
+  useEffect(() => {
+    const unsubscribeOneOffActiveTasks = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS,
+      (response) => {
+        setOneOffTasks(response as Task[]);
+      },
+    );
 
-    allTasks.forEach((task) => {
-      if (!taskSortedBySchedule[task.schedule as TaskScheduleTypeEnum]) {
-        taskSortedBySchedule[task.schedule] = [];
-      }
-      taskSortedBySchedule[task.schedule].push(task);
-    });
-    return taskSortedBySchedule;
-  }, [allTasks]);
+    return unsubscribeOneOffActiveTasks;
+  }, []);
 
-  const schedulesOrderedArray = useMemo(() => {
-    return Object.values(TaskScheduleTypeEnum);
+  useEffect(() => {
+    const unsubscribeDailyActiveTasks = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_ALL_DAILY_ACTIVE_TASKS,
+      (response) => {
+        setDailyTasks(response as RepetitiveTaskTemplate[]);
+      },
+    );
+
+    return unsubscribeDailyActiveTasks;
+  }, []);
+
+  useEffect(() => {
+    const unsubscribeSpecificDaysInAWeek = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
+      (response) => {
+        setSpecificDaysInAWeekTasks(response as RepetitiveTaskTemplate[]);
+      },
+    );
+
+    return unsubscribeSpecificDaysInAWeek;
   }, []);
 
   return (
     <div>
-      {Object.keys(tasksSorted)
-        .sort((a, b) => {
-          const indexA = schedulesOrderedArray.indexOf(
-            a as TaskScheduleTypeEnum,
-          );
-          const indexB = schedulesOrderedArray.indexOf(
-            b as TaskScheduleTypeEnum,
-          );
-          return indexA - indexB;
-        })
-        .map((schedule, index) => {
-          return (
-            <Fragment key={`${schedule}`}>
-              <Typography mt={index === 0 ? 2 : 5} mb={1} variant="h6">
-                {schedule}
-              </Typography>
-              <List>
-                {tasksSorted[schedule].map((task) => {
-                  let days: DaysInAWeek[] = [];
-                  if (
-                    task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek
-                  ) {
-                    // todo days should be used to calculate labels
-                    days = Object.values(DaysInAWeek).filter(
-                      (day) => task[day],
-                    );
+      <Typography mt={2} mb={1} variant="h6">
+        {TaskScheduleTypeEnum.Unscheduled}
+      </Typography>
+      {unscheduledTasks.length === 0 && (
+        <Typography variant="body2">No tasks unscheduled</Typography>
+      )}
+      {unscheduledTasks.length > 0 && (
+        <List>
+          {unscheduledTasks.map((task) => {
+            return (
+              <Fragment key={task.id}>
+                <TodoListItem
+                  schedule={task.schedule as TaskScheduleTypeEnum}
+                  taskTitle={task.title}
+                  isCompleted={
+                    task.completionStatus === TaskCompletionStatusEnum.COMPLETE
                   }
+                  onChange={() => {}}
+                  onFail={() => {}}
+                  onReschedule={() => {}}
+                  showClock
+                  key={task.id}
+                />
+                <Divider />
+              </Fragment>
+            );
+          })}
+        </List>
+      )}
 
-                  return (
-                    <Fragment key={task.id}>
-                      <TodoListItem
-                        schedule={task.schedule as TaskScheduleTypeEnum}
-                        taskTitle={task.title}
-                        isCompleted={
-                          task.completionStatus ===
-                          TaskCompletionStatusEnum.COMPLETE
-                        }
-                        onChange={() => {}}
-                        onFail={() => {}}
-                        onReschedule={() => {}}
-                        showClock
-                        key={task.id}
-                      />
-                      <Divider />
-                    </Fragment>
-                  );
-                })}
-              </List>
-            </Fragment>
-          );
-        })}
+      <Typography mt={5} mb={1} variant="h6">
+        {TaskScheduleTypeEnum.Once}
+      </Typography>
+      {oneOffTasks.length === 0 && (
+        <Typography variant="body2">No one-off tasks scheduled.</Typography>
+      )}
+      {oneOffTasks.length > 0 && (
+        <List>
+          {oneOffTasks.map((task) => {
+            return (
+              <Fragment key={task.id}>
+                <TodoListItem
+                  schedule={task.schedule as TaskScheduleTypeEnum}
+                  taskTitle={task.title}
+                  isCompleted={
+                    task.completionStatus === TaskCompletionStatusEnum.COMPLETE
+                  }
+                  onChange={() => {}}
+                  onFail={() => {}}
+                  onReschedule={() => {}}
+                  showClock
+                  key={task.id}
+                />
+                <Divider />
+              </Fragment>
+            );
+          })}
+        </List>
+      )}
+
+      <Typography mt={5} mb={1} variant="h6">
+        {TaskScheduleTypeEnum.Daily}
+      </Typography>
+      {dailyTasks.length === 0 && (
+        <Typography variant="body2">No daily tasks.</Typography>
+      )}
+      {dailyTasks.length > 0 && (
+        <List>
+          {dailyTasks.map((task) => {
+            return (
+              <Fragment key={task.id}>
+                <TodoListItem
+                  schedule={task.schedule as TaskScheduleTypeEnum}
+                  taskTitle={task.title}
+                  onChange={() => {}}
+                  onFail={() => {}}
+                  onReschedule={() => {}}
+                  showClock
+                  key={task.id}
+                />
+                <Divider />
+              </Fragment>
+            );
+          })}
+        </List>
+      )}
+
+      <Typography mt={5} mb={1} variant="h6">
+        {TaskScheduleTypeEnum.SpecificDaysInAWeek}
+      </Typography>
+      {specificDaysInAWeekTasks.length === 0 && (
+        <Typography variant="body2">No tasks.</Typography>
+      )}
+      {specificDaysInAWeekTasks.length > 0 && (
+        <List>
+          {specificDaysInAWeekTasks.map((task) => {
+            const days = Object.values(DaysInAWeek).filter((day) => task[day]);
+
+            return (
+              <Fragment key={task.id}>
+                <TodoListItem
+                  schedule={task.schedule as TaskScheduleTypeEnum}
+                  taskTitle={task.title}
+                  onChange={() => {}}
+                  onFail={() => {}}
+                  onReschedule={() => {}}
+                  showClock
+                  key={task.id}
+                  dayLabels={days}
+                />
+                <Divider />
+              </Fragment>
+            );
+          })}
+        </List>
+      )}
     </div>
   );
 }
