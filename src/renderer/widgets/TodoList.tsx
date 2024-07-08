@@ -15,38 +15,40 @@ import dayjs, { Dayjs } from 'dayjs';
 import { ITask, TaskScheduleTypeEnum, ChannelsEnum } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
 
-function TodoList() {
+interface ITodoListProps {
+  refreshTasks: () => void;
+}
+
+function TodoList({ refreshTasks }: ITodoListProps) {
   const [tasksToday, setTasksToday] = useState<ITask[]>([]);
   const [tasksOverdue, setTasksOverdue] = useState<ITask[]>([]);
   const [taskForScoring, setTaskIndexForScoring] = useState<ITask>();
   const [score, setScore] = useState<number | null>(null);
 
-  const handleTaskRefresh = () => {
-    window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_TODAY);
-    // window.electron.ipcRenderer.sendMessage('request-tasks-today');
-    // window.electron.ipcRenderer.sendMessage('request-tasks-overdue');
-    window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_OVERDUE);
-  };
-
   useEffect(() => {
     // todo channel names should be enum
-    handleTaskRefresh();
+    refreshTasks();
 
-    window.electron.ipcRenderer.on(
+    const unsubscribeTasksToday = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_TODAY,
       (response) => {
         // todo need error handling
         setTasksToday(response as ITask[]);
       },
     );
-    window.electron.ipcRenderer.on(
+    const unsubscribeTasksOverdue = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_OVERDUE,
       (response) => {
         // todo need error handling
         setTasksOverdue(response as ITask[]);
       },
     );
-  }, []);
+
+    return () => {
+      unsubscribeTasksToday();
+      unsubscribeTasksOverdue();
+    };
+  }, [refreshTasks]);
 
   const onTaskCompletionChange = (
     id: number,
@@ -61,7 +63,7 @@ function TodoList() {
         score: taskScore,
       },
     );
-    handleTaskRefresh();
+    refreshTasks();
   };
 
   const handleTaskToggle = (
@@ -87,7 +89,7 @@ function TodoList() {
     window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASK_FAILURE, {
       id: taskId,
     });
-    handleTaskRefresh();
+    refreshTasks();
   };
 
   const handleTaskReSchedule = (taskId: number, rescheduledTime: Dayjs) => {
@@ -100,7 +102,7 @@ function TodoList() {
         dueDate,
       },
     );
-    handleTaskRefresh();
+    refreshTasks();
   };
 
   const todayFormatted = dayjs().format('dddd, MMMM D, YYYY');

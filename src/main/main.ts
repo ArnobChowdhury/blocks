@@ -9,11 +9,11 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain, IpcMainEvent } from 'electron';
+import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { PrismaClient } from '@prisma/client';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import {
@@ -22,13 +22,9 @@ import {
   TaskCompletionStatusEnum,
   DaysInAWeek,
   ChannelsEnum,
+  IPCEventsResponseEnum,
 } from '../renderer/types';
-import {
-  flattenTasksForToday,
-  flattenAllTasks,
-  getTodayStart,
-  getTodayEnd,
-} from './helpers';
+import { getTodayStart, getTodayEnd } from './helpers';
 
 const prisma = new PrismaClient();
 
@@ -149,59 +145,196 @@ const makeCompletedOneOffTasksInactive = async () => {
     where: {
       isActive: true,
       schedule: TaskScheduleTypeEnum.Once,
-      DailyTaskEntry: {
-        every: {
-          dueDate: {
-            lt: todayStart,
-          },
-          completionStatus: TaskCompletionStatusEnum.COMPLETE,
-        },
+      dueDate: {
+        lt: todayStart,
       },
+      completionStatus: TaskCompletionStatusEnum.COMPLETE,
     },
     data: {
       isActive: false,
     },
   });
 };
-const sendTodaysTasks = async (event: IpcMainEvent) => {
-  let today: number | DaysInAWeek = new Date().getDay();
-  today = Object.values(DaysInAWeek)[today];
+const generateDueRepetitiveTasks = async () => {
+  const todayStart = dayjs().startOf('day');
+  const todayStartAsString = todayStart.toISOString();
+
+  const dueRepetitiveTasks = await prisma.repetitiveTaskTemplate.findMany({
+    where: {
+      isActive: true,
+      OR: [
+        { lastDateOfTaskGeneration: { lt: todayStartAsString } },
+        { lastDateOfTaskGeneration: null },
+      ],
+    },
+  });
+
+  await Promise.all(
+    dueRepetitiveTasks.map(async (repetitiveTask) => {
+      const { id: templateId, title, schedule } = repetitiveTask;
+
+      let lastDateOfTaskGeneration: Dayjs | Date | null;
+      // eslint-disable-next-line prettier/prettier
+      lastDateOfTaskGeneration = repetitiveTask.lastDateOfTaskGeneration;
+
+      let daysSinceLastTaskGeneration: number;
+
+      if (!lastDateOfTaskGeneration) {
+        daysSinceLastTaskGeneration = 1;
+        lastDateOfTaskGeneration = todayStart.subtract(1, 'day');
+      } else
+        daysSinceLastTaskGeneration = dayjs().diff(
+          dayjs(lastDateOfTaskGeneration),
+          'day',
+        );
+
+      const dayArray = Array.from(
+        { length: daysSinceLastTaskGeneration },
+        (_, i) => i + 1,
+      );
+
+      await Promise.all(
+        dayArray.map(async (day) => {
+          let dueDate: Dayjs | string = dayjs(lastDateOfTaskGeneration).add(
+            day,
+            'day',
+          );
+          const dayOfWeekLowercase = dueDate.format('dddd').toLowerCase();
+
+          if (repetitiveTask[dayOfWeekLowercase as DaysInAWeek]) {
+            dueDate = dueDate.toISOString();
+
+            await prisma.task.upsert({
+              where: {
+                repetitiveTaskTemplateId_dueDate: {
+                  repetitiveTaskTemplateId: templateId,
+                  dueDate,
+                },
+              },
+              create: {
+                repetitiveTaskTemplateId: templateId,
+                dueDate,
+                title,
+                schedule,
+              },
+              update: {},
+            });
+
+            await prisma.repetitiveTaskTemplate.update({
+              where: {
+                id: templateId,
+              },
+              data: {
+                lastDateOfTaskGeneration: dueDate,
+              },
+            });
+          }
+        }),
+      );
+    }),
+  );
+};
+
+ipcMain.on(ChannelsEnum.REQUEST_CREATE_TASK, async (event, task: ITaskIPC) => {
+  const { title, schedule, dueDate, days, shouldBeScored } = task;
+  try {
+    if (
+      schedule === TaskScheduleTypeEnum.Once ||
+      schedule === TaskScheduleTypeEnum.Unscheduled
+    ) {
+      // create a new task
+      await prisma.task.create({
+        data: {
+          title,
+          schedule,
+          shouldBeScored,
+          createdAt: new Date(),
+          dueDate,
+        },
+      });
+    } else {
+      let monday;
+      let tuesday;
+      let wednesday;
+      let thursday;
+      let friday;
+      let saturday;
+      let sunday;
+
+      if (schedule === TaskScheduleTypeEnum.Daily) {
+        monday = true;
+        tuesday = true;
+        wednesday = true;
+        thursday = true;
+        friday = true;
+        saturday = true;
+        sunday = true;
+      }
+
+      if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) {
+        days?.forEach((day) => {
+          switch (day) {
+            case 'monday':
+              monday = true;
+              break;
+            case 'tuesday':
+              tuesday = true;
+              break;
+            case 'wednesday':
+              wednesday = true;
+              break;
+            case 'thursday':
+              thursday = true;
+              break;
+            case 'friday':
+              friday = true;
+              break;
+            case 'saturday':
+              saturday = true;
+              break;
+            case 'sunday':
+              sunday = true;
+              break;
+            default:
+              break;
+          }
+        });
+      }
+
+      await prisma.repetitiveTaskTemplate.create({
+        data: {
+          title,
+          schedule,
+          shouldBeScored,
+          monday,
+          tuesday,
+          wednesday,
+          thursday,
+          friday,
+          saturday,
+          sunday,
+        },
+      });
+
+      event.reply(ChannelsEnum.RESPONSE_CREATE_TASK, {
+        message: IPCEventsResponseEnum.SUCCESSFUL,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    event.reply(ChannelsEnum.ERROR_CREATE_TASK, {
+      message: IPCEventsResponseEnum.ERROR,
+    });
+  }
+});
+
+ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
+  await generateDueRepetitiveTasks();
 
   const todayStart = getTodayStart();
   const todayEnd = getTodayEnd();
 
-  const repetitiveTaskQuery: { [key: string | DaysInAWeek]: boolean } = {
-    isActive: true,
-  };
-  repetitiveTaskQuery[today] = true;
-
-  // first create task entries for repetitive tasks
-  const todaysRepetitiveTasks = await prisma.task.findMany({
-    where: repetitiveTaskQuery,
-  });
-
-  await Promise.all(
-    todaysRepetitiveTasks.map(async (task) => {
-      await prisma.dailyTaskEntry.upsert({
-        where: {
-          taskId_dueDate: {
-            taskId: task.id,
-            dueDate: todayStart,
-          },
-        },
-        create: {
-          taskId: task.id,
-          completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-          dueDate: todayStart,
-          createdAt: new Date(),
-          lastModifiedAt: new Date(),
-        },
-        update: {},
-      });
-    }),
-  );
-
-  const tasksForToday = await prisma.dailyTaskEntry.findMany({
+  const tasksForToday = await prisma.task.findMany({
     where: {
       dueDate: {
         gte: todayStart,
@@ -216,124 +349,21 @@ const sendTodaysTasks = async (event: IpcMainEvent) => {
       dueDate: true,
       completionStatus: true,
       score: true,
-      task: {
-        select: {
-          title: true,
-          shouldBeScored: true,
-          schedule: true,
-        },
-      },
+      title: true,
+      shouldBeScored: true,
     },
   });
 
-  const flattenedTasksForToday = flattenTasksForToday(tasksForToday);
-
-  event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, flattenedTasksForToday);
-};
-
-ipcMain.on(ChannelsEnum.CREATE_TASK, async (event, task: ITaskIPC) => {
-  const { title, schedule, dueDate, days, shouldBeScored } = task;
-  let monday;
-  let tuesday;
-  let wednesday;
-  let thursday;
-  let friday;
-  let saturday;
-  let sunday;
-
-  if (schedule === TaskScheduleTypeEnum.Daily) {
-    monday = true;
-    tuesday = true;
-    wednesday = true;
-    thursday = true;
-    friday = true;
-    saturday = true;
-    sunday = true;
-  }
-
-  if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) {
-    days?.forEach((day) => {
-      switch (day) {
-        case 'monday':
-          monday = true;
-          break;
-        case 'tuesday':
-          tuesday = true;
-          break;
-        case 'wednesday':
-          wednesday = true;
-          break;
-        case 'thursday':
-          thursday = true;
-          break;
-        case 'friday':
-          friday = true;
-          break;
-        case 'saturday':
-          saturday = true;
-          break;
-        case 'sunday':
-          sunday = true;
-          break;
-        default:
-          break;
-      }
-    });
-  }
-
-  try {
-    const taskInDB = await prisma.task.create({
-      data: {
-        title,
-        schedule,
-        monday,
-        tuesday,
-        wednesday,
-        thursday,
-        friday,
-        saturday,
-        sunday,
-        shouldBeScored,
-        createdAt: new Date(),
-        lastModifiedAt: new Date(),
-        // lastEntryUpdateDate: new Date(),
-      },
-    });
-
-    if (schedule === TaskScheduleTypeEnum.Once && dueDate) {
-      await prisma.dailyTaskEntry.create({
-        data: {
-          taskId: taskInDB.id,
-          completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-          dueDate: new Date(dueDate),
-          createdAt: new Date(),
-          lastModifiedAt: new Date(),
-        },
-      });
-
-      await prisma.task.update({
-        where: {
-          id: taskInDB.id,
-        },
-        data: {
-          lastEntryUpdateDate: new Date(),
-        },
-      });
-    }
-    await sendTodaysTasks(event);
-  } catch (err) {
-    console.log(err);
-  }
+  event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, tasksForToday);
 });
 
-ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
-  await sendTodaysTasks(event);
-});
-
+/**
+ * todo: add error handling
+ */
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
   const todayStart = getTodayStart();
 
-  const tasksOverdue = await prisma.dailyTaskEntry.findMany({
+  const tasksOverdue = await prisma.task.findMany({
     where: {
       dueDate: {
         lt: todayStart,
@@ -345,26 +375,23 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
       dueDate: true,
       completionStatus: true,
       score: true,
-      task: {
-        select: {
-          title: true,
-          shouldBeScored: true,
-          schedule: true,
-        },
-      },
+      title: true,
+      shouldBeScored: true,
+      schedule: true,
     },
   });
 
-  const flattenedTasksOverdue = flattenTasksForToday(tasksOverdue);
-
-  event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, flattenedTasksOverdue);
+  event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, tasksOverdue);
 });
 
+/**
+ * todo: add error handling
+ */
 ipcMain.on(
   ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
   async (event, { id, checked, score }) => {
     // todo: need to make the one-off task in active
-    await prisma.dailyTaskEntry.update({
+    await prisma.task.update({
       where: {
         id,
       },
@@ -378,8 +405,11 @@ ipcMain.on(
   },
 );
 
+/**
+ * todo: add error handling
+ */
 ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
-  await prisma.dailyTaskEntry.update({
+  await prisma.task.update({
     where: {
       id,
     },
@@ -389,38 +419,59 @@ ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
   });
 });
 
+/**
+ * todos
+ * 1. add error handling
+ * 2. Separate function for repetitive tasks
+ */
 ipcMain.on(ChannelsEnum.REQUEST_ALL_ACTIVE_TASKS, async (event) => {
   await makeCompletedOneOffTasksInactive();
   const tasks = await prisma.task.findMany({
     where: {
       isActive: true,
-    },
-    include: {
-      DailyTaskEntry: {
-        orderBy: {
-          dueDate: 'desc',
-        },
-        take: 1,
-      },
+      OR: [
+        { schedule: TaskScheduleTypeEnum.Once },
+        { schedule: TaskScheduleTypeEnum.Unscheduled },
+      ],
     },
   });
 
-  const flattenedAllTasks = flattenAllTasks(tasks);
-
-  event.reply(ChannelsEnum.RESPONSE_ALL_ACTIVE_TASKS, flattenedAllTasks);
+  event.reply(ChannelsEnum.RESPONSE_ALL_ACTIVE_TASKS, tasks);
 });
 
+/**
+ * todos
+ * 1. add error handling
+ * 2. Change the name from re-schedule to something else. Then we can use the same function for unscheduled tasks as well
+ */
 ipcMain.on(
   ChannelsEnum.REQUEST_TASK_RESCHEDULE,
   async (event, { id, dueDate }) => {
     /**
      * Todos for rescheduling
      * 1. todo add a check that the task is not a Daily task. We don't allow rescheduling for Daily tasks
-     * 2. in case of rescheduling a weekly task, we need to create a new dailyTaskEntry for the new dueDate
+     * 2. in case of rescheduling a weekly task, we need to create a new task for the new dueDate
      * and mark the previous one as failed. That way our habit tracker will show the right representation.
      *   */
 
-    await prisma.dailyTaskEntry.update({
+    const task = await prisma.task.findFirstOrThrow({
+      where: {
+        id,
+      },
+    });
+
+    if (task.schedule === TaskScheduleTypeEnum.Daily) {
+      return;
+      // todo add error handling
+    }
+
+    if (task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) {
+      // need logic: a task can be delayed if the rescheduled day is prior to the next iteration
+      return;
+      // todo add error handling
+    }
+
+    await prisma.task.update({
       where: {
         id,
       },
@@ -431,15 +482,21 @@ ipcMain.on(
   },
 );
 
+/**
+ * todos:
+ * 1. add error handling
+ * 2. Whole function has to be addressed
+ */
+
 ipcMain.on(
   ChannelsEnum.REQUEST_MONTHLY_REPORT,
   async (event, { monthIndex }) => {
     const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();
     const endOfMonth = dayjs().month(monthIndex).endOf('month').toDate();
 
-    const tasks = await prisma.task.findMany({
+    const tasks = await prisma.repetitiveTaskTemplate.findMany({
       where: {
-        isActive: true,
+        // isActive: true,
         schedule: {
           in: [
             TaskScheduleTypeEnum.Daily,
@@ -448,7 +505,7 @@ ipcMain.on(
         },
       },
       include: {
-        DailyTaskEntry: {
+        Task: {
           orderBy: {
             dueDate: 'asc',
           },

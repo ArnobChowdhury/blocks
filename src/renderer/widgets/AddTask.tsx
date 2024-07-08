@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Button,
   Box,
@@ -18,13 +18,23 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Dayjs } from 'dayjs';
 import CustomChip from '../components/CustomChip';
 import { CalendarChip } from '../components';
-import { TaskScheduleTypeEnum, DaysInAWeek, ChannelsEnum } from '../types';
+import {
+  TaskScheduleTypeEnum,
+  DaysInAWeek,
+  ChannelsEnum,
+  IPCEventsResponseEnum,
+} from '../types';
+
+interface ICreateTaskResponse {
+  message: IPCEventsResponseEnum;
+}
 
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
+  refreshTasks: () => void;
 }
 
-function AddTask({ widgetCloseFunc }: IAddTaskProps) {
+function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
   const [taskTitle, setTaskTitle] = useState('');
   const [selectedScheduleType, setSelectedTypeFrequency] =
     useState<TaskScheduleTypeEnum>(TaskScheduleTypeEnum.Unscheduled);
@@ -74,6 +84,21 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const showDate = Boolean(dateAnchorEl);
   const datePopOverId = showDate ? 'datepicker-popover' : undefined;
 
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_CREATE_TASK,
+      (response) => {
+        if (
+          (response as ICreateTaskResponse).message ===
+          IPCEventsResponseEnum.SUCCESSFUL
+        ) {
+          refreshTasks();
+        }
+      },
+    );
+    return unsubscribe;
+  }, [refreshTasks]);
+
   const handleAddTask = () => {
     let dueDate;
     if (selectedDate) {
@@ -88,7 +113,10 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       shouldBeScored,
     };
 
-    window.electron.ipcRenderer.sendMessage(ChannelsEnum.CREATE_TASK, task);
+    window.electron.ipcRenderer.sendMessage(
+      ChannelsEnum.REQUEST_CREATE_TASK,
+      task,
+    );
     widgetCloseFunc(false);
   };
 
