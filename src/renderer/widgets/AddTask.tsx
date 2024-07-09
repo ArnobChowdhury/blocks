@@ -23,11 +23,8 @@ import {
   DaysInAWeek,
   ChannelsEnum,
   IPCEventsResponseEnum,
+  IEventResponse,
 } from '../types';
-
-interface ICreateTaskResponse {
-  message: IPCEventsResponseEnum;
-}
 
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
@@ -89,7 +86,7 @@ function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
       ChannelsEnum.RESPONSE_CREATE_TASK,
       (response) => {
         if (
-          (response as ICreateTaskResponse).message ===
+          (response as IEventResponse).message ===
           IPCEventsResponseEnum.SUCCESSFUL
         ) {
           refreshTasks();

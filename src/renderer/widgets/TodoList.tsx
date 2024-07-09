@@ -12,7 +12,13 @@ import {
 } from '@mui/material';
 import dayjs, { Dayjs } from 'dayjs';
 
-import { ITask, TaskScheduleTypeEnum, ChannelsEnum } from '../types';
+import {
+  ITask,
+  TaskScheduleTypeEnum,
+  ChannelsEnum,
+  IEventResponse,
+  IPCEventsResponseEnum,
+} from '../types';
 import { TodoListItem, TaskScoring } from '../components';
 
 interface ITodoListProps {
@@ -50,6 +56,54 @@ function TodoList({ refreshTasks }: ITodoListProps) {
     };
   }, [refreshTasks]);
 
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TASK_FAILURE,
+      (response) => {
+        if (
+          (response as IEventResponse).message ===
+          IPCEventsResponseEnum.SUCCESSFUL
+        ) {
+          refreshTasks();
+        }
+      },
+    );
+
+    return unsubscribe;
+  }, [refreshTasks]);
+
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TASK_RESCHEDULE,
+      (response) => {
+        if (
+          (response as IEventResponse).message ===
+          IPCEventsResponseEnum.SUCCESSFUL
+        ) {
+          refreshTasks();
+        }
+      },
+    );
+
+    return unsubscribe;
+  }, [refreshTasks]);
+
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TOGGLE_TASK_COMPLETION_STATUS,
+      (response) => {
+        if (
+          (response as IEventResponse).message ===
+          IPCEventsResponseEnum.SUCCESSFUL
+        ) {
+          refreshTasks();
+        }
+      },
+    );
+
+    return unsubscribe;
+  }, [refreshTasks]);
+
   const onTaskCompletionChange = (
     id: number,
     checked: boolean,
@@ -63,7 +117,6 @@ function TodoList({ refreshTasks }: ITodoListProps) {
         score: taskScore,
       },
     );
-    refreshTasks();
   };
 
   const handleTaskToggle = (
@@ -89,7 +142,6 @@ function TodoList({ refreshTasks }: ITodoListProps) {
     window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASK_FAILURE, {
       id: taskId,
     });
-    refreshTasks();
   };
 
   const handleTaskReSchedule = (taskId: number, rescheduledTime: Dayjs) => {
@@ -102,7 +154,6 @@ function TodoList({ refreshTasks }: ITodoListProps) {
         dueDate,
       },
     );
-    refreshTasks();
   };
 
   const todayFormatted = dayjs().format('dddd, MMMM D, YYYY');

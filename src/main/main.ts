@@ -384,39 +384,51 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
   event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, tasksOverdue);
 });
 
-/**
- * todo: add error handling
- */
 ipcMain.on(
   ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
   async (event, { id, checked, score }) => {
     // todo: need to make the one-off task in active
+    try {
+      await prisma.task.update({
+        where: {
+          id,
+        },
+        data: {
+          completionStatus: checked
+            ? TaskCompletionStatusEnum.COMPLETE
+            : TaskCompletionStatusEnum.INCOMPLETE,
+          score,
+        },
+      });
+      event.reply(ChannelsEnum.RESPONSE_TOGGLE_TASK_COMPLETION_STATUS, {
+        message: IPCEventsResponseEnum.SUCCESSFUL,
+      });
+    } catch (err) {
+      event.reply(ChannelsEnum.ERROR_TOGGLE_TASK_COMPLETION_STATUS, {
+        message: IPCEventsResponseEnum.ERROR,
+      });
+    }
+  },
+);
+
+ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
+  try {
     await prisma.task.update({
       where: {
         id,
       },
       data: {
-        completionStatus: checked
-          ? TaskCompletionStatusEnum.COMPLETE
-          : TaskCompletionStatusEnum.INCOMPLETE,
-        score,
+        completionStatus: TaskCompletionStatusEnum.FAILED,
       },
     });
-  },
-);
-
-/**
- * todo: add error handling
- */
-ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
-  await prisma.task.update({
-    where: {
-      id,
-    },
-    data: {
-      completionStatus: TaskCompletionStatusEnum.FAILED,
-    },
-  });
+    event.reply(ChannelsEnum.RESPONSE_TASK_FAILURE, {
+      message: IPCEventsResponseEnum.SUCCESSFUL,
+    });
+  } catch (err) {
+    event.reply(ChannelsEnum.ERROR_TASK_FAILURE, {
+      message: IPCEventsResponseEnum.ERROR,
+    });
+  }
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS, async (event) => {
@@ -497,11 +509,6 @@ ipcMain.on(
   },
 );
 
-/**
- * todos
- * 1. add error handling
- * 2. Change the name from re-schedule to something else. Then we can use the same function for unscheduled tasks as well
- */
 ipcMain.on(
   ChannelsEnum.REQUEST_TASK_RESCHEDULE,
   async (event, { id, dueDate }) => {
@@ -512,39 +519,42 @@ ipcMain.on(
      * and mark the previous one as failed. That way our habit tracker will show the right representation.
      *   */
 
-    const task = await prisma.task.findFirstOrThrow({
-      where: {
-        id,
-      },
-    });
+    try {
+      const task = await prisma.task.findFirstOrThrow({
+        where: {
+          id,
+        },
+      });
 
-    if (task.schedule === TaskScheduleTypeEnum.Daily) {
-      return;
-      // todo add error handling
+      if (task.schedule === TaskScheduleTypeEnum.Daily) {
+        return;
+        // todo add error handling
+      }
+
+      if (task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) {
+        // need logic: a task can be delayed if the rescheduled day is prior to the next iteration
+        return;
+        // todo add error handling
+      }
+
+      await prisma.task.update({
+        where: {
+          id,
+        },
+        data: {
+          dueDate,
+        },
+      });
+      event.reply(ChannelsEnum.RESPONSE_TASK_RESCHEDULE, {
+        message: IPCEventsResponseEnum.SUCCESSFUL,
+      });
+    } catch (err) {
+      event.reply(ChannelsEnum.ERROR_TASK_RESCHEDULE, {
+        message: IPCEventsResponseEnum.ERROR,
+      });
     }
-
-    if (task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) {
-      // need logic: a task can be delayed if the rescheduled day is prior to the next iteration
-      return;
-      // todo add error handling
-    }
-
-    await prisma.task.update({
-      where: {
-        id,
-      },
-      data: {
-        dueDate,
-      },
-    });
   },
 );
-
-/**
- * todos:
- * 1. add error handling
- * 2. Whole function has to be addressed
- */
 
 ipcMain.on(
   ChannelsEnum.REQUEST_MONTHLY_REPORT,
