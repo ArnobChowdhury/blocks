@@ -115,7 +115,7 @@ function TodoList({ refreshTasks }: ITodoListProps) {
             Overdue
           </Typography>
           <List>
-            {tasksOverdue.map((task, index) => (
+            {tasksOverdue.map((task) => (
               <React.Fragment key={task.id}>
                 <TodoListItem
                   isCompleted={task.completionStatus === 'COMPLETE'}
@@ -126,8 +126,9 @@ function TodoList({ refreshTasks }: ITodoListProps) {
                   onReschedule={(rescheduledTime) =>
                     handleTaskReSchedule(task.id, rescheduledTime)
                   }
+                  dueDateLabel={task.dueDate}
                 />
-                {index !== tasksToday.length - 1 && <Divider />}
+                <Divider />
               </React.Fragment>
             ))}
           </List>
@@ -137,7 +138,7 @@ function TodoList({ refreshTasks }: ITodoListProps) {
         {todayFormatted}
       </Typography>
       <List>
-        {tasksToday.map((task, index) => (
+        {tasksToday.map((task) => (
           <React.Fragment key={task.id}>
             <TodoListItem
               isCompleted={task.completionStatus === 'COMPLETE'}
@@ -149,7 +150,7 @@ function TodoList({ refreshTasks }: ITodoListProps) {
                 handleTaskReSchedule(task.id, rescheduledTime)
               }
             />
-            {index !== tasksToday.length - 1 && <Divider />}
+            <Divider />
           </React.Fragment>
         ))}
       </List>

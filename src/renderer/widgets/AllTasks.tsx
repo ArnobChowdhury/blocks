@@ -123,6 +123,7 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
                   onReschedule={() => {}}
                   showClock
                   key={task.id}
+                  dueDateLabel={task.dueDate}
                 />
                 <Divider />
               </Fragment>

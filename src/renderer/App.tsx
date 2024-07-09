@@ -32,6 +32,7 @@ import { Today, Inbox, Tracker } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
 import CalendarToday from './icons/CalendarToday';
 import InboxIcon from './icons/Inbox';
+import TrackerIcon from './icons/Tracker';
 
 // Create a custom theme
 const customTheme = createTheme({
@@ -113,7 +114,7 @@ function Navigation() {
         selected={location.pathname === '/tracker'}
       >
         <ListItemIcon>
-          <InboxIcon />
+          <TrackerIcon />
         </ListItemIcon>
         <ListItemText primary="Tracker" />
       </ListItemButton>

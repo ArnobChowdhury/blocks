@@ -14,11 +14,12 @@ import {
 } from '@mui/material';
 import { LocalizationProvider, StaticDatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import SmallCheckbox from './SmallCheckbox';
 import Clock from '../icons/Clock';
 import Close from '../icons/Close';
 import { TaskScheduleTypeEnum, DaysInAWeek } from '../types';
+import CalendarChip from './CalendarChip';
 
 interface ITodoListItemProps {
   isCompleted?: boolean;
@@ -27,6 +28,7 @@ interface ITodoListItemProps {
   showClock: boolean;
   schedule?: TaskScheduleTypeEnum;
   dayLabels?: DaysInAWeek[];
+  dueDateLabel?: string | Date | Dayjs | null;
   onFail: () => void;
   onReschedule: (rescheduledTime: Dayjs) => void;
 }
@@ -38,6 +40,7 @@ function TodoListItem({
   showClock = true,
   schedule,
   dayLabels,
+  dueDateLabel,
   onFail,
   onReschedule,
 }: ITodoListItemProps) {
@@ -96,23 +99,28 @@ function TodoListItem({
               />
             )}
 
-            {dayLabels && dayLabels.length > 0 && (
-              <Box ml={2}>
-                {dayLabels.map((day) => (
-                  <Chip
-                    key={day}
-                    label={day}
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      mr: 1,
-                      color: theme.palette.primary.main,
-                      textTransform: 'capitalize',
-                    }}
-                  />
-                ))}
-              </Box>
-            )}
+            <Box ml={2}>
+              {dueDateLabel && (
+                <CalendarChip size="small" date={dayjs(dueDateLabel)} />
+              )}
+              {dayLabels && dayLabels.length > 0 && (
+                <Box ml={2}>
+                  {dayLabels.map((day) => (
+                    <Chip
+                      key={day}
+                      label={day}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        mr: 1,
+                        color: theme.palette.primary.main,
+                        textTransform: 'capitalize',
+                      }}
+                    />
+                  ))}
+                </Box>
+              )}
+            </Box>
           </Box>
           <Fade in={showOptions} timeout={200}>
             <Box display="flex">
