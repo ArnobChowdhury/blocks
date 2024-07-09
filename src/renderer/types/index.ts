@@ -88,6 +88,7 @@ export enum ChannelsEnum {
 
   REQUEST_MONTHLY_REPORT = 'request-monthly-report',
   RESPONSE_MONTHLY_REPORT = 'response-monthly-report',
+  ERROR_MONTHLY_REPORT = 'error-monthly-report',
 
   REQUEST_TASKS_OVERDUE = 'request-tasks-overdue',
   RESPONSE_TASKS_OVERDUE = 'response-tasks-overdue',

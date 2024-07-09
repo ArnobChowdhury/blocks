@@ -1,12 +1,17 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Typography, styled, Box, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
+import { Task, RepetitiveTaskTemplate } from '@prisma/client';
 import {
   TaskScheduleTypeEnum,
   TaskCompletionStatusEnum,
   ChannelsEnum,
 } from '../types';
 import { scoreColors } from '../constants';
+
+interface ExtendedRepetitiveTaskTemplate extends RepetitiveTaskTemplate {
+  Task: Task[];
+}
 
 const StyledTh = styled('th')({
   height: '20px',
@@ -33,8 +38,9 @@ const StyledTd = styled('td')({
 });
 
 function HabitTracker() {
-  const [habits, setHabits] = useState<unknown[]>();
-  const [hoveredHabit, setHoveredHabit] = useState<unknown>(null);
+  const [habits, setHabits] = useState<ExtendedRepetitiveTaskTemplate[]>();
+  const [hoveredHabit, setHoveredHabit] =
+    useState<ExtendedRepetitiveTaskTemplate | null>(null);
 
   const theme = useTheme();
 
@@ -46,12 +52,14 @@ function HabitTracker() {
         monthIndex,
       },
     );
-    window.electron.ipcRenderer.on(
+
+    const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_MONTHLY_REPORT,
       (response) => {
-        setHabits(response as unknown[]);
+        setHabits(response as ExtendedRepetitiveTaskTemplate[]);
       },
     );
+    return unsubscribe;
   }, []);
 
   const daysInCurrentMonth = useMemo(() => {
@@ -62,11 +70,12 @@ function HabitTracker() {
   const dateToday = new Date().getDay();
 
   /**
-   * 1. Needs to be typed
-   * 2. Logic needs to be checked and simplified - same logic written for DAILY and WEEKLY tasks
-   * 3. Mapped values need to have key props (check console log)
-   * 4. Syntactic error in using table elements - (check console errors)
-   * 5. Can the graph building algorithm's time complexity be improved?
+   * Todos
+   * 1. Logic needs to be checked and simplified - same logic written for DAILY and WEEKLY tasks
+   * 2. Mapped values need to have key props (check console log)
+   * 3. Syntactic error in using table elements - (check console errors)
+   * 4. Can the graph building algorithm's time complexity be improved?
+   * 5. Handle error
    */
 
   return (
@@ -93,12 +102,15 @@ function HabitTracker() {
           </StyledTh>
         </tr>
         {habits?.map((habit) => {
-          const entriesByDate = {};
+          const entriesByDate: { [key: number]: Task } = {};
 
           // todo  can its time complexity be improved?
-          habit?.DailyTaskEntry.forEach((taskEntry) => {
-            const day = taskEntry.dueDate.getDay();
-            entriesByDate[day] = taskEntry;
+          habit?.Task.forEach((taskEntry) => {
+            const { dueDate } = taskEntry;
+            if (dueDate) {
+              const day = dueDate.getDay();
+              entriesByDate[day] = taskEntry;
+            }
           });
 
           return (

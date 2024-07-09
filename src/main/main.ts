@@ -552,38 +552,37 @@ ipcMain.on(
     const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();
     const endOfMonth = dayjs().month(monthIndex).endOf('month').toDate();
 
-    const tasks = await prisma.repetitiveTaskTemplate.findMany({
-      where: {
-        // isActive: true,
-        schedule: {
-          in: [
-            TaskScheduleTypeEnum.Daily,
-            TaskScheduleTypeEnum.SpecificDaysInAWeek,
-          ],
+    try {
+      const tasks = await prisma.repetitiveTaskTemplate.findMany({
+        where: {
+          schedule: {
+            in: [
+              TaskScheduleTypeEnum.Daily,
+              TaskScheduleTypeEnum.SpecificDaysInAWeek,
+            ],
+          },
         },
-      },
-      include: {
-        Task: {
-          orderBy: {
-            dueDate: 'asc',
-          },
-          select: {
-            id: true,
-            completionStatus: true,
-            dueDate: true,
-            score: true,
-          },
-          where: {
-            dueDate: {
-              gte: startOfMonth,
-              lte: endOfMonth,
+        include: {
+          Task: {
+            orderBy: {
+              dueDate: 'asc',
+            },
+            where: {
+              dueDate: {
+                gte: startOfMonth,
+                lte: endOfMonth,
+              },
             },
           },
         },
-      },
-    });
+      });
 
-    event.reply(ChannelsEnum.RESPONSE_MONTHLY_REPORT, tasks);
+      event.reply(ChannelsEnum.RESPONSE_MONTHLY_REPORT, tasks);
+    } catch (err) {
+      event.reply(ChannelsEnum.ERROR_MONTHLY_REPORT, {
+        message: IPCEventsResponseEnum.ERROR,
+      });
+    }
   },
 );
 
