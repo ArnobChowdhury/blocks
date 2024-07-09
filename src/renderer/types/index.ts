@@ -24,16 +24,6 @@ export interface ITaskIPC {
   shouldBeScored?: boolean; // only if the schedule is Daily or SpecificDaysInAWeek
 }
 
-export interface ITask {
-  id: number;
-  title: string;
-  dueDate: string; // only if the schedule is Once
-  completionStatus: 'INCOMPLETE' | 'COMPLETE' | 'POSTPONED';
-  score?: number;
-  shouldBeScored?: boolean;
-  schedule: TaskScheduleTypeEnum;
-}
-
 export interface IDailyTaskEntry {
   id: number;
   taskId: number;

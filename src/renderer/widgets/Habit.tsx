@@ -108,8 +108,8 @@ function HabitTracker() {
           habit?.Task.forEach((taskEntry) => {
             const { dueDate } = taskEntry;
             if (dueDate) {
-              const day = dueDate.getDay();
-              entriesByDate[day] = taskEntry;
+              const dateOfTask = dueDate.getDate();
+              entriesByDate[dateOfTask] = taskEntry;
             }
           });
 

@@ -25,12 +25,12 @@ interface ITodoListItemProps {
   isCompleted?: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   taskTitle: string;
-  showClock: boolean;
+  showClock?: boolean;
   schedule?: TaskScheduleTypeEnum;
   dayLabels?: DaysInAWeek[];
   dueDateLabel?: string | Date | Dayjs | null;
-  onFail: () => void;
-  onReschedule: (rescheduledTime: Dayjs) => void;
+  onFail?: () => void;
+  onReschedule?: (rescheduledTime: Dayjs) => void;
 }
 
 function TodoListItem({
@@ -177,7 +177,7 @@ function TodoListItem({
                         if (val) {
                           setSelectedDate(val);
                           setDateAnchorEl(null);
-                          onReschedule(val);
+                          if (onReschedule) onReschedule(val);
                         }
                       }}
                       orientation="landscape"

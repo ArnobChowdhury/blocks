@@ -344,14 +344,6 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
         not: TaskCompletionStatusEnum.FAILED,
       },
     },
-    select: {
-      id: true,
-      dueDate: true,
-      completionStatus: true,
-      score: true,
-      title: true,
-      shouldBeScored: true,
-    },
   });
 
   event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, tasksForToday);
@@ -537,13 +529,15 @@ ipcMain.on(
         // todo add error handling
       }
 
+      const data: { [key: string]: any } = { dueDate };
+      if (task.schedule === TaskScheduleTypeEnum.Unscheduled)
+        data.schedule = TaskScheduleTypeEnum.Once;
+
       await prisma.task.update({
         where: {
           id,
         },
-        data: {
-          dueDate,
-        },
+        data,
       });
       event.reply(ChannelsEnum.RESPONSE_TASK_RESCHEDULE, {
         message: IPCEventsResponseEnum.SUCCESSFUL,

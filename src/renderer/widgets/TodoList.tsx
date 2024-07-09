@@ -10,25 +10,31 @@ import {
   Button,
   Box,
 } from '@mui/material';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
+
+import { Task } from '@prisma/client';
 
 import {
-  ITask,
   TaskScheduleTypeEnum,
   ChannelsEnum,
   IEventResponse,
   IPCEventsResponseEnum,
 } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
+import {
+  onTaskCompletionChange,
+  onTaskFailure,
+  onTaskReSchedule,
+} from '../utils';
 
 interface ITodoListProps {
   refreshTasks: () => void;
 }
 
 function TodoList({ refreshTasks }: ITodoListProps) {
-  const [tasksToday, setTasksToday] = useState<ITask[]>([]);
-  const [tasksOverdue, setTasksOverdue] = useState<ITask[]>([]);
-  const [taskForScoring, setTaskIndexForScoring] = useState<ITask>();
+  const [tasksToday, setTasksToday] = useState<Task[]>([]);
+  const [tasksOverdue, setTasksOverdue] = useState<Task[]>([]);
+  const [taskForScoring, setTaskIndexForScoring] = useState<Task>();
   const [score, setScore] = useState<number | null>(null);
 
   useEffect(() => {
@@ -39,14 +45,14 @@ function TodoList({ refreshTasks }: ITodoListProps) {
       ChannelsEnum.RESPONSE_TASKS_TODAY,
       (response) => {
         // todo need error handling
-        setTasksToday(response as ITask[]);
+        setTasksToday(response as Task[]);
       },
     );
     const unsubscribeTasksOverdue = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_OVERDUE,
       (response) => {
         // todo need error handling
-        setTasksOverdue(response as ITask[]);
+        setTasksOverdue(response as Task[]);
       },
     );
 
@@ -104,24 +110,9 @@ function TodoList({ refreshTasks }: ITodoListProps) {
     return unsubscribe;
   }, [refreshTasks]);
 
-  const onTaskCompletionChange = (
-    id: number,
-    checked: boolean,
-    taskScore?: number | null,
-  ) => {
-    window.electron.ipcRenderer.sendMessage(
-      ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
-      {
-        id,
-        checked,
-        score: taskScore,
-      },
-    );
-  };
-
   const handleTaskToggle = (
     e: React.ChangeEvent<HTMLInputElement>,
-    task: ITask,
+    task: Task,
     // index: number,
   ) => {
     if (task.shouldBeScored && e.target.checked) setTaskIndexForScoring(task);
@@ -136,24 +127,6 @@ function TodoList({ refreshTasks }: ITodoListProps) {
   const handleScoreDialogClose = () => {
     setTaskIndexForScoring(undefined);
     setScore(null);
-  };
-
-  const handleTaskFailure = (taskId: number) => {
-    window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASK_FAILURE, {
-      id: taskId,
-    });
-  };
-
-  const handleTaskReSchedule = (taskId: number, rescheduledTime: Dayjs) => {
-    const dueDate = rescheduledTime.toISOString();
-
-    window.electron.ipcRenderer.sendMessage(
-      ChannelsEnum.REQUEST_TASK_RESCHEDULE,
-      {
-        id: taskId,
-        dueDate,
-      },
-    );
   };
 
   const todayFormatted = dayjs().format('dddd, MMMM D, YYYY');
@@ -173,9 +146,9 @@ function TodoList({ refreshTasks }: ITodoListProps) {
                   onChange={(e) => handleTaskToggle(e, task)}
                   taskTitle={task.title}
                   showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
-                  onFail={() => handleTaskFailure(task.id)}
+                  onFail={() => onTaskFailure(task.id)}
                   onReschedule={(rescheduledTime) =>
-                    handleTaskReSchedule(task.id, rescheduledTime)
+                    onTaskReSchedule(task.id, rescheduledTime)
                   }
                   dueDateLabel={task.dueDate}
                 />
@@ -196,9 +169,9 @@ function TodoList({ refreshTasks }: ITodoListProps) {
               onChange={(e) => handleTaskToggle(e, task)}
               taskTitle={task.title}
               showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
-              onFail={() => handleTaskFailure(task.id)}
+              onFail={() => onTaskFailure(task.id)}
               onReschedule={(rescheduledTime) =>
-                handleTaskReSchedule(task.id, rescheduledTime)
+                onTaskReSchedule(task.id, rescheduledTime)
               }
             />
             <Divider />

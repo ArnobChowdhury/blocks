@@ -6,8 +6,15 @@ import {
   TaskScheduleTypeEnum,
   DaysInAWeek,
   TaskCompletionStatusEnum,
+  IPCEventsResponseEnum,
+  IEventResponse,
 } from '../types';
 import { TodoListItem } from '../components';
+import {
+  onTaskCompletionChange,
+  onTaskFailure,
+  onTaskReSchedule,
+} from '../utils';
 
 interface IAllTasksProps {
   refreshAllTasks: () => void;
@@ -69,6 +76,59 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
     return unsubscribeSpecificDaysInAWeek;
   }, []);
 
+  /**
+   * todos:
+   * 1. Find a way to share these useEffect hooks among pages - maybe custom hooks or context hooks
+   *  */
+
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TASK_FAILURE,
+      (response) => {
+        if (
+          (response as IEventResponse).message ===
+          IPCEventsResponseEnum.SUCCESSFUL
+        ) {
+          refreshAllTasks();
+        }
+      },
+    );
+
+    return unsubscribe;
+  }, [refreshAllTasks]);
+
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TASK_RESCHEDULE,
+      (response) => {
+        if (
+          (response as IEventResponse).message ===
+          IPCEventsResponseEnum.SUCCESSFUL
+        ) {
+          refreshAllTasks();
+        }
+      },
+    );
+
+    return unsubscribe;
+  }, [refreshAllTasks]);
+
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TOGGLE_TASK_COMPLETION_STATUS,
+      (response) => {
+        if (
+          (response as IEventResponse).message ===
+          IPCEventsResponseEnum.SUCCESSFUL
+        ) {
+          refreshAllTasks();
+        }
+      },
+    );
+
+    return unsubscribe;
+  }, [refreshAllTasks]);
+
   return (
     <div>
       <Typography mt={2} mb={1} variant="h6">
@@ -88,9 +148,13 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
                   isCompleted={
                     task.completionStatus === TaskCompletionStatusEnum.COMPLETE
                   }
-                  onChange={() => {}}
-                  onFail={() => {}}
-                  onReschedule={() => {}}
+                  onChange={(e) =>
+                    onTaskCompletionChange(task.id, e.target.checked, undefined)
+                  }
+                  onFail={() => onTaskFailure(task.id)}
+                  onReschedule={(rescheduledTime) =>
+                    onTaskReSchedule(task.id, rescheduledTime)
+                  }
                   showClock
                   key={task.id}
                 />
@@ -118,9 +182,13 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
                   isCompleted={
                     task.completionStatus === TaskCompletionStatusEnum.COMPLETE
                   }
-                  onChange={() => {}}
-                  onFail={() => {}}
-                  onReschedule={() => {}}
+                  onChange={(e) =>
+                    onTaskCompletionChange(task.id, e.target.checked, undefined)
+                  }
+                  onFail={() => onTaskFailure(task.id)}
+                  onReschedule={(rescheduledTime) =>
+                    onTaskReSchedule(task.id, rescheduledTime)
+                  }
                   showClock
                   key={task.id}
                   dueDateLabel={task.dueDate}
@@ -147,9 +215,6 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
                   schedule={task.schedule as TaskScheduleTypeEnum}
                   taskTitle={task.title}
                   onChange={() => {}}
-                  onFail={() => {}}
-                  onReschedule={() => {}}
-                  showClock
                   key={task.id}
                 />
                 <Divider />
@@ -176,8 +241,6 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
                   schedule={task.schedule as TaskScheduleTypeEnum}
                   taskTitle={task.title}
                   onChange={() => {}}
-                  onFail={() => {}}
-                  onReschedule={() => {}}
                   showClock
                   key={task.id}
                   dayLabels={days}
