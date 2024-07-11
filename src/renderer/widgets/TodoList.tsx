@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import dayjs from 'dayjs';
 
-import { Task } from '@prisma/client';
+import { Task } from '../../generated/client';
 
 import {
   TaskScheduleTypeEnum,

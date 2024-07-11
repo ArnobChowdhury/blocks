@@ -27,5 +27,13 @@
     "package-lock.json": true,
     "*.{css,sass,scss}.d.ts": true
   },
-  "cSpell.words": ["datepicker", "fontsource", "todos"]
+  "cSpell.words": [
+    "camelcase",
+    "datasources",
+    "datepicker",
+    "fontsource",
+    "libquery",
+    "roboto",
+    "todos"
+  ]
 }

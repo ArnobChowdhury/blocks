@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Typography, styled, Box, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
-import { Task, RepetitiveTaskTemplate } from '@prisma/client';
+import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 import {
   TaskScheduleTypeEnum,
   TaskCompletionStatusEnum,
@@ -67,7 +67,7 @@ function HabitTracker() {
   }, []);
 
   const dates = [...Array(daysInCurrentMonth).keys()].map((day) => day + 1);
-  const dateToday = new Date().getDay();
+  const dateToday = new Date().getDate();
 
   /**
    * Todos

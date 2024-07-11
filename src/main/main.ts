@@ -8,13 +8,15 @@
  * When running `npm run build` or `npm run build:main`, this file is compiled to
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
+import fs from 'fs';
 import path from 'path';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import { PrismaClient } from '@prisma/client';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dotenv/config';
 import MenuBuilder from './menu';
+import { dbPath, dbUrl, latestMigration, Migration } from './constants';
 import { resolveHtmlPath } from './util';
 import {
   ITaskIPC,
@@ -26,7 +28,8 @@ import {
 } from '../renderer/types';
 import { getTodayStart, getTodayEnd } from './helpers';
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
+import { prisma, runPrismaCommand } from './prisma';
 
 class AppUpdater {
   constructor() {
@@ -70,6 +73,57 @@ const installExtensions = async () => {
 };
 
 const createWindow = async () => {
+  let needsMigration;
+  const dbExists = fs.existsSync(dbPath);
+  if (!dbExists) {
+    needsMigration = true;
+    // prisma for whatever reason has trouble if the database file does not exist yet.
+    // So just touch it here
+    fs.closeSync(fs.openSync(dbPath, 'w'));
+  } else {
+    try {
+      const latest: Migration[] =
+        await prisma.$queryRaw`select * from _prisma_migrations order by finished_at`;
+      needsMigration =
+        latest[latest.length - 1]?.migration_name !== latestMigration;
+    } catch (e) {
+      log.error(e);
+      needsMigration = true;
+    }
+  }
+
+  if (needsMigration) {
+    try {
+      const schemaPath = path.join(
+        app.getAppPath().replace('app.asar', 'app.asar.unpacked'),
+        'prisma',
+        'schema.prisma',
+      );
+      log.info(
+        `Needs a migration. Running prisma migrate with schema path ${schemaPath}`,
+      );
+
+      // first create or migrate the database! If you were deploying prisma to a cloud service, this migrate deploy
+      // command you would run as part of your CI/CD deployment. Since this is an electron app, it just needs
+      // to run every time the production app is started. That way if the user updates the app and the schema has
+      // changed, it will transparently migrate their DB.
+      await runPrismaCommand({
+        command: ['migrate', 'deploy', '--schema', schemaPath],
+        dbUrl,
+      });
+      log.info('Migration done.');
+
+      // seed
+      // log.info("Seeding...");
+      // await seed(prisma);
+    } catch (e) {
+      log.error(e);
+      process.exit(1);
+    }
+  } else {
+    log.info('Does not need migration');
+  }
+
   if (isDebug) {
     await installExtensions();
   }

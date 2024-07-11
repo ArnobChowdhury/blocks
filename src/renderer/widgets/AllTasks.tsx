@@ -1,6 +1,6 @@
 import { useEffect, useState, Fragment } from 'react';
 import { List, Typography, Divider } from '@mui/material';
-import { Task, RepetitiveTaskTemplate } from '@prisma/client';
+import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 import {
   ChannelsEnum,
   TaskScheduleTypeEnum,

@@ -22,7 +22,7 @@
   },
   "main": "./src/main/main.ts",
   "scripts": {
-    "build": "concurrently \"npm run build:main\" \"npm run build:renderer\"",
+    "build": "node copy-files.mjs && node install-engines-on-mac.js && concurrently \"npm run build:main\" \"npm run build:renderer\"",
     "build:dll": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.renderer.dev.dll.ts",
     "build:main": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.main.prod.ts",
     "build:renderer": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.renderer.prod.ts",
@@ -92,17 +92,18 @@
     "@mui/lab": "^5.0.0-alpha.170",
     "@mui/material": "^5.15.20",
     "@mui/x-date-pickers": "^7.8.0",
-    "@prisma/client": "^5.16.1",
+    "@prisma/client": "^5.16.2",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.11",
     "dotenv": "^16.4.5",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
     "electron-updater": "^6.1.4",
+    "fs-extra": "^11.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.24.0",
-    "sqlite3": "^5.1.7"
+    "replace-in-file": "^8.1.0"
   },
   "devDependencies": {
     "@electron/notarize": "^2.1.0",
@@ -172,14 +173,27 @@
     "webpack-merge": "^5.9.0"
   },
   "build": {
-    "productName": "ElectronReact",
-    "appId": "org.erb.ElectronReact",
+    "productName": "Blocks",
+    "appId": "com.appfoundry.blockstracker",
     "asar": true,
-    "asarUnpack": "**\\*.{node,dll}",
+    "asarUnpack": [
+      "**\\*.{node,dll}",
+      "prisma/**"
+    ],
     "files": [
       "dist",
       "node_modules",
-      "package.json"
+      "package.json",
+      "prisma/**/*",
+      "!prisma/dev.db",
+      "!**/node_modules/@prisma/engines/introspection-engine*",
+      "!**/node_modules/@prisma/engines/schema-engine*",
+      "!**/node_modules/@prisma/engines/prisma-fmt*",
+      "!**/node_modules/@prisma/engines/query_engine-*",
+      "!**/node_modules/@prisma/engines/libquery_engine*",
+      "!**/node_modules/prisma/query_engine*",
+      "!**/node_modules/prisma/libquery_engine*",
+      "!**/node_modules/prisma/**/*.mjs"
     ],
     "afterSign": ".erb/scripts/notarize.js",
     "mac": {
@@ -227,7 +241,10 @@
       "output": "release/build"
     },
     "extraResources": [
-      "./assets/**"
+      "./assets/**",
+      "node_modules/@prisma/engines/schema-engine*",
+      "node_modules/@prisma/engines/query*",
+      "node_modules/@prisma/engines/libquery*"
     ],
     "publish": {
       "provider": "github",
