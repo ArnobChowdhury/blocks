@@ -162,6 +162,7 @@ const createWindow = async () => {
   });
 
   mainWindow.on('closed', () => {
+    log.info('Window closed');
     mainWindow = null;
   });
 
@@ -657,9 +658,16 @@ app
   .then(() => {
     createWindow();
     app.on('activate', () => {
+      log.info('app activated');
       // On macOS it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.
       if (mainWindow === null) createWindow();
     });
   })
-  .catch(console.log);
+  .catch((err) => {
+    if (isDebug) {
+      console.log(err);
+    } else {
+      log.error(err);
+    }
+  });
