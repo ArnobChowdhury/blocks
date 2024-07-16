@@ -1,6 +1,6 @@
 {
   "name": "blockstracker",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "description": "Todoing and habit tracking in one app",
   "keywords": [
     "electron",
@@ -243,8 +243,8 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "electron-react-boilerplate",
-      "repo": "electron-react-boilerplate"
+      "owner": "ArnobChowdhury",
+      "repo": "blocks"
     }
   },
   "collective": {
