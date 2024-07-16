@@ -226,7 +226,12 @@ const generateDueRepetitiveTasks = async () => {
 
   await Promise.all(
     dueRepetitiveTasks.map(async (repetitiveTask) => {
-      const { id: templateId, title, schedule } = repetitiveTask;
+      const {
+        id: templateId,
+        title,
+        schedule,
+        shouldBeScored,
+      } = repetitiveTask;
 
       let lastDateOfTaskGeneration: Dayjs | Date | null;
       // eslint-disable-next-line prettier/prettier
@@ -271,6 +276,7 @@ const generateDueRepetitiveTasks = async () => {
                 dueDate,
                 title,
                 schedule,
+                shouldBeScored,
               },
               update: {},
             });

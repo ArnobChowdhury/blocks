@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import dayjs from 'dayjs';
 
+// eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
 
 import {
