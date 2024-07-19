@@ -20,6 +20,7 @@ import Clock from '../icons/Clock';
 import Close from '../icons/Close';
 import { TaskScheduleTypeEnum, DaysInAWeek } from '../types';
 import CalendarChip from './CalendarChip';
+import CustomChip from './CustomChip';
 
 interface ITodoListItemProps {
   isCompleted?: boolean;
@@ -101,7 +102,12 @@ function TodoListItem({
 
             <Box ml={2}>
               {dueDateLabel && (
-                <CalendarChip size="small" date={dayjs(dueDateLabel)} />
+                <CustomChip
+                  size="small"
+                  label={`${dayjs(dueDateLabel).date()} ${dayjs(
+                    dueDateLabel,
+                  ).format('MMMM')}`}
+                />
               )}
               {dayLabels && dayLabels.length > 0 && (
                 <Box ml={2}>
