@@ -95,7 +95,7 @@
     "@mui/material": "^5.15.20",
     "@mui/x-date-pickers": "^7.8.0",
     "@prisma/client": "^5.16.2",
-    "@prisma/engines": "^5.16.2",
+    "@prisma/engines": "^5.17.0",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.11",
     "dotenv": "^16.4.5",
