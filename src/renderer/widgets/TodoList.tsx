@@ -26,6 +26,7 @@ import {
   onTaskCompletionChange,
   onTaskFailure,
   onTaskReSchedule,
+  formatDate,
 } from '../utils';
 
 interface ITodoListProps {
@@ -35,6 +36,9 @@ interface ITodoListProps {
 function TodoList({ refreshTasks }: ITodoListProps) {
   const [tasksToday, setTasksToday] = useState<Task[]>([]);
   const [tasksOverdue, setTasksOverdue] = useState<Task[]>([]);
+  const [sortedTasksOverdue, setSortedTasksOverdue] = useState<{
+    [key: string]: Task[];
+  }>({});
   const [taskForScoring, setTaskIndexForScoring] = useState<Task>();
   const [score, setScore] = useState<number | null>(null);
 
@@ -111,6 +115,22 @@ function TodoList({ refreshTasks }: ITodoListProps) {
     return unsubscribe;
   }, [refreshTasks]);
 
+  useEffect(() => {
+    const sortedTasksOverdue: { [key: string]: Task[] } = {};
+
+    tasksOverdue.forEach((task) => {
+      const taskDueDate = formatDate(dayjs(task.dueDate!));
+
+      if (sortedTasksOverdue[taskDueDate]) {
+        sortedTasksOverdue[taskDueDate].push(task);
+      } else {
+        sortedTasksOverdue[taskDueDate] = [task];
+      }
+    });
+
+    setSortedTasksOverdue(sortedTasksOverdue);
+  }, [tasksOverdue]);
+
   const handleTaskToggle = (
     e: React.ChangeEvent<HTMLInputElement>,
     task: Task,
@@ -130,7 +150,7 @@ function TodoList({ refreshTasks }: ITodoListProps) {
     setScore(null);
   };
 
-  const todayFormatted = dayjs().format('dddd, MMMM D, YYYY');
+  const todayFormatted = formatDate(dayjs());
 
   return (
     <>
@@ -139,24 +159,30 @@ function TodoList({ refreshTasks }: ITodoListProps) {
           <Typography variant="h6" mt={2}>
             Overdue
           </Typography>
-          <List>
-            {tasksOverdue.map((task) => (
-              <React.Fragment key={task.id}>
-                <TodoListItem
-                  isCompleted={task.completionStatus === 'COMPLETE'}
-                  onChange={(e) => handleTaskToggle(e, task)}
-                  taskTitle={task.title}
-                  showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
-                  onFail={() => onTaskFailure(task.id)}
-                  onReschedule={(rescheduledTime) =>
-                    onTaskReSchedule(task.id, rescheduledTime)
-                  }
-                  dueDateLabel={task.dueDate}
-                />
-                <Divider />
-              </React.Fragment>
-            ))}
-          </List>
+          {Object.keys(sortedTasksOverdue).map((key) => (
+            <Box ml={2}>
+              <Typography variant="body1" mt={2} sx={{ fontWeight: 500 }}>
+                {key}
+              </Typography>
+              <List>
+                {sortedTasksOverdue[key].map((task) => (
+                  <React.Fragment key={task.id}>
+                    <TodoListItem
+                      isCompleted={task.completionStatus === 'COMPLETE'}
+                      onChange={(e) => handleTaskToggle(e, task)}
+                      taskTitle={task.title}
+                      showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
+                      onFail={() => onTaskFailure(task.id)}
+                      onReschedule={(rescheduledTime) =>
+                        onTaskReSchedule(task.id, rescheduledTime)
+                      }
+                    />
+                    <Divider />
+                  </React.Fragment>
+                ))}
+              </List>
+            </Box>
+          ))}
         </>
       )}
       <Typography variant="h6" mt={2}>

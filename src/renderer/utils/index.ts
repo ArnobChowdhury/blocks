@@ -38,3 +38,7 @@ export const onTaskReSchedule = (taskId: number, rescheduledTime: Dayjs) => {
     },
   );
 };
+
+export const formatDate = (day: Dayjs) => {
+  return day.format('dddd, MMMM D, YYYY');
+};
