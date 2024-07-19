@@ -231,22 +231,24 @@ const generateDueRepetitiveTasks = async () => {
         title,
         schedule,
         shouldBeScored,
+        createdAt,
       } = repetitiveTask;
 
       let lastDateOfTaskGeneration: Dayjs | Date | null;
       // eslint-disable-next-line prettier/prettier
       lastDateOfTaskGeneration = repetitiveTask.lastDateOfTaskGeneration;
 
-      let daysSinceLastTaskGeneration: number;
-
       if (!lastDateOfTaskGeneration) {
-        daysSinceLastTaskGeneration = 1;
-        lastDateOfTaskGeneration = todayStart.subtract(1, 'day');
-      } else
-        daysSinceLastTaskGeneration = dayjs().diff(
-          dayjs(lastDateOfTaskGeneration),
-          'day',
-        );
+        const taskCreationDate = dayjs(createdAt).startOf('day').toISOString();
+        if (taskCreationDate === todayStart.toISOString())
+          lastDateOfTaskGeneration = todayStart.subtract(1, 'day');
+        else lastDateOfTaskGeneration = createdAt;
+      }
+
+      let daysSinceLastTaskGeneration = dayjs().diff(
+        dayjs(lastDateOfTaskGeneration),
+        'day',
+      );
 
       const dayArray = Array.from(
         { length: daysSinceLastTaskGeneration },
