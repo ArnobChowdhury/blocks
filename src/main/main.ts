@@ -493,6 +493,9 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS, async (event) => {
       where: {
         isActive: true,
         schedule: TaskScheduleTypeEnum.Once,
+        completionStatus: {
+          not: TaskCompletionStatusEnum.FAILED,
+        },
       },
     });
 
@@ -511,6 +514,9 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS, async (event) => {
       where: {
         isActive: true,
         schedule: TaskScheduleTypeEnum.Unscheduled,
+        completionStatus: {
+          not: TaskCompletionStatusEnum.FAILED,
+        },
       },
     });
 
