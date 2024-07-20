@@ -2,7 +2,7 @@
  * @NOTE: Prepend a `~` to css file paths that are in your node_modules
  *        See https://github.com/webpack-contrib/sass-loader#imports
  */
-body, button {
+body, button, text {
   font-family: "M PLUS Rounded 1c", sans-serif;
 }
 
