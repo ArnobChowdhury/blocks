@@ -10,6 +10,7 @@ import {
   Button,
   Box,
 } from '@mui/material';
+import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import dayjs from 'dayjs';
 
 // eslint-disable-next-line import/no-relative-packages
@@ -28,6 +29,7 @@ import {
   onTaskReSchedule,
   formatDate,
 } from '../utils';
+import { useBulkFailure } from '../hooks';
 
 interface ITodoListProps {
   refreshTasks: () => void;
@@ -42,8 +44,12 @@ function TodoList({ refreshTasks }: ITodoListProps) {
   const [taskForScoring, setTaskIndexForScoring] = useState<Task>();
   const [score, setScore] = useState<number | null>(null);
 
+  /**
+   * 1. Error is not handled
+   */
+  const { onBulkFailure, error, requestOnGoing } = useBulkFailure(refreshTasks);
+
   useEffect(() => {
-    // todo channel names should be enum
     refreshTasks();
 
     const unsubscribeTasksToday = window.electron.ipcRenderer.on(
@@ -152,6 +158,11 @@ function TodoList({ refreshTasks }: ITodoListProps) {
 
   const todayFormatted = formatDate(dayjs());
 
+  const handleBulkFailure = async (date: string) => {
+    const taskIds = sortedTasksOverdue[date].map((task) => task.id);
+    await onBulkFailure(taskIds);
+  };
+
   return (
     <>
       {tasksOverdue.length > 0 && (
@@ -160,10 +171,25 @@ function TodoList({ refreshTasks }: ITodoListProps) {
             Overdue
           </Typography>
           {Object.keys(sortedTasksOverdue).map((key) => (
-            <Box ml={2}>
-              <Typography variant="body1" mt={2} sx={{ fontWeight: 500 }}>
-                {key}
-              </Typography>
+            <Box ml={2} key={key}>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                width="100%"
+                alignItems="center"
+              >
+                <Typography variant="body1" mt={2} sx={{ fontWeight: 500 }}>
+                  {key}
+                </Typography>
+                <Button
+                  size="small"
+                  startIcon={<ThumbDownIcon />}
+                  onClick={() => handleBulkFailure(key)}
+                  disabled={requestOnGoing}
+                >
+                  Fail all
+                </Button>
+              </Box>
               <List>
                 {sortedTasksOverdue[key].map((task) => (
                   <React.Fragment key={task.id}>

@@ -20,9 +20,10 @@ const electronHandler = {
     once(channel: ChannelsEnum, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
-    // removeAllListeners(channel: Channels) {
-    //   ipcRenderer.removeAllListeners(channel);
-    // },
+
+    async invoke(channel: ChannelsEnum, ...args: unknown[]) {
+      return await ipcRenderer.invoke(channel, ...args);
+    },
   },
 };
 

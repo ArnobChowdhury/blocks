@@ -653,6 +653,27 @@ ipcMain.on(
   },
 );
 
+ipcMain.handle(
+  ChannelsEnum.REQUEST_BULK_TASK_FAILURE,
+  async (_event, tasks: number[]) => {
+    try {
+      return await prisma.task.updateMany({
+        where: {
+          id: {
+            in: tasks,
+          },
+        },
+        data: {
+          completionStatus: TaskCompletionStatusEnum.FAILED,
+        },
+      });
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed

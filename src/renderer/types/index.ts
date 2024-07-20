@@ -108,6 +108,8 @@ export enum ChannelsEnum {
   REQUEST_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS = 'request_all_specific_days_in_a_week_active_tasks',
   RESPONSE_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS = 'response_all_specific_days_in_a_week_active_tasks',
   ERROR_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS = 'error_all_specific_days_in_a_week_active_tasks',
+
+  REQUEST_BULK_TASK_FAILURE = 'request_bulk_task_failure',
 }
 
 export enum IPCEventsResponseEnum {
