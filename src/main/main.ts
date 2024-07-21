@@ -229,6 +229,7 @@ const generateDueRepetitiveTasks = async () => {
       const {
         id: templateId,
         title,
+        description,
         schedule,
         shouldBeScored,
         createdAt,
@@ -277,6 +278,7 @@ const generateDueRepetitiveTasks = async () => {
                 repetitiveTaskTemplateId: templateId,
                 dueDate,
                 title,
+                description,
                 schedule,
                 shouldBeScored,
               },
@@ -299,7 +301,7 @@ const generateDueRepetitiveTasks = async () => {
 };
 
 ipcMain.on(ChannelsEnum.REQUEST_CREATE_TASK, async (event, task: ITaskIPC) => {
-  const { title, schedule, dueDate, days, shouldBeScored } = task;
+  const { title, description, schedule, dueDate, days, shouldBeScored } = task;
   try {
     if (
       schedule === TaskScheduleTypeEnum.Once ||
@@ -309,6 +311,7 @@ ipcMain.on(ChannelsEnum.REQUEST_CREATE_TASK, async (event, task: ITaskIPC) => {
       await prisma.task.create({
         data: {
           title,
+          description,
           schedule,
           shouldBeScored,
           createdAt: new Date(),
@@ -367,6 +370,7 @@ ipcMain.on(ChannelsEnum.REQUEST_CREATE_TASK, async (event, task: ITaskIPC) => {
       await prisma.repetitiveTaskTemplate.create({
         data: {
           title,
+          description,
           schedule,
           shouldBeScored,
           monday,

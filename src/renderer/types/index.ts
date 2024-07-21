@@ -18,6 +18,7 @@ export enum TaskScheduleTypeEnum {
 export interface ITaskIPC {
   id?: string;
   title: string;
+  description: string;
   schedule: TaskScheduleTypeEnum;
   days?: DaysInAWeek[]; // only if the schedule is SpecificDaysInAWeek
   dueDate?: string; // only if the schedule is Once

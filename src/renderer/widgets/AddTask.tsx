@@ -11,7 +11,9 @@ import {
   Divider,
   FormControlLabel,
   Checkbox,
+  useTheme,
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -26,6 +28,12 @@ import {
   IEventResponse,
 } from '../types';
 
+const SectionHeader = styled(Typography)(({ theme }) => ({
+  ...theme.typography.body2,
+  marginBottom: theme.spacing(1),
+  fontWeight: 500,
+}));
+
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
   refreshTasks: () => void;
@@ -33,12 +41,15 @@ interface IAddTaskProps {
 
 function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
   const [taskTitle, setTaskTitle] = useState('');
+  const [taskDescription, setTaskDescription] = useState('');
   const [selectedScheduleType, setSelectedTypeFrequency] =
     useState<TaskScheduleTypeEnum>(TaskScheduleTypeEnum.Unscheduled);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>();
   const [selectedDays, setSelectedDays] = useState<DaysInAWeek[]>([]);
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(false);
+
+  const theme = useTheme();
 
   const isAddButtonDisabled = useMemo(() => {
     if (!taskTitle) {
@@ -104,6 +115,7 @@ function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
 
     const task = {
       title: taskTitle,
+      description: taskDescription,
       schedule: selectedScheduleType,
       days: selectedDays,
       dueDate,
@@ -121,17 +133,46 @@ function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Paper sx={{ padding: 2.5 }} variant="outlined">
         <TextField
-          label="Task name"
+          placeholder="Task name"
           fullWidth
           value={taskTitle}
           onChange={(e) => setTaskTitle(e.target.value)}
           variant="standard"
+          inputProps={{
+            maxLength: 1000,
+            style: {
+              fontWeight: 500,
+            },
+          }}
+        />
+        <TextField
+          placeholder="Description (optional)"
+          fullWidth
+          sx={{ mt: 2 }}
+          value={taskDescription}
+          multiline
+          onChange={(e) => setTaskDescription(e.target.value)}
+          variant="standard"
+          InputProps={{
+            endAdornment: (
+              <Box ml={1} alignSelf="flex-end">
+                <Typography
+                  variant="caption"
+                  sx={{ opacity: 0.8 }}
+                >{`${taskDescription.length}/1000`}</Typography>
+              </Box>
+            ),
+          }}
+          inputProps={{
+            maxLength: 1000,
+            style: {
+              fontSize: theme.typography.body2.fontSize,
+            },
+          }}
         />
 
         <Box sx={{ mt: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Schedule
-          </Typography>
+          <SectionHeader>Schedule</SectionHeader>
           <Grid container spacing={1}>
             {Object.values(TaskScheduleTypeEnum).map((option) => (
               <Grid item key={option}>
@@ -184,9 +225,7 @@ function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
 
         {selectedScheduleType === TaskScheduleTypeEnum.SpecificDaysInAWeek && (
           <Box sx={{ mt: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Select Days
-            </Typography>
+            <SectionHeader>Select Days</SectionHeader>
             <Grid container spacing={1}>
               {Object.values(DaysInAWeek).map((day) => (
                 <Grid item key={day}>
@@ -220,7 +259,7 @@ function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
                 onChange={(e) => setShouldBeScored(e.target.checked)}
               />
             }
-            label="Score your habit?"
+            label={<Typography variant="body2">Score your habit?</Typography>}
             sx={{ alignSelf: 'flex-end', my: 2 }}
           />
         )}
