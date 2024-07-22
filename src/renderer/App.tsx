@@ -25,6 +25,9 @@ import {
   Box,
   ThemeProvider,
   createTheme,
+  Typography,
+  useTheme,
+  Dialog,
 } from '@mui/material';
 import { styled } from '@mui/system';
 import { PageWrapper } from './layouts';
@@ -33,13 +36,16 @@ import ArrowLeft from './icons/ArrowLeft';
 import CalendarToday from './icons/CalendarToday';
 import InboxIcon from './icons/Inbox';
 import TrackerIcon from './icons/Tracker';
+import Plus from './icons/Plus';
+import { AddTask } from './widgets';
 
-// Create a custom theme
+const MyStyledListItemText = styled(ListItemText)({
+  color: 'red', // Change this to the color you want
+});
+
 const customTheme = createTheme({
   typography: {
-    // fontFamily: 'M PLUS Rounded 1c, sans-serif',
-    fontFamily: 'M PLUS Rounded 1c',
-    //  "M PLUS Rounded 1c";
+    fontFamily: 'M PLUS Rounded 1c, sans-serif',
     allVariants: {
       color: '#333333',
     },
@@ -85,53 +91,74 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 function Navigation() {
   const location = useLocation();
+  const theme = useTheme();
+  const [showAddTask, setShowAddTask] = useState(false);
 
   return (
-    <List>
-      <ListItemButton
-        component={Link}
-        to="/"
-        selected={location.pathname === '/'}
-      >
-        <ListItemIcon>
-          <CalendarToday date={new Date().getDate()} />
-        </ListItemIcon>
-        <ListItemText primary="Today" />
-      </ListItemButton>
-      <ListItemButton
-        component={Link}
-        to="/inbox"
-        selected={location.pathname === '/inbox'}
-      >
-        <ListItemIcon>
-          <InboxIcon />
-        </ListItemIcon>
-        <ListItemText primary="Inbox" />
-      </ListItemButton>
-      <ListItemButton
-        component={Link}
-        to="/tracker"
-        selected={location.pathname === '/tracker'}
-      >
-        <ListItemIcon>
-          <TrackerIcon />
-        </ListItemIcon>
-        <ListItemText primary="Tracker" />
-      </ListItemButton>
-    </List>
+    <>
+      <List>
+        <ListItemButton onClick={() => setShowAddTask(true)} sx={{ mb: 1 }}>
+          <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
+            <Plus />
+          </ListItemIcon>
+          <MyStyledListItemText
+            primary={
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 500, color: theme.palette.primary.main }}
+              >
+                Add task
+              </Typography>
+            }
+          />
+        </ListItemButton>
+        <ListItemButton
+          component={Link}
+          to="/"
+          selected={location.pathname === '/'}
+        >
+          <ListItemIcon>
+            <CalendarToday date={new Date().getDate()} />
+          </ListItemIcon>
+          <ListItemText primary="Today" />
+        </ListItemButton>
+        <ListItemButton
+          component={Link}
+          to="/inbox"
+          selected={location.pathname === '/inbox'}
+        >
+          <ListItemIcon>
+            <InboxIcon />
+          </ListItemIcon>
+          <ListItemText primary="Inbox" />
+        </ListItemButton>
+        <ListItemButton
+          component={Link}
+          to="/tracker"
+          selected={location.pathname === '/tracker'}
+        >
+          <ListItemIcon>
+            <TrackerIcon />
+          </ListItemIcon>
+          <ListItemText primary="Tracker" />
+        </ListItemButton>
+      </List>
+      <Dialog open={showAddTask}>
+        <AddTask widgetCloseFunc={setShowAddTask} />
+      </Dialog>
+    </>
   );
 }
 
 function App() {
-  // const theme = useTheme();
-  const [open, setOpen] = useState(true);
+  const [openDrawer, setOpenDrawer] = useState(true);
 
   const handleDrawerOpen = () => {
-    setOpen(true);
+    setOpenDrawer(true);
   };
 
   const handleDrawerClose = () => {
-    setOpen(false);
+    setOpenDrawer(false);
   };
 
   return (
@@ -150,20 +177,19 @@ function App() {
             }}
             variant="persistent"
             anchor="left"
-            open={open}
+            open={openDrawer}
           >
             <DrawerHeader>
               <IconButton onClick={handleDrawerClose}>
-                {/* {theme.direction === 'ltr' ? <ChevronLeft /> : <ChevronRight />} */}
                 <ArrowLeft />
               </IconButton>
             </DrawerHeader>
             <Navigation />
           </Drawer>
-          <Main open={open}>
+          <Main open={openDrawer}>
             <PageWrapper
               onRightArrowClick={handleDrawerOpen}
-              isDrawerOpen={!open}
+              isDrawerOpen={!openDrawer}
             >
               <Routes>
                 <Route path="/" element={<Today />} />

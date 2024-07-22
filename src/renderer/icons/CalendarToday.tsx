@@ -34,7 +34,7 @@ function CalendarToday({ date }: ICalendarTodayProps) {
         textAnchor="middle"
         dy=".3em"
         fontFamily="Inter"
-        fontSize="10"
+        fontSize="9"
         fontWeight="bold"
         fill="#01877E"
       >

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Button,
   Box,
@@ -20,13 +20,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Dayjs } from 'dayjs';
 import CustomChip from '../components/CustomChip';
 import { CalendarChip } from '../components';
-import {
-  TaskScheduleTypeEnum,
-  DaysInAWeek,
-  ChannelsEnum,
-  IPCEventsResponseEnum,
-  IEventResponse,
-} from '../types';
+import { TaskScheduleTypeEnum, DaysInAWeek, ChannelsEnum } from '../types';
 
 const SectionHeader = styled(Typography)(({ theme }) => ({
   ...theme.typography.body2,
@@ -36,10 +30,9 @@ const SectionHeader = styled(Typography)(({ theme }) => ({
 
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
-  refreshTasks: () => void;
 }
 
-function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
+function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
   const [selectedScheduleType, setSelectedTypeFrequency] =
@@ -92,21 +85,6 @@ function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
   const showDate = Boolean(dateAnchorEl);
   const datePopOverId = showDate ? 'datepicker-popover' : undefined;
 
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_CREATE_TASK,
-      (response) => {
-        if (
-          (response as IEventResponse).message ===
-          IPCEventsResponseEnum.SUCCESSFUL
-        ) {
-          refreshTasks();
-        }
-      },
-    );
-    return unsubscribe;
-  }, [refreshTasks]);
-
   const handleAddTask = () => {
     let dueDate;
     if (selectedDate) {
@@ -131,7 +109,7 @@ function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Paper sx={{ padding: 2.5 }} variant="outlined">
+      <Paper sx={{ padding: 2.5, minWidth: '600px' }} variant="outlined">
         <TextField
           placeholder="Task name"
           fullWidth
@@ -162,11 +140,11 @@ function AddTask({ widgetCloseFunc, refreshTasks }: IAddTaskProps) {
                 >{`${taskDescription.length}/1000`}</Typography>
               </Box>
             ),
-          }}
-          inputProps={{
-            maxLength: 1000,
-            style: {
-              fontSize: theme.typography.body2.fontSize,
+            inputProps: {
+              maxLength: 1000,
+              style: {
+                fontSize: theme.typography.body2.fontSize,
+              },
             },
           }}
         />

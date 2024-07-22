@@ -39,6 +39,11 @@ export const onTaskReSchedule = (taskId: number, rescheduledTime: Dayjs) => {
   );
 };
 
+export const handleTaskRefresh = () => {
+  window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_TODAY);
+  window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_OVERDUE);
+};
+
 export const formatDate = (day: Dayjs) => {
   return day.format('dddd, MMMM D, YYYY');
 };

@@ -44,10 +44,11 @@ function TodoList({ refreshTasks }: ITodoListProps) {
   const [taskForScoring, setTaskIndexForScoring] = useState<Task>();
   const [score, setScore] = useState<number | null>(null);
 
-  /**
-   * 1. Error is not handled
-   */
-  const { onBulkFailure, error, requestOnGoing } = useBulkFailure(refreshTasks);
+  const {
+    onBulkFailure,
+    //  error, // todo handle error
+    requestOnGoing,
+  } = useBulkFailure(refreshTasks);
 
   useEffect(() => {
     refreshTasks();
@@ -122,19 +123,34 @@ function TodoList({ refreshTasks }: ITodoListProps) {
   }, [refreshTasks]);
 
   useEffect(() => {
-    const sortedTasksOverdue: { [key: string]: Task[] } = {};
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_CREATE_TASK,
+      (response) => {
+        if (
+          (response as IEventResponse).message ===
+          IPCEventsResponseEnum.SUCCESSFUL
+        ) {
+          refreshTasks();
+        }
+      },
+    );
+    return unsubscribe;
+  }, [refreshTasks]);
+
+  useEffect(() => {
+    const tasksOverdueByDate: { [key: string]: Task[] } = {};
 
     tasksOverdue.forEach((task) => {
       const taskDueDate = formatDate(dayjs(task.dueDate!));
 
-      if (sortedTasksOverdue[taskDueDate]) {
-        sortedTasksOverdue[taskDueDate].push(task);
+      if (tasksOverdueByDate[taskDueDate]) {
+        tasksOverdueByDate[taskDueDate].push(task);
       } else {
-        sortedTasksOverdue[taskDueDate] = [task];
+        tasksOverdueByDate[taskDueDate] = [task];
       }
     });
 
-    setSortedTasksOverdue(sortedTasksOverdue);
+    setSortedTasksOverdue(tasksOverdueByDate);
   }, [tasksOverdue]);
 
   const handleTaskToggle = (
@@ -170,6 +186,7 @@ function TodoList({ refreshTasks }: ITodoListProps) {
           <Typography variant="h6" mt={2}>
             Overdue
           </Typography>
+          {/* todo sorting needed to ensure the dates are in correct order  */}
           {Object.keys(sortedTasksOverdue).map((key) => (
             <Box ml={2} key={key}>
               <Box

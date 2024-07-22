@@ -246,7 +246,7 @@ const generateDueRepetitiveTasks = async () => {
         else lastDateOfTaskGeneration = createdAt;
       }
 
-      let daysSinceLastTaskGeneration = dayjs().diff(
+      const daysSinceLastTaskGeneration = dayjs().diff(
         dayjs(lastDateOfTaskGeneration),
         'day',
       );
@@ -382,11 +382,10 @@ ipcMain.on(ChannelsEnum.REQUEST_CREATE_TASK, async (event, task: ITaskIPC) => {
           sunday,
         },
       });
-
-      event.reply(ChannelsEnum.RESPONSE_CREATE_TASK, {
-        message: IPCEventsResponseEnum.SUCCESSFUL,
-      });
     }
+    event.reply(ChannelsEnum.RESPONSE_CREATE_TASK, {
+      message: IPCEventsResponseEnum.SUCCESSFUL,
+    });
   } catch (err) {
     console.error(err);
     event.reply(ChannelsEnum.ERROR_CREATE_TASK, {
