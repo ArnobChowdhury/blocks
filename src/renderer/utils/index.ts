@@ -47,3 +47,9 @@ export const handleTaskRefresh = () => {
 export const formatDate = (day: Dayjs) => {
   return day.format('dddd, MMMM D, YYYY');
 };
+
+export const executeAfterASecond = (cb: () => any) => {
+  setTimeout(() => {
+    cb();
+  }, 1000);
+};

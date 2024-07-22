@@ -9,6 +9,8 @@ import {
   DialogActions,
   Button,
   Box,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import dayjs from 'dayjs';
@@ -28,6 +30,7 @@ import {
   onTaskFailure,
   onTaskReSchedule,
   formatDate,
+  executeAfterASecond,
 } from '../utils';
 import { useBulkFailure } from '../hooks';
 
@@ -43,12 +46,21 @@ function TodoList({ refreshTasks }: ITodoListProps) {
   }>({});
   const [taskForScoring, setTaskIndexForScoring] = useState<Task>();
   const [score, setScore] = useState<number | null>(null);
+  const [widgetError, setWidgetError] = useState('');
+  const [showNotification, setShowNotification] = useState(false);
 
   const {
     onBulkFailure,
-    //  error, // todo handle error
+    error: bulkFailureError,
     requestOnGoing,
   } = useBulkFailure(refreshTasks);
+
+  useEffect(() => {
+    if (bulkFailureError) {
+      setWidgetError(bulkFailureError);
+      setShowNotification(true);
+    }
+  }, [bulkFailureError]);
 
   useEffect(() => {
     refreshTasks();
@@ -179,6 +191,11 @@ function TodoList({ refreshTasks }: ITodoListProps) {
     await onBulkFailure(taskIds);
   };
 
+  const handleNotificationClose = () => {
+    setShowNotification(false);
+    executeAfterASecond(() => setWidgetError(''));
+  };
+
   return (
     <>
       {tasksOverdue.length > 0 && (
@@ -278,6 +295,15 @@ function TodoList({ refreshTasks }: ITodoListProps) {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={showNotification}
+        autoHideDuration={6000}
+        onClose={handleNotificationClose}
+      >
+        <Alert severity="error" onClose={handleNotificationClose}>
+          {widgetError}
+        </Alert>
+      </Snackbar>
     </>
   );
 }
