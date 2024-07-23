@@ -53,3 +53,9 @@ export const executeAfterASecond = (cb: () => any) => {
     cb();
   }, 1000);
 };
+
+export const formatErrorMessage = (msg: string) => {
+  const splitMsg = msg.split('Error: ');
+  if (splitMsg[1]) return splitMsg[1];
+  return 'Something went wrong!';
+};

@@ -21,6 +21,7 @@ import { Dayjs } from 'dayjs';
 import CustomChip from '../components/CustomChip';
 import { CalendarChip } from '../components';
 import { TaskScheduleTypeEnum, DaysInAWeek, ChannelsEnum } from '../types';
+import { useApp } from '../context/AppProvider';
 
 const SectionHeader = styled(Typography)(({ theme }) => ({
   ...theme.typography.body2,
@@ -41,6 +42,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const [selectedDays, setSelectedDays] = useState<DaysInAWeek[]>([]);
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(false);
+  const { setShowNotification, setNotification } = useApp();
 
   const theme = useTheme();
 
@@ -85,7 +87,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const showDate = Boolean(dateAnchorEl);
   const datePopOverId = showDate ? 'datepicker-popover' : undefined;
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     let dueDate;
     if (selectedDate) {
       dueDate = selectedDate.toISOString();
@@ -100,11 +102,17 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       shouldBeScored,
     };
 
-    window.electron.ipcRenderer.sendMessage(
-      ChannelsEnum.REQUEST_CREATE_TASK,
-      task,
-    );
-    widgetCloseFunc(false);
+    try {
+      await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_CREATE_TASK,
+        task,
+      );
+
+      widgetCloseFunc(false);
+    } catch (err: any) {
+      setNotification({ message: err.message, type: 'error' });
+      setShowNotification(true);
+    }
   };
 
   return (

@@ -28,6 +28,8 @@ import {
   Typography,
   useTheme,
   Dialog,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { styled } from '@mui/system';
 import { PageWrapper } from './layouts';
@@ -38,6 +40,8 @@ import InboxIcon from './icons/Inbox';
 import TrackerIcon from './icons/Tracker';
 import Plus from './icons/Plus';
 import { AddTask } from './widgets';
+import { useApp } from './context/AppProvider';
+import { executeAfterASecond, formatErrorMessage } from './utils';
 
 const MyStyledListItemText = styled(ListItemText)({
   color: 'red', // Change this to the color you want
@@ -161,6 +165,18 @@ function App() {
     setOpenDrawer(false);
   };
 
+  const {
+    showNotification,
+    notification,
+    setShowNotification,
+    setNotification,
+  } = useApp();
+
+  const handleNotificationClose = () => {
+    setShowNotification(false);
+    executeAfterASecond(() => setNotification(undefined));
+  };
+
   return (
     <ThemeProvider theme={customTheme}>
       <Router>
@@ -199,6 +215,21 @@ function App() {
               </Routes>
             </PageWrapper>
           </Main>
+
+          <Snackbar
+            open={showNotification}
+            autoHideDuration={6000}
+            onClose={handleNotificationClose}
+          >
+            <Alert
+              severity={notification?.type}
+              onClose={handleNotificationClose}
+            >
+              {notification?.type === 'error'
+                ? formatErrorMessage(notification?.message)
+                : notification?.message}
+            </Alert>
+          </Snackbar>
         </Box>
       </Router>
     </ThemeProvider>

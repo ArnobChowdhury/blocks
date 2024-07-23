@@ -70,7 +70,6 @@ export enum ChannelsEnum {
 
   REQUEST_CREATE_TASK = 'request_create-task',
   RESPONSE_CREATE_TASK = 'response_create-task',
-  ERROR_CREATE_TASK = 'error_create-task',
 
   REQUEST_TASKS_TODAY = 'request-tasks-today',
   RESPONSE_TASKS_TODAY = 'response-tasks-today',

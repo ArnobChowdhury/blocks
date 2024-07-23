@@ -300,99 +300,101 @@ const generateDueRepetitiveTasks = async () => {
   );
 };
 
-ipcMain.on(ChannelsEnum.REQUEST_CREATE_TASK, async (event, task: ITaskIPC) => {
-  const { title, description, schedule, dueDate, days, shouldBeScored } = task;
-  try {
-    if (
-      schedule === TaskScheduleTypeEnum.Once ||
-      schedule === TaskScheduleTypeEnum.Unscheduled
-    ) {
-      // create a new task
-      await prisma.task.create({
-        data: {
-          title,
-          description,
-          schedule,
-          shouldBeScored,
-          createdAt: new Date(),
-          dueDate,
-        },
-      });
-    } else {
-      let monday;
-      let tuesday;
-      let wednesday;
-      let thursday;
-      let friday;
-      let saturday;
-      let sunday;
+ipcMain.handle(
+  ChannelsEnum.REQUEST_CREATE_TASK,
+  async (event, task: ITaskIPC) => {
+    const { title, description, schedule, dueDate, days, shouldBeScored } =
+      task;
+    try {
+      if (
+        schedule === TaskScheduleTypeEnum.Once ||
+        schedule === TaskScheduleTypeEnum.Unscheduled
+      ) {
+        // create a new task
+        await prisma.task.create({
+          data: {
+            title,
+            description,
+            schedule,
+            shouldBeScored,
+            createdAt: new Date(),
+            dueDate,
+          },
+        });
+      } else {
+        let monday;
+        let tuesday;
+        let wednesday;
+        let thursday;
+        let friday;
+        let saturday;
+        let sunday;
 
-      if (schedule === TaskScheduleTypeEnum.Daily) {
-        monday = true;
-        tuesday = true;
-        wednesday = true;
-        thursday = true;
-        friday = true;
-        saturday = true;
-        sunday = true;
-      }
+        if (schedule === TaskScheduleTypeEnum.Daily) {
+          monday = true;
+          tuesday = true;
+          wednesday = true;
+          thursday = true;
+          friday = true;
+          saturday = true;
+          sunday = true;
+        }
 
-      if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) {
-        days?.forEach((day) => {
-          switch (day) {
-            case 'monday':
-              monday = true;
-              break;
-            case 'tuesday':
-              tuesday = true;
-              break;
-            case 'wednesday':
-              wednesday = true;
-              break;
-            case 'thursday':
-              thursday = true;
-              break;
-            case 'friday':
-              friday = true;
-              break;
-            case 'saturday':
-              saturday = true;
-              break;
-            case 'sunday':
-              sunday = true;
-              break;
-            default:
-              break;
-          }
+        if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) {
+          days?.forEach((day) => {
+            switch (day) {
+              case 'monday':
+                monday = true;
+                break;
+              case 'tuesday':
+                tuesday = true;
+                break;
+              case 'wednesday':
+                wednesday = true;
+                break;
+              case 'thursday':
+                thursday = true;
+                break;
+              case 'friday':
+                friday = true;
+                break;
+              case 'saturday':
+                saturday = true;
+                break;
+              case 'sunday':
+                sunday = true;
+                break;
+              default:
+                break;
+            }
+          });
+        }
+
+        await prisma.repetitiveTaskTemplate.create({
+          data: {
+            title,
+            description,
+            schedule,
+            shouldBeScored,
+            monday,
+            tuesday,
+            wednesday,
+            thursday,
+            friday,
+            saturday,
+            sunday,
+          },
         });
       }
-
-      await prisma.repetitiveTaskTemplate.create({
-        data: {
-          title,
-          description,
-          schedule,
-          shouldBeScored,
-          monday,
-          tuesday,
-          wednesday,
-          thursday,
-          friday,
-          saturday,
-          sunday,
-        },
+      event.sender.send(ChannelsEnum.RESPONSE_CREATE_TASK, {
+        message: IPCEventsResponseEnum.SUCCESSFUL,
       });
+    } catch (err) {
+      log.error(err);
+      throw err;
     }
-    event.reply(ChannelsEnum.RESPONSE_CREATE_TASK, {
-      message: IPCEventsResponseEnum.SUCCESSFUL,
-    });
-  } catch (err) {
-    console.error(err);
-    event.reply(ChannelsEnum.ERROR_CREATE_TASK, {
-      message: IPCEventsResponseEnum.ERROR,
-    });
-  }
-});
+  },
+);
 
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
   await generateDueRepetitiveTasks();
