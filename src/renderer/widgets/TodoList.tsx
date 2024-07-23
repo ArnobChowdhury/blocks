@@ -15,14 +15,7 @@ import dayjs from 'dayjs';
 
 // eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
-import { useApp } from '../context/AppProvider';
-
-import {
-  TaskScheduleTypeEnum,
-  ChannelsEnum,
-  IEventResponse,
-  IPCEventsResponseEnum,
-} from '../types';
+import { TaskScheduleTypeEnum } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
 import {
   onTaskCompletionChange,
@@ -31,14 +24,14 @@ import {
   formatDate,
 } from '../utils';
 import { useBulkFailure } from '../hooks';
+import { useApp } from '../context/AppProvider';
 
 interface ITodoListProps {
   refreshTasks: () => void;
 }
 
 function TodoList({ refreshTasks }: ITodoListProps) {
-  const [tasksToday, setTasksToday] = useState<Task[]>([]);
-  const [tasksOverdue, setTasksOverdue] = useState<Task[]>([]);
+  const { tasksToday, tasksOverdue } = useApp();
   const [sortedTasksOverdue, setSortedTasksOverdue] = useState<{
     [key: string]: Task[];
   }>({});
@@ -58,93 +51,6 @@ function TodoList({ refreshTasks }: ITodoListProps) {
       setShowNotification(true);
     }
   }, [bulkFailureError, setNotification, setShowNotification]);
-
-  useEffect(() => {
-    refreshTasks();
-
-    const unsubscribeTasksToday = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASKS_TODAY,
-      (response) => {
-        // todo need error handling
-        setTasksToday(response as Task[]);
-      },
-    );
-    const unsubscribeTasksOverdue = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASKS_OVERDUE,
-      (response) => {
-        // todo need error handling
-        setTasksOverdue(response as Task[]);
-      },
-    );
-
-    return () => {
-      unsubscribeTasksToday();
-      unsubscribeTasksOverdue();
-    };
-  }, [refreshTasks]);
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASK_FAILURE,
-      (response) => {
-        if (
-          (response as IEventResponse).message ===
-          IPCEventsResponseEnum.SUCCESSFUL
-        ) {
-          refreshTasks();
-        }
-      },
-    );
-
-    return unsubscribe;
-  }, [refreshTasks]);
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASK_RESCHEDULE,
-      (response) => {
-        if (
-          (response as IEventResponse).message ===
-          IPCEventsResponseEnum.SUCCESSFUL
-        ) {
-          refreshTasks();
-        }
-      },
-    );
-
-    return unsubscribe;
-  }, [refreshTasks]);
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TOGGLE_TASK_COMPLETION_STATUS,
-      (response) => {
-        if (
-          (response as IEventResponse).message ===
-          IPCEventsResponseEnum.SUCCESSFUL
-        ) {
-          refreshTasks();
-        }
-      },
-    );
-
-    return unsubscribe;
-  }, [refreshTasks]);
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_CREATE_TASK,
-      (response) => {
-        if (
-          (response as IEventResponse).message ===
-          IPCEventsResponseEnum.SUCCESSFUL
-        ) {
-          refreshTasks();
-        }
-      },
-    );
-    return unsubscribe;
-  }, [refreshTasks]);
 
   useEffect(() => {
     const tasksOverdueByDate: { [key: string]: Task[] } = {};

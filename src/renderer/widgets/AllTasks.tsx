@@ -1,5 +1,6 @@
 import { useEffect, useState, Fragment } from 'react';
 import { List, Typography, Divider } from '@mui/material';
+// eslint-disable-next-line import/no-relative-packages
 import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 import {
   ChannelsEnum,
@@ -79,6 +80,9 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
   /**
    * todos:
    * 1. Find a way to share these useEffect hooks among pages - maybe custom hooks or context hooks
+   * 2. Move the refreshAllTasks to utils
+   * 3. Call the refreshAllTasks from app context page for failure, reschedule and toggle events
+   * 4. Get rid of the duplicate logic from this page
    *  */
 
   useEffect(() => {
