@@ -1,17 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@mui/material';
 import Plus from '../icons/Plus';
 import { AddTask, TodoList } from '../widgets';
 import { PageHeader } from '../components';
-import { handleTaskRefresh } from '../utils';
+import { refreshTodayPageTasks } from '../utils';
 
 function Today() {
   const [showAddTask, setShowAddTask] = useState(false);
 
+  useEffect(() => {
+    refreshTodayPageTasks();
+  }, []);
+
   return (
     <>
       <PageHeader>Today</PageHeader>
-      <TodoList refreshTasks={handleTaskRefresh} />
+      <TodoList />
       {showAddTask && <AddTask widgetCloseFunc={setShowAddTask} />}
       {!showAddTask && (
         <Button

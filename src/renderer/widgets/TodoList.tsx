@@ -15,23 +15,21 @@ import dayjs from 'dayjs';
 
 // eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
-import { TaskScheduleTypeEnum } from '../types';
+import { TaskScheduleTypeEnum, ChannelsEnum } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
 import {
   onTaskCompletionChange,
   onTaskFailure,
   onTaskReSchedule,
   formatDate,
+  refreshTodayPageTasks,
 } from '../utils';
 import { useBulkFailure } from '../hooks';
 import { useApp } from '../context/AppProvider';
 
-interface ITodoListProps {
-  refreshTasks: () => void;
-}
-
-function TodoList({ refreshTasks }: ITodoListProps) {
-  const { tasksToday, tasksOverdue } = useApp();
+function TodoList() {
+  const [tasksToday, setTasksToday] = useState<Task[]>([]);
+  const [tasksOverdue, setTasksOverdue] = useState<Task[]>([]);
   const [sortedTasksOverdue, setSortedTasksOverdue] = useState<{
     [key: string]: Task[];
   }>({});
@@ -39,11 +37,35 @@ function TodoList({ refreshTasks }: ITodoListProps) {
   const [score, setScore] = useState<number | null>(null);
   const { setShowNotification, setNotification } = useApp();
 
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TASKS_TODAY,
+      (response) => {
+        // todo need error handling
+        setTasksToday(response as Task[]);
+      },
+    );
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TASKS_OVERDUE,
+      (response) => {
+        // todo need error handling
+        setTasksOverdue(response as Task[]);
+      },
+    );
+
+    return unsubscribe;
+  }, []);
+
   const {
     onBulkFailure,
     error: bulkFailureError,
     requestOnGoing,
-  } = useBulkFailure(refreshTasks);
+  } = useBulkFailure(refreshTodayPageTasks);
 
   useEffect(() => {
     if (bulkFailureError) {

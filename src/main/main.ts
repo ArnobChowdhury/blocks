@@ -24,7 +24,6 @@ import {
   TaskCompletionStatusEnum,
   DaysInAWeek,
   ChannelsEnum,
-  IPCEventsResponseEnum,
 } from '../renderer/types';
 import { getTodayStart, getTodayEnd } from './helpers';
 
@@ -386,9 +385,7 @@ ipcMain.handle(
           },
         });
       }
-      event.sender.send(ChannelsEnum.RESPONSE_CREATE_TASK, {
-        message: IPCEventsResponseEnum.SUCCESSFUL,
-      });
+      event.sender.send(ChannelsEnum.RESPONSE_CREATE_TASK);
     } catch (err) {
       log.error(err);
       throw err;
@@ -460,13 +457,9 @@ ipcMain.on(
           score,
         },
       });
-      event.reply(ChannelsEnum.RESPONSE_TOGGLE_TASK_COMPLETION_STATUS, {
-        message: IPCEventsResponseEnum.SUCCESSFUL,
-      });
+      event.reply(ChannelsEnum.RESPONSE_TOGGLE_TASK_COMPLETION_STATUS);
     } catch (err) {
-      event.reply(ChannelsEnum.ERROR_TOGGLE_TASK_COMPLETION_STATUS, {
-        message: IPCEventsResponseEnum.ERROR,
-      });
+      event.reply(ChannelsEnum.ERROR_TOGGLE_TASK_COMPLETION_STATUS);
     }
   },
 );
@@ -481,13 +474,9 @@ ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
         completionStatus: TaskCompletionStatusEnum.FAILED,
       },
     });
-    event.reply(ChannelsEnum.RESPONSE_TASK_FAILURE, {
-      message: IPCEventsResponseEnum.SUCCESSFUL,
-    });
+    event.reply(ChannelsEnum.RESPONSE_TASK_FAILURE);
   } catch (err) {
-    event.reply(ChannelsEnum.ERROR_TASK_FAILURE, {
-      message: IPCEventsResponseEnum.ERROR,
-    });
+    event.reply(ChannelsEnum.ERROR_TASK_FAILURE);
   }
 });
 
@@ -506,9 +495,7 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS, async (event) => {
 
     event.reply(ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS, tasks);
   } catch {
-    event.reply(ChannelsEnum.ERROR_ALL_ONE_OFF_ACTIVE_TASKS, {
-      message: IPCEventsResponseEnum.ERROR,
-    });
+    event.reply(ChannelsEnum.ERROR_ALL_ONE_OFF_ACTIVE_TASKS);
   }
 });
 
@@ -527,9 +514,7 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS, async (event) => {
 
     event.reply(ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS, tasks);
   } catch {
-    event.reply(ChannelsEnum.ERROR_ALL_UNSCHEDULED_ACTIVE_TASKS, {
-      message: IPCEventsResponseEnum.ERROR,
-    });
+    event.reply(ChannelsEnum.ERROR_ALL_UNSCHEDULED_ACTIVE_TASKS);
   }
 });
 
@@ -545,9 +530,7 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS, async (event) => {
 
     event.reply(ChannelsEnum.RESPONSE_ALL_DAILY_ACTIVE_TASKS, tasks);
   } catch {
-    event.reply(ChannelsEnum.ERROR_ALL_DAILY_ACTIVE_TASKS, {
-      message: IPCEventsResponseEnum.ERROR,
-    });
+    event.reply(ChannelsEnum.ERROR_ALL_DAILY_ACTIVE_TASKS);
   }
 });
 
@@ -568,9 +551,7 @@ ipcMain.on(
         tasks,
       );
     } catch {
-      event.reply(ChannelsEnum.ERROR_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS, {
-        message: IPCEventsResponseEnum.ERROR,
-      });
+      event.reply(ChannelsEnum.ERROR_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS);
     }
   },
 );
@@ -613,13 +594,9 @@ ipcMain.on(
         },
         data,
       });
-      event.reply(ChannelsEnum.RESPONSE_TASK_RESCHEDULE, {
-        message: IPCEventsResponseEnum.SUCCESSFUL,
-      });
+      event.reply(ChannelsEnum.RESPONSE_TASK_RESCHEDULE);
     } catch (err) {
-      event.reply(ChannelsEnum.ERROR_TASK_RESCHEDULE, {
-        message: IPCEventsResponseEnum.ERROR,
-      });
+      event.reply(ChannelsEnum.ERROR_TASK_RESCHEDULE);
     }
   },
 );
@@ -657,9 +634,7 @@ ipcMain.on(
 
       event.reply(ChannelsEnum.RESPONSE_MONTHLY_REPORT, tasks);
     } catch (err) {
-      event.reply(ChannelsEnum.ERROR_MONTHLY_REPORT, {
-        message: IPCEventsResponseEnum.ERROR,
-      });
+      event.reply(ChannelsEnum.ERROR_MONTHLY_REPORT);
     }
   },
 );

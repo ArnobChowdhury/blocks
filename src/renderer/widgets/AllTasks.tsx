@@ -1,14 +1,10 @@
-import { useEffect, useState, Fragment } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { List, Typography, Divider } from '@mui/material';
-// eslint-disable-next-line import/no-relative-packages
-import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 import {
-  ChannelsEnum,
   TaskScheduleTypeEnum,
   DaysInAWeek,
   TaskCompletionStatusEnum,
-  IPCEventsResponseEnum,
-  IEventResponse,
+  ChannelsEnum,
 } from '../types';
 import { TodoListItem } from '../components';
 import {
@@ -17,21 +13,11 @@ import {
   onTaskReSchedule,
 } from '../utils';
 
-interface IAllTasksProps {
-  refreshAllTasks: () => void;
-}
+// eslint-disable-next-line import/no-relative-packages
+import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 
-function AllTasks({ refreshAllTasks }: IAllTasksProps) {
+function AllTasks() {
   const [unscheduledTasks, setUnscheduledTasks] = useState<Task[]>([]);
-  const [oneOffTasks, setOneOffTasks] = useState<Task[]>([]);
-  const [dailyTasks, setDailyTasks] = useState<RepetitiveTaskTemplate[]>([]);
-  const [specificDaysInAWeekTasks, setSpecificDaysInAWeekTasks] = useState<
-    RepetitiveTaskTemplate[]
-  >([]);
-
-  useEffect(() => {
-    refreshAllTasks();
-  }, [refreshAllTasks]);
 
   useEffect(() => {
     const unsubscribeUnscheduledActiveTasks = window.electron.ipcRenderer.on(
@@ -44,6 +30,8 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
     return unsubscribeUnscheduledActiveTasks;
   }, []);
 
+  const [oneOffTasks, setOneOffTasks] = useState<Task[]>([]);
+
   useEffect(() => {
     const unsubscribeOneOffActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS,
@@ -54,6 +42,8 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
 
     return unsubscribeOneOffActiveTasks;
   }, []);
+
+  const [dailyTasks, setDailyTasks] = useState<RepetitiveTaskTemplate[]>([]);
 
   useEffect(() => {
     const unsubscribeDailyActiveTasks = window.electron.ipcRenderer.on(
@@ -66,6 +56,10 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
     return unsubscribeDailyActiveTasks;
   }, []);
 
+  const [specificDaysInAWeekTasks, setSpecificDaysInAWeekTasks] = useState<
+    RepetitiveTaskTemplate[]
+  >([]);
+
   useEffect(() => {
     const unsubscribeSpecificDaysInAWeek = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
@@ -76,62 +70,6 @@ function AllTasks({ refreshAllTasks }: IAllTasksProps) {
 
     return unsubscribeSpecificDaysInAWeek;
   }, []);
-
-  /**
-   * todos:
-   * 1. Find a way to share these useEffect hooks among pages - maybe custom hooks or context hooks
-   * 2. Move the refreshAllTasks to utils
-   * 3. Call the refreshAllTasks from app context page for failure, reschedule and toggle events
-   * 4. Get rid of the duplicate logic from this page
-   *  */
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASK_FAILURE,
-      (response) => {
-        if (
-          (response as IEventResponse).message ===
-          IPCEventsResponseEnum.SUCCESSFUL
-        ) {
-          refreshAllTasks();
-        }
-      },
-    );
-
-    return unsubscribe;
-  }, [refreshAllTasks]);
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASK_RESCHEDULE,
-      (response) => {
-        if (
-          (response as IEventResponse).message ===
-          IPCEventsResponseEnum.SUCCESSFUL
-        ) {
-          refreshAllTasks();
-        }
-      },
-    );
-
-    return unsubscribe;
-  }, [refreshAllTasks]);
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TOGGLE_TASK_COMPLETION_STATUS,
-      (response) => {
-        if (
-          (response as IEventResponse).message ===
-          IPCEventsResponseEnum.SUCCESSFUL
-        ) {
-          refreshAllTasks();
-        }
-      },
-    );
-
-    return unsubscribe;
-  }, [refreshAllTasks]);
 
   return (
     <div>

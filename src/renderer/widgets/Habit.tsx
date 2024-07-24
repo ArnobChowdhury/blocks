@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Typography, styled, Box, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
+// eslint-disable-next-line import/no-relative-packages
 import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 import {
   TaskScheduleTypeEnum,
@@ -71,11 +72,12 @@ function HabitTracker() {
 
   /**
    * Todos
-   * 1. Logic needs to be checked and simplified - same logic written for DAILY and WEEKLY tasks
-   * 2. Mapped values need to have key props (check console log)
-   * 3. Syntactic error in using table elements - (check console errors)
-   * 4. Can the graph building algorithm's time complexity be improved?
-   * 5. Handle error
+   * 1. make a useHabit hook?
+   * 2. Logic needs to be checked and simplified - same logic written for DAILY and WEEKLY tasks
+   * 3. Mapped values need to have key props (check console log)
+   * 4. Syntactic error in using table elements - (check console errors)
+   * 5. Can the graph building algorithm's time complexity be improved?
+   * 6. Handle error
    */
 
   return (

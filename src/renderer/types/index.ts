@@ -111,12 +111,3 @@ export enum ChannelsEnum {
 
   REQUEST_BULK_TASK_FAILURE = 'request_bulk_task_failure',
 }
-
-export enum IPCEventsResponseEnum {
-  SUCCESSFUL = 'SUCCESSFUL',
-  ERROR = 'ERROR',
-}
-
-export interface IEventResponse {
-  message: IPCEventsResponseEnum;
-}

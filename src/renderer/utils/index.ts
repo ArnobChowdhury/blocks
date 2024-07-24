@@ -39,9 +39,23 @@ export const onTaskReSchedule = (taskId: number, rescheduledTime: Dayjs) => {
   );
 };
 
-export const handleTaskRefresh = () => {
+export const refreshTodayPageTasks = () => {
   window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_TODAY);
   window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_OVERDUE);
+};
+export const refreshAllTasks = () => {
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS,
+  );
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS,
+  );
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS,
+  );
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
+  );
 };
 
 export const formatDate = (day: Dayjs) => {
