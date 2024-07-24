@@ -1,4 +1,4 @@
 import useBulkFailure from './useBulkFailure';
+import useToggleTaskCompletionStatus from './useToggleTaskCompletion';
 
-// eslint-disable-next-line import/prefer-default-export
-export { useBulkFailure };
+export { useBulkFailure, useToggleTaskCompletionStatus };

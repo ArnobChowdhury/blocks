@@ -8,16 +8,24 @@ import {
 } from '../types';
 import { TodoListItem } from '../components';
 import {
-  onTaskCompletionChange,
+  handlePageTaskRefresh,
   onTaskFailure,
   onTaskReSchedule,
 } from '../utils';
+import { useToggleTaskCompletionStatus } from '../hooks';
+import { useApp } from '../context/AppProvider';
 
 // eslint-disable-next-line import/no-relative-packages
 import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 
 function AllTasks() {
   const [unscheduledTasks, setUnscheduledTasks] = useState<Task[]>([]);
+  const {
+    onToggleTaskCompletionStatus,
+    error: toggleTaskCompletionStatusError,
+  } = useToggleTaskCompletionStatus(handlePageTaskRefresh);
+
+  const { setNotifier } = useApp();
 
   useEffect(() => {
     const unsubscribeUnscheduledActiveTasks = window.electron.ipcRenderer.on(
@@ -71,6 +79,12 @@ function AllTasks() {
     return unsubscribeSpecificDaysInAWeek;
   }, []);
 
+  useEffect(() => {
+    if (toggleTaskCompletionStatusError) {
+      setNotifier(toggleTaskCompletionStatusError, 'error');
+    }
+  }, [setNotifier, toggleTaskCompletionStatusError]);
+
   return (
     <div>
       <Typography mt={2} mb={1} variant="h6">
@@ -91,7 +105,11 @@ function AllTasks() {
                     task.completionStatus === TaskCompletionStatusEnum.COMPLETE
                   }
                   onChange={(e) =>
-                    onTaskCompletionChange(task.id, e.target.checked, undefined)
+                    onToggleTaskCompletionStatus(
+                      task.id,
+                      e.target.checked,
+                      undefined,
+                    )
                   }
                   onFail={() => onTaskFailure(task.id)}
                   onReschedule={(rescheduledTime) =>
@@ -125,7 +143,11 @@ function AllTasks() {
                     task.completionStatus === TaskCompletionStatusEnum.COMPLETE
                   }
                   onChange={(e) =>
-                    onTaskCompletionChange(task.id, e.target.checked, undefined)
+                    onToggleTaskCompletionStatus(
+                      task.id,
+                      e.target.checked,
+                      undefined,
+                    )
                   }
                   onFail={() => onTaskFailure(task.id)}
                   onReschedule={(rescheduledTime) =>

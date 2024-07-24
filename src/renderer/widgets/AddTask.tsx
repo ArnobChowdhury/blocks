@@ -42,7 +42,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const [selectedDays, setSelectedDays] = useState<DaysInAWeek[]>([]);
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(false);
-  const { setShowNotification, setNotification } = useApp();
+  const { setNotifier } = useApp();
 
   const theme = useTheme();
 
@@ -110,8 +110,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
 
       widgetCloseFunc(false);
     } catch (err: any) {
-      setNotification({ message: err.message, type: 'error' });
-      setShowNotification(true);
+      setNotifier(err.message, 'error');
     }
   };
 

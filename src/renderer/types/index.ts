@@ -75,8 +75,6 @@ export enum ChannelsEnum {
   RESPONSE_TASKS_TODAY = 'response-tasks-today',
 
   REQUEST_TOGGLE_TASK_COMPLETION_STATUS = 'request-toggle-task-completion-status',
-  RESPONSE_TOGGLE_TASK_COMPLETION_STATUS = 'response-toggle-task-completion-status',
-  ERROR_TOGGLE_TASK_COMPLETION_STATUS = 'error-toggle-task-completion-status',
 
   REQUEST_MONTHLY_REPORT = 'request-monthly-report',
   RESPONSE_MONTHLY_REPORT = 'response-monthly-report',

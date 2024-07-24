@@ -3,13 +3,14 @@ import React, {
   useEffect,
   PropsWithChildren,
   useContext,
+  useCallback,
 } from 'react';
 
-import { refreshTodayPageTasks, refreshAllTasks } from '../utils';
+import { handlePageTaskRefresh } from '../utils';
 import { ChannelsEnum } from '../types';
 
 const AppContextFn = () => {
-  const [showNotification, setShowNotification] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
   const [notification, setNotification] = useState<{
     message: string;
     type: 'error' | 'info' | 'success' | 'warning';
@@ -19,28 +20,9 @@ const AppContextFn = () => {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_CREATE_TASK,
       () => {
-        if (window.location.pathname === '/inbox') {
-          refreshAllTasks();
-        } else {
-          refreshTodayPageTasks();
-        }
+        handlePageTaskRefresh();
       },
     );
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TOGGLE_TASK_COMPLETION_STATUS,
-      () => {
-        if (window.location.pathname === '/inbox') {
-          refreshAllTasks();
-        } else {
-          refreshTodayPageTasks();
-        }
-      },
-    );
-
     return unsubscribe;
   }, []);
 
@@ -48,11 +30,7 @@ const AppContextFn = () => {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASK_RESCHEDULE,
       () => {
-        if (window.location.pathname === '/inbox') {
-          refreshAllTasks();
-        } else {
-          refreshTodayPageTasks();
-        }
+        handlePageTaskRefresh();
       },
     );
 
@@ -63,22 +41,31 @@ const AppContextFn = () => {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASK_FAILURE,
       () => {
-        if (window.location.pathname === '/inbox') {
-          refreshAllTasks();
-        } else {
-          refreshTodayPageTasks();
-        }
+        handlePageTaskRefresh();
       },
     );
 
     return unsubscribe;
   }, []);
 
+  const setNotifier = useCallback(
+    (message: string, type: 'error' | 'success' | 'info' | 'warning') => {
+      setShowSnackbar(true);
+      setNotification({ message, type });
+    },
+    [],
+  );
+
+  const clearNotifier = useCallback(() => {
+    setShowSnackbar(false);
+    setNotification(undefined);
+  }, []);
+
   return {
-    showNotification,
-    setShowNotification,
+    showSnackbar,
     notification,
-    setNotification,
+    setNotifier,
+    clearNotifier,
   };
 };
 

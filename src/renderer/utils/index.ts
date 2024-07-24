@@ -6,21 +6,6 @@ import { ChannelsEnum } from '../types';
  * 1. Create a separate service for all ipc messages
  */
 
-export const onTaskCompletionChange = (
-  id: number,
-  checked: boolean,
-  taskScore?: number | null,
-) => {
-  window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
-    {
-      id,
-      checked,
-      score: taskScore,
-    },
-  );
-};
-
 export const onTaskFailure = (taskId: number) => {
   window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASK_FAILURE, {
     id: taskId,
@@ -58,14 +43,18 @@ export const refreshAllTasks = () => {
   );
 };
 
-export const formatDate = (day: Dayjs) => {
-  return day.format('dddd, MMMM D, YYYY');
+export const handlePageTaskRefresh = () => {
+  const location = window.location.pathname;
+  if (location === '/inbox') {
+    refreshAllTasks();
+  }
+  if (location === '/') {
+    refreshTodayPageTasks();
+  }
 };
 
-export const executeAfterASecond = (cb: () => any) => {
-  setTimeout(() => {
-    cb();
-  }, 1000);
+export const formatDate = (day: Dayjs) => {
+  return day.format('dddd, MMMM D, YYYY');
 };
 
 export const formatErrorMessage = (msg: string) => {

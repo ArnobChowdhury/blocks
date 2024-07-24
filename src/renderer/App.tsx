@@ -41,7 +41,7 @@ import TrackerIcon from './icons/Tracker';
 import Plus from './icons/Plus';
 import { AddTask } from './widgets';
 import { useApp } from './context/AppProvider';
-import { executeAfterASecond, formatErrorMessage } from './utils';
+import { formatErrorMessage } from './utils';
 
 const MyStyledListItemText = styled(ListItemText)({
   color: 'red', // Change this to the color you want
@@ -165,17 +165,7 @@ function App() {
     setOpenDrawer(false);
   };
 
-  const {
-    showNotification,
-    notification,
-    setShowNotification,
-    setNotification,
-  } = useApp();
-
-  const handleNotificationClose = () => {
-    setShowNotification(false);
-    executeAfterASecond(() => setNotification(undefined));
-  };
+  const { showSnackbar, notification, clearNotifier } = useApp();
 
   return (
     <ThemeProvider theme={customTheme}>
@@ -217,14 +207,11 @@ function App() {
           </Main>
 
           <Snackbar
-            open={showNotification}
+            open={showSnackbar}
             autoHideDuration={6000}
-            onClose={handleNotificationClose}
+            onClose={clearNotifier}
           >
-            <Alert
-              severity={notification?.type}
-              onClose={handleNotificationClose}
-            >
+            <Alert severity={notification?.type} onClose={clearNotifier}>
               {notification?.type === 'error'
                 ? formatErrorMessage(notification?.message)
                 : notification?.message}

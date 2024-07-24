@@ -441,7 +441,7 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
   event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, tasksOverdue);
 });
 
-ipcMain.on(
+ipcMain.handle(
   ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
   async (event, { id, checked, score }) => {
     // todo: need to make the one-off task in active
@@ -457,9 +457,9 @@ ipcMain.on(
           score,
         },
       });
-      event.reply(ChannelsEnum.RESPONSE_TOGGLE_TASK_COMPLETION_STATUS);
     } catch (err) {
-      event.reply(ChannelsEnum.ERROR_TOGGLE_TASK_COMPLETION_STATUS);
+      log.error(err);
+      throw err;
     }
   },
 );

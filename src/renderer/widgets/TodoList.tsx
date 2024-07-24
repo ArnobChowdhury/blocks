@@ -18,13 +18,12 @@ import { Task } from '../../generated/client';
 import { TaskScheduleTypeEnum, ChannelsEnum } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
 import {
-  onTaskCompletionChange,
   onTaskFailure,
   onTaskReSchedule,
   formatDate,
   refreshTodayPageTasks,
 } from '../utils';
-import { useBulkFailure } from '../hooks';
+import { useBulkFailure, useToggleTaskCompletionStatus } from '../hooks';
 import { useApp } from '../context/AppProvider';
 
 function TodoList() {
@@ -35,7 +34,7 @@ function TodoList() {
   }>({});
   const [taskForScoring, setTaskIndexForScoring] = useState<Task>();
   const [score, setScore] = useState<number | null>(null);
-  const { setShowNotification, setNotification } = useApp();
+  const { setNotifier } = useApp();
 
   useEffect(() => {
     const unsubscribe = window.electron.ipcRenderer.on(
@@ -62,6 +61,17 @@ function TodoList() {
   }, []);
 
   const {
+    onToggleTaskCompletionStatus,
+    error: toggleTaskCompletionStatusError,
+  } = useToggleTaskCompletionStatus(refreshTodayPageTasks);
+
+  useEffect(() => {
+    if (toggleTaskCompletionStatusError) {
+      setNotifier(toggleTaskCompletionStatusError, 'error');
+    }
+  }, [toggleTaskCompletionStatusError, setNotifier]);
+
+  const {
     onBulkFailure,
     error: bulkFailureError,
     requestOnGoing,
@@ -69,10 +79,9 @@ function TodoList() {
 
   useEffect(() => {
     if (bulkFailureError) {
-      setNotification({ message: bulkFailureError, type: 'error' });
-      setShowNotification(true);
+      setNotifier(bulkFailureError, 'error');
     }
-  }, [bulkFailureError, setNotification, setShowNotification]);
+  }, [bulkFailureError, setNotifier]);
 
   useEffect(() => {
     const tasksOverdueByDate: { [key: string]: Task[] } = {};
@@ -97,7 +106,7 @@ function TodoList() {
   ) => {
     if (task.shouldBeScored && e.target.checked) setTaskIndexForScoring(task);
     else
-      onTaskCompletionChange(
+      onToggleTaskCompletionStatus(
         task.id,
         e.target.checked,
         task.shouldBeScored ? null : undefined,
@@ -207,7 +216,7 @@ function TodoList() {
             disabled={score === null}
             onClick={() => {
               if (score === null || !taskForScoring) return;
-              onTaskCompletionChange(taskForScoring.id, true, score);
+              onToggleTaskCompletionStatus(taskForScoring.id, true, score);
               handleScoreDialogClose();
             }}
           >
