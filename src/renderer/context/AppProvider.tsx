@@ -26,6 +26,10 @@ const AppContextFn = () => {
     return unsubscribe;
   }, []);
 
+  /**
+   * Add event listeners... for page refresh events' errors and set notifiers
+   */
+
   const setNotifier = useCallback(
     (message: string, type: 'error' | 'success' | 'info' | 'warning') => {
       setShowSnackbar(true);
