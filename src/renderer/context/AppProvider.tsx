@@ -26,28 +26,6 @@ const AppContextFn = () => {
     return unsubscribe;
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASK_RESCHEDULE,
-      () => {
-        handlePageTaskRefresh();
-      },
-    );
-
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASK_FAILURE,
-      () => {
-        handlePageTaskRefresh();
-      },
-    );
-
-    return unsubscribe;
-  }, []);
-
   const setNotifier = useCallback(
     (message: string, type: 'error' | 'success' | 'info' | 'warning') => {
       setShowSnackbar(true);

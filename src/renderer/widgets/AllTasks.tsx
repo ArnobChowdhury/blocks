@@ -7,12 +7,12 @@ import {
   ChannelsEnum,
 } from '../types';
 import { TodoListItem } from '../components';
+import { handlePageTaskRefresh } from '../utils';
 import {
-  handlePageTaskRefresh,
-  onTaskFailure,
-  onTaskReSchedule,
-} from '../utils';
-import { useToggleTaskCompletionStatus } from '../hooks';
+  useToggleTaskCompletionStatus,
+  useTaskFailure,
+  useTaskReschedule,
+} from '../hooks';
 import { useApp } from '../context/AppProvider';
 
 // eslint-disable-next-line import/no-relative-packages
@@ -24,6 +24,14 @@ function AllTasks() {
     onToggleTaskCompletionStatus,
     error: toggleTaskCompletionStatusError,
   } = useToggleTaskCompletionStatus(handlePageTaskRefresh);
+
+  const { onTaskFailure, error: taskFailureError } = useTaskFailure(
+    handlePageTaskRefresh,
+  );
+
+  const { onTaskReschedule, error: taskRescheduleError } = useTaskReschedule(
+    handlePageTaskRefresh,
+  );
 
   const { setNotifier } = useApp();
 
@@ -85,6 +93,18 @@ function AllTasks() {
     }
   }, [setNotifier, toggleTaskCompletionStatusError]);
 
+  useEffect(() => {
+    if (taskFailureError) {
+      setNotifier(taskFailureError, 'error');
+    }
+  }, [setNotifier, taskFailureError]);
+
+  useEffect(() => {
+    if (taskRescheduleError) {
+      setNotifier(taskRescheduleError, 'error');
+    }
+  }, [setNotifier, taskRescheduleError]);
+
   return (
     <div>
       <Typography mt={2} mb={1} variant="h6">
@@ -113,7 +133,7 @@ function AllTasks() {
                   }
                   onFail={() => onTaskFailure(task.id)}
                   onReschedule={(rescheduledTime) =>
-                    onTaskReSchedule(task.id, rescheduledTime)
+                    onTaskReschedule(task.id, rescheduledTime)
                   }
                   showClock
                   key={task.id}
@@ -151,7 +171,7 @@ function AllTasks() {
                   }
                   onFail={() => onTaskFailure(task.id)}
                   onReschedule={(rescheduledTime) =>
-                    onTaskReSchedule(task.id, rescheduledTime)
+                    onTaskReschedule(task.id, rescheduledTime)
                   }
                   showClock
                   key={task.id}

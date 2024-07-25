@@ -464,7 +464,7 @@ ipcMain.handle(
   },
 );
 
-ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
+ipcMain.handle(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
   try {
     await prisma.task.update({
       where: {
@@ -474,9 +474,9 @@ ipcMain.on(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
         completionStatus: TaskCompletionStatusEnum.FAILED,
       },
     });
-    event.reply(ChannelsEnum.RESPONSE_TASK_FAILURE);
   } catch (err) {
-    event.reply(ChannelsEnum.ERROR_TASK_FAILURE);
+    log.error(err);
+    throw err;
   }
 });
 
@@ -556,7 +556,7 @@ ipcMain.on(
   },
 );
 
-ipcMain.on(
+ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_RESCHEDULE,
   async (event, { id, dueDate }) => {
     /**
@@ -594,9 +594,9 @@ ipcMain.on(
         },
         data,
       });
-      event.reply(ChannelsEnum.RESPONSE_TASK_RESCHEDULE);
-    } catch (err) {
-      event.reply(ChannelsEnum.ERROR_TASK_RESCHEDULE);
+    } catch (err: any) {
+      log.error(err.message);
+      throw err;
     }
   },
 );

@@ -17,13 +17,13 @@ import dayjs from 'dayjs';
 import { Task } from '../../generated/client';
 import { TaskScheduleTypeEnum, ChannelsEnum } from '../types';
 import { TodoListItem, TaskScoring } from '../components';
+import { formatDate, refreshTodayPageTasks } from '../utils';
 import {
-  onTaskFailure,
-  onTaskReSchedule,
-  formatDate,
-  refreshTodayPageTasks,
-} from '../utils';
-import { useBulkFailure, useToggleTaskCompletionStatus } from '../hooks';
+  useBulkFailure,
+  useToggleTaskCompletionStatus,
+  useTaskFailure,
+  useTaskReschedule,
+} from '../hooks';
 import { useApp } from '../context/AppProvider';
 
 function TodoList() {
@@ -71,6 +71,16 @@ function TodoList() {
     }
   }, [toggleTaskCompletionStatusError, setNotifier]);
 
+  const { onTaskFailure, error: taskFailureError } = useTaskFailure(
+    refreshTodayPageTasks,
+  );
+
+  useEffect(() => {
+    if (taskFailureError) {
+      setNotifier(taskFailureError, 'error');
+    }
+  }, [taskFailureError, setNotifier]);
+
   const {
     onBulkFailure,
     error: bulkFailureError,
@@ -82,6 +92,16 @@ function TodoList() {
       setNotifier(bulkFailureError, 'error');
     }
   }, [bulkFailureError, setNotifier]);
+
+  const { onTaskReschedule, error: taskRescheduleError } = useTaskReschedule(
+    refreshTodayPageTasks,
+  );
+
+  useEffect(() => {
+    if (taskRescheduleError) {
+      setNotifier(taskRescheduleError, 'error');
+    }
+  }, [taskRescheduleError, setNotifier]);
 
   useEffect(() => {
     const tasksOverdueByDate: { [key: string]: Task[] } = {};
@@ -102,7 +122,6 @@ function TodoList() {
   const handleTaskToggle = (
     e: React.ChangeEvent<HTMLInputElement>,
     task: Task,
-    // index: number,
   ) => {
     if (task.shouldBeScored && e.target.checked) setTaskIndexForScoring(task);
     else
@@ -163,7 +182,7 @@ function TodoList() {
                       showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
                       onFail={() => onTaskFailure(task.id)}
                       onReschedule={(rescheduledTime) =>
-                        onTaskReSchedule(task.id, rescheduledTime)
+                        onTaskReschedule(task.id, rescheduledTime)
                       }
                     />
                     <Divider />
@@ -187,7 +206,7 @@ function TodoList() {
               showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
               onFail={() => onTaskFailure(task.id)}
               onReschedule={(rescheduledTime) =>
-                onTaskReSchedule(task.id, rescheduledTime)
+                onTaskReschedule(task.id, rescheduledTime)
               }
             />
             <Divider />

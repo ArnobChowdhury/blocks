@@ -84,12 +84,8 @@ export enum ChannelsEnum {
   RESPONSE_TASKS_OVERDUE = 'response-tasks-overdue',
 
   REQUEST_TASK_FAILURE = 'request-task-failure',
-  RESPONSE_TASK_FAILURE = 'response-task-failure',
-  ERROR_TASK_FAILURE = 'error-task-failure',
 
   REQUEST_TASK_RESCHEDULE = 'request_task_reschedule',
-  RESPONSE_TASK_RESCHEDULE = 'response_task_reschedule',
-  ERROR_TASK_RESCHEDULE = 'error_task_reschedule',
 
   REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS = 'request_all_unscheduled_active_tasks',
   RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS = 'response_all_unscheduled_active_tasks',

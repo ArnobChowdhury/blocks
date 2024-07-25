@@ -1,33 +1,11 @@
 import { Dayjs } from 'dayjs';
 import { ChannelsEnum } from '../types';
 
-/**
- * todos:
- * 1. Create a separate service for all ipc messages
- */
-
-export const onTaskFailure = (taskId: number) => {
-  window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASK_FAILURE, {
-    id: taskId,
-  });
-};
-
-export const onTaskReSchedule = (taskId: number, rescheduledTime: Dayjs) => {
-  const dueDate = rescheduledTime.toISOString();
-
-  window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_TASK_RESCHEDULE,
-    {
-      id: taskId,
-      dueDate,
-    },
-  );
-};
-
 export const refreshTodayPageTasks = () => {
   window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_TODAY);
   window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_OVERDUE);
 };
+
 export const refreshAllTasks = () => {
   window.electron.ipcRenderer.sendMessage(
     ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS,
