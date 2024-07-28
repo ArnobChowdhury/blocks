@@ -19,7 +19,6 @@ import SmallCheckbox from './SmallCheckbox';
 import Clock from '../icons/Clock';
 import Close from '../icons/Close';
 import { TaskScheduleTypeEnum, DaysInAWeek } from '../types';
-import CalendarChip from './CalendarChip';
 import CustomChip from './CustomChip';
 
 interface ITodoListItemProps {

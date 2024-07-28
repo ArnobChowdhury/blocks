@@ -1,4 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import { useEditor, Editor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
 import {
   Button,
   Box,
@@ -11,7 +14,6 @@ import {
   Divider,
   FormControlLabel,
   Checkbox,
-  useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { StaticDatePicker } from '@mui/x-date-pickers';
@@ -19,7 +21,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Dayjs } from 'dayjs';
 import CustomChip from '../components/CustomChip';
-import { CalendarChip } from '../components';
+import { CalendarChip, DescriptionEditor } from '../components';
 import { TaskScheduleTypeEnum, DaysInAWeek, ChannelsEnum } from '../types';
 import { useApp } from '../context/AppProvider';
 
@@ -35,7 +37,6 @@ interface IAddTaskProps {
 
 function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const [taskTitle, setTaskTitle] = useState('');
-  const [taskDescription, setTaskDescription] = useState('');
   const [selectedScheduleType, setSelectedTypeFrequency] =
     useState<TaskScheduleTypeEnum>(TaskScheduleTypeEnum.Unscheduled);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>();
@@ -44,7 +45,23 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const [shouldBeScored, setShouldBeScored] = useState(false);
   const { setNotifier } = useApp();
 
-  const theme = useTheme();
+  const editor: Editor | null = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false, // TODO : Making this as `false` becase marks are not preserved when I try to preserve attrs, awaiting a bit of help
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false, // TODO : Making this as `false` becase marks are not preserved when I try to preserve attrs, awaiting a bit of help
+        },
+      }),
+      Placeholder.configure({
+        placeholder: 'Task Description',
+      }),
+    ],
+  });
 
   const isAddButtonDisabled = useMemo(() => {
     if (!taskTitle) {
@@ -93,9 +110,15 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       dueDate = selectedDate.toISOString();
     }
 
+    let stringifiedJson;
+    if (editor) {
+      const descriptionAsJSON = editor.getJSON();
+      stringifiedJson = JSON.stringify(descriptionAsJSON);
+    }
+
     const task = {
       title: taskTitle,
-      description: taskDescription,
+      description: stringifiedJson,
       schedule: selectedScheduleType,
       days: selectedDays,
       dueDate,
@@ -130,31 +153,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
             },
           }}
         />
-        <TextField
-          placeholder="Description (optional)"
-          fullWidth
-          sx={{ mt: 2 }}
-          value={taskDescription}
-          multiline
-          onChange={(e) => setTaskDescription(e.target.value)}
-          variant="standard"
-          InputProps={{
-            endAdornment: (
-              <Box ml={1} alignSelf="flex-end">
-                <Typography
-                  variant="caption"
-                  sx={{ opacity: 0.8 }}
-                >{`${taskDescription.length}/1000`}</Typography>
-              </Box>
-            ),
-            inputProps: {
-              maxLength: 1000,
-              style: {
-                fontSize: theme.typography.body2.fontSize,
-              },
-            },
-          }}
-        />
+        <DescriptionEditor editor={editor} />
 
         <Box sx={{ mt: 2 }}>
           <SectionHeader>Schedule</SectionHeader>
