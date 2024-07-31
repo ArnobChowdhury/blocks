@@ -34,7 +34,7 @@ function TodoList() {
   }>({});
   const [taskForScoring, setTaskIndexForScoring] = useState<Task>();
   const [score, setScore] = useState<number | null>(null);
-  const { setNotifier } = useApp();
+  const { setNotifier, setTaskIdForEdit } = useApp();
 
   useEffect(() => {
     const unsubscribe = window.electron.ipcRenderer.on(
@@ -144,6 +144,12 @@ function TodoList() {
     await onBulkFailure(taskIds);
   };
 
+  const handleTaskEdit = (taskId: number) => {
+    if (taskId) {
+      setTaskIdForEdit(taskId);
+    }
+  };
+
   return (
     <>
       {tasksOverdue.length > 0 && (
@@ -184,6 +190,7 @@ function TodoList() {
                       onReschedule={(rescheduledTime) =>
                         onTaskReschedule(task.id, rescheduledTime)
                       }
+                      onTaskEdit={() => handleTaskEdit(task.id)}
                     />
                     <Divider />
                   </React.Fragment>
@@ -208,6 +215,7 @@ function TodoList() {
               onReschedule={(rescheduledTime) =>
                 onTaskReschedule(task.id, rescheduledTime)
               }
+              onTaskEdit={() => handleTaskEdit(task.id)}
             />
             <Divider />
           </React.Fragment>

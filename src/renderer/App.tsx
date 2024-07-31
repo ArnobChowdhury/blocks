@@ -96,7 +96,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 function Navigation() {
   const location = useLocation();
   const theme = useTheme();
-  const [showAddTask, setShowAddTask] = useState(false);
+  const { showAddTask, setShowAddTask, taskForEdit } = useApp();
 
   return (
     <>

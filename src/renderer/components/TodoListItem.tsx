@@ -31,6 +31,7 @@ interface ITodoListItemProps {
   dueDateLabel?: string | Date | Dayjs | null;
   onFail?: () => void;
   onReschedule?: (rescheduledTime: Dayjs) => void;
+  onTaskEdit: () => void;
 }
 
 function TodoListItem({
@@ -43,6 +44,7 @@ function TodoListItem({
   dueDateLabel,
   onFail,
   onReschedule,
+  onTaskEdit,
 }: ITodoListItemProps) {
   const isAHabit =
     schedule === TaskScheduleTypeEnum.Daily ||
@@ -92,6 +94,10 @@ function TodoListItem({
                       textDecoration: isCompleted ? 'line-through' : 'none',
                     }}
                     variant="body2"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onTaskEdit();
+                    }}
                   >
                     {taskTitle}
                   </Typography>

@@ -9,12 +9,24 @@ import React, {
 import { handlePageTaskRefresh } from '../utils';
 import { ChannelsEnum } from '../types';
 
+// eslint-disable-next-line import/no-relative-packages
+import { Task } from '../../generated/client';
+
 const AppContextFn = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [notification, setNotification] = useState<{
     message: string;
     type: 'error' | 'info' | 'success' | 'warning';
   }>();
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [taskIdForEdit, setTaskIdForEdit] = useState<number>();
+  const [taskForEdit, setTaskForEdit] = useState<Task>();
+
+  useEffect(() => {
+    if (taskIdForEdit && !taskForEdit) {
+      // fetch the task if taskIdForEdit is undefined
+    }
+  }, [taskForEdit, taskIdForEdit]);
 
   useEffect(() => {
     const unsubscribe = window.electron.ipcRenderer.on(
@@ -48,6 +60,10 @@ const AppContextFn = () => {
     notification,
     setNotifier,
     clearNotifier,
+    showAddTask,
+    setShowAddTask,
+    taskForEdit,
+    setTaskIdForEdit,
   };
 };
 
