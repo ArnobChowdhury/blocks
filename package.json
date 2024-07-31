@@ -1,6 +1,6 @@
 {
   "name": "blockstracker",
-  "version": "0.1.0-beta.9",
+  "version": "0.1.0-beta.10",
   "description": "Todoing and habit tracking in one app",
   "keywords": [
     "electron",
@@ -97,7 +97,6 @@
     "@prisma/client": "^5.16.2",
     "@prisma/engines": "^5.17.0",
     "@tiptap/extension-placeholder": "^2.5.7",
-    "@tiptap/pm": "^2.5.7",
     "@tiptap/react": "^2.5.7",
     "@tiptap/starter-kit": "^2.5.7",
     "date-fns": "^3.6.0",
