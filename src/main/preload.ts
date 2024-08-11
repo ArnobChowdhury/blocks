@@ -22,7 +22,7 @@ const electronHandler = {
     },
 
     async invoke(channel: ChannelsEnum, ...args: unknown[]) {
-      return await ipcRenderer.invoke(channel, ...args);
+      return ipcRenderer.invoke(channel, ...args);
     },
   },
 };

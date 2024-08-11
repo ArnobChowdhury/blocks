@@ -21,23 +21,6 @@ const AppContextFn = () => {
   const [showAddTask, setShowAddTask] = useState(false);
   const [taskIdForEdit, setTaskIdForEdit] = useState<number>();
   const [taskForEdit, setTaskForEdit] = useState<Task>();
-
-  useEffect(() => {
-    if (taskIdForEdit && !taskForEdit) {
-      // fetch the task if taskIdForEdit is undefined
-    }
-  }, [taskForEdit, taskIdForEdit]);
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_CREATE_TASK,
-      () => {
-        handlePageTaskRefresh();
-      },
-    );
-    return unsubscribe;
-  }, []);
-
   /**
    * Add event listeners... for page refresh events' errors and set notifiers
    */
@@ -49,6 +32,30 @@ const AppContextFn = () => {
     },
     [],
   );
+
+  useEffect(() => {
+    if (taskIdForEdit && !taskForEdit) {
+      // fetch the task if taskIdForEdit is undefined
+      window.electron.ipcRenderer
+        .invoke(ChannelsEnum.REQUEST_TASK_DETAILS, taskIdForEdit)
+        .then((res) => {
+          return setTaskForEdit(res);
+        })
+        .catch((err: any) => {
+          setNotifier(err.message, 'error');
+        });
+    }
+  }, [taskForEdit, taskIdForEdit, setNotifier]);
+
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK,
+      () => {
+        handlePageTaskRefresh();
+      },
+    );
+    return unsubscribe;
+  }, []);
 
   const clearNotifier = useCallback(() => {
     setShowSnackbar(false);
@@ -64,6 +71,7 @@ const AppContextFn = () => {
     setShowAddTask,
     taskForEdit,
     setTaskIdForEdit,
+    setTaskForEdit,
   };
 };
 

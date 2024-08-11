@@ -16,7 +16,7 @@ export enum TaskScheduleTypeEnum {
 }
 
 export interface ITaskIPC {
-  id?: string;
+  id?: number;
   title: string;
   description: string;
   schedule: TaskScheduleTypeEnum;
@@ -69,7 +69,10 @@ export enum ChannelsEnum {
   IPC_EXAMPLE = 'ipc-example',
 
   REQUEST_CREATE_TASK = 'request_create-task',
-  RESPONSE_CREATE_TASK = 'response_create-task',
+
+  RESPONSE_CREATE_OR_UPDATE_TASK = 'response_create-task',
+
+  REQUEST_UPDATE_TASK = 'request_task_update',
 
   REQUEST_TASKS_TODAY = 'request-tasks-today',
   RESPONSE_TASKS_TODAY = 'response-tasks-today',
@@ -104,4 +107,6 @@ export enum ChannelsEnum {
   ERROR_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS = 'error_all_specific_days_in_a_week_active_tasks',
 
   REQUEST_BULK_TASK_FAILURE = 'request_bulk_task_failure',
+
+  REQUEST_TASK_DETAILS = 'request_task_details',
 }

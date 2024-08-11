@@ -299,6 +299,9 @@ const generateDueRepetitiveTasks = async () => {
   );
 };
 
+/**
+ * todo: add error handling
+ */
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_TASK,
   async (event, task: ITaskIPC) => {
@@ -385,7 +388,7 @@ ipcMain.handle(
           },
         });
       }
-      event.sender.send(ChannelsEnum.RESPONSE_CREATE_TASK);
+      event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
     } catch (err) {
       log.error(err);
       throw err;
@@ -393,6 +396,33 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle(
+  ChannelsEnum.REQUEST_UPDATE_TASK,
+  async (event, task: ITaskIPC) => {
+    const { id, title, description, dueDate, shouldBeScored } = task;
+    try {
+      await prisma.task.update({
+        where: {
+          id,
+        },
+        data: {
+          title,
+          description,
+          dueDate,
+          shouldBeScored,
+        },
+      });
+      event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
+    } catch (err) {
+      log.error(err);
+      throw err;
+    }
+  },
+);
+
+/**
+ * todo: add error handling
+ */
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
   await generateDueRepetitiveTasks();
 
@@ -651,6 +681,22 @@ ipcMain.handle(
         },
         data: {
           completionStatus: TaskCompletionStatusEnum.FAILED,
+        },
+      });
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
+ipcMain.handle(
+  ChannelsEnum.REQUEST_TASK_DETAILS,
+  async (_event, taskId: number) => {
+    try {
+      return await prisma.task.findUniqueOrThrow({
+        where: {
+          id: taskId,
         },
       });
     } catch (err: any) {
