@@ -112,8 +112,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
 
     let stringifiedJson;
     if (editor) {
-      const descriptionAsJSON = editor.getJSON();
-      stringifiedJson = JSON.stringify(descriptionAsJSON);
+      stringifiedJson = editor.getHTML();
     }
 
     const task = {

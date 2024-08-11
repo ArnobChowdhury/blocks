@@ -9,23 +9,18 @@ import React, {
 import { handlePageTaskRefresh } from '../utils';
 import { ChannelsEnum } from '../types';
 
+// eslint-disable-next-line import/no-relative-packages
+import { Task } from '../../generated/client';
+
 const AppContextFn = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [notification, setNotification] = useState<{
     message: string;
     type: 'error' | 'info' | 'success' | 'warning';
   }>();
-
-  useEffect(() => {
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_CREATE_TASK,
-      () => {
-        handlePageTaskRefresh();
-      },
-    );
-    return unsubscribe;
-  }, []);
-
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [taskIdForEdit, setTaskIdForEdit] = useState<number>();
+  const [taskForEdit, setTaskForEdit] = useState<Task>();
   /**
    * Add event listeners... for page refresh events' errors and set notifiers
    */
@@ -38,6 +33,30 @@ const AppContextFn = () => {
     [],
   );
 
+  useEffect(() => {
+    if (taskIdForEdit && !taskForEdit) {
+      // fetch the task if taskIdForEdit is undefined
+      window.electron.ipcRenderer
+        .invoke(ChannelsEnum.REQUEST_TASK_DETAILS, taskIdForEdit)
+        .then((res) => {
+          return setTaskForEdit(res);
+        })
+        .catch((err: any) => {
+          setNotifier(err.message, 'error');
+        });
+    }
+  }, [taskForEdit, taskIdForEdit, setNotifier]);
+
+  useEffect(() => {
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK,
+      () => {
+        handlePageTaskRefresh();
+      },
+    );
+    return unsubscribe;
+  }, []);
+
   const clearNotifier = useCallback(() => {
     setShowSnackbar(false);
     setNotification(undefined);
@@ -48,6 +67,11 @@ const AppContextFn = () => {
     notification,
     setNotifier,
     clearNotifier,
+    showAddTask,
+    setShowAddTask,
+    taskForEdit,
+    setTaskIdForEdit,
+    setTaskForEdit,
   };
 };
 

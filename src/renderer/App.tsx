@@ -39,7 +39,7 @@ import CalendarToday from './icons/CalendarToday';
 import InboxIcon from './icons/Inbox';
 import TrackerIcon from './icons/Tracker';
 import Plus from './icons/Plus';
-import { AddTask } from './widgets';
+import { AddTask, EditTask } from './widgets';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
 
@@ -96,7 +96,18 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 function Navigation() {
   const location = useLocation();
   const theme = useTheme();
-  const [showAddTask, setShowAddTask] = useState(false);
+  const {
+    showAddTask,
+    setShowAddTask,
+    taskForEdit,
+    setTaskIdForEdit,
+    setTaskForEdit,
+  } = useApp();
+
+  const handleEditTaskCancel = () => {
+    setTaskForEdit(undefined);
+    setTaskIdForEdit(undefined);
+  };
 
   return (
     <>
@@ -149,6 +160,11 @@ function Navigation() {
       </List>
       <Dialog open={showAddTask}>
         <AddTask widgetCloseFunc={setShowAddTask} />
+      </Dialog>
+      <Dialog open={Boolean(taskForEdit)}>
+        {taskForEdit && (
+          <EditTask task={taskForEdit} widgetCloseFunc={handleEditTaskCancel} />
+        )}
       </Dialog>
     </>
   );
