@@ -13,23 +13,20 @@ import {
   Popover,
   Divider,
   FormControlLabel,
-  Checkbox,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { Dayjs } from 'dayjs';
 import CustomChip from '../components/CustomChip';
-import { CalendarChip, DescriptionEditor } from '../components';
+import {
+  CalendarChip,
+  DescriptionEditor,
+  SectionHeader,
+  SmallCheckbox,
+} from '../components';
 import { TaskScheduleTypeEnum, DaysInAWeek, ChannelsEnum } from '../types';
 import { useApp } from '../context/AppProvider';
-
-const SectionHeader = styled(Typography)(({ theme }) => ({
-  ...theme.typography.body2,
-  marginBottom: theme.spacing(1),
-  fontWeight: 500,
-}));
 
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
@@ -236,7 +233,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
             TaskScheduleTypeEnum.SpecificDaysInAWeek) && (
           <FormControlLabel
             control={
-              <Checkbox
+              <SmallCheckbox
                 name="scoreHabit"
                 checked={shouldBeScored}
                 onChange={(e) => setShouldBeScored(e.target.checked)}

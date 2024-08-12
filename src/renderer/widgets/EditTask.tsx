@@ -11,27 +11,22 @@ import {
   Popover,
   Divider,
   FormControlLabel,
-  Checkbox,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-// import CustomChip from '../components/CustomChip';
-import { CalendarChip, DescriptionEditor } from '../components';
+import {
+  CalendarChip,
+  DescriptionEditor,
+  SectionHeader,
+  SmallCheckbox,
+} from '../components';
 import { TaskScheduleTypeEnum, ChannelsEnum } from '../types';
 import { useApp } from '../context/AppProvider';
 
 // eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
-
-// todo: should be moved to components if used because same component is present in AddTask as well
-const SectionHeader = styled(Typography)(({ theme }) => ({
-  ...theme.typography.body2,
-  marginBottom: theme.spacing(1),
-  fontWeight: 500,
-}));
 
 interface IEditTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
@@ -43,9 +38,6 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(
     dayjs(task.dueDate),
   );
-  // todo selected Days need to be handled later. Problematic because of
-  // const [selectedDays, setSelectedDays] = useState<DaysInAWeek[]>([]);
-
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(task.shouldBeScored);
   const { setNotifier } = useApp();
@@ -166,7 +158,7 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
             <Divider sx={{ my: 2 }} />
             <FormControlLabel
               control={
-                <Checkbox
+                <SmallCheckbox
                   name="scoreHabit"
                   checked={Boolean(shouldBeScored)}
                   onChange={(e) => setShouldBeScored(e.target.checked)}
