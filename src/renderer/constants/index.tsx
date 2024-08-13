@@ -6,3 +6,10 @@ export const scoreColors = [
   '#134F5CCC',
   '#134F5C',
 ];
+
+export const TimeColors = {
+  morning: '#E4F8FC',
+  afternoon: '#FEEED4',
+  evening: '#FFDFDC',
+  night: '#CDD2E9',
+};

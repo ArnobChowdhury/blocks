@@ -232,6 +232,7 @@ const generateDueRepetitiveTasks = async () => {
         schedule,
         shouldBeScored,
         createdAt,
+        timeOfDay,
       } = repetitiveTask;
 
       let lastDateOfTaskGeneration: Dayjs | Date | null;
@@ -280,6 +281,7 @@ const generateDueRepetitiveTasks = async () => {
                 description,
                 schedule,
                 shouldBeScored,
+                timeOfDay,
               },
               update: {},
             });
@@ -305,8 +307,15 @@ const generateDueRepetitiveTasks = async () => {
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_TASK,
   async (event, task: ITaskIPC) => {
-    const { title, description, schedule, dueDate, days, shouldBeScored } =
-      task;
+    const {
+      title,
+      description,
+      schedule,
+      dueDate,
+      days,
+      shouldBeScored,
+      timeOfDay,
+    } = task;
     try {
       if (
         schedule === TaskScheduleTypeEnum.Once ||
@@ -321,6 +330,7 @@ ipcMain.handle(
             shouldBeScored,
             createdAt: new Date(),
             dueDate,
+            timeOfDay,
           },
         });
       } else {
@@ -385,6 +395,7 @@ ipcMain.handle(
             friday,
             saturday,
             sunday,
+            timeOfDay,
           },
         });
       }
@@ -399,7 +410,7 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_TASK,
   async (event, task: ITaskIPC) => {
-    const { id, title, description, dueDate, shouldBeScored } = task;
+    const { id, title, description, dueDate, shouldBeScored, timeOfDay } = task;
     try {
       await prisma.task.update({
         where: {
@@ -410,6 +421,7 @@ ipcMain.handle(
           description,
           dueDate,
           shouldBeScored,
+          timeOfDay,
         },
       });
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);

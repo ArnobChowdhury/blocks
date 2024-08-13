@@ -30,6 +30,7 @@ model RepetitiveTaskTemplate {
   friday                   Boolean?  @default(false)
   saturday                 Boolean?  @default(false)
   sunday                   Boolean?  @default(false)
+  timeOfDay                String?
   lastDateOfTaskGeneration DateTime?
   createdAt                DateTime  @default(now())
   modifiedAt               DateTime  @updatedAt
@@ -47,6 +48,7 @@ model Task {
   dueDate                  DateTime?
   shouldBeScored           Boolean?
   score                    Int?
+  timeOfDay                String?
   RepetitiveTaskTemplate   RepetitiveTaskTemplate? @relation(fields: [repetitiveTaskTemplateId], references: [id], onDelete: Cascade)
   repetitiveTaskTemplateId Int?
   createdAt                DateTime                @default(now())
