@@ -135,7 +135,7 @@ function TodoList() {
   }, [taskRescheduleError, setNotifier]);
 
   useEffect(() => {
-    const tasksOverdueByDate: { [key: string]: Task[] } = {};
+    const tasksOverdueByDate: Record<string, Task[]> = {};
 
     tasksOverdue.forEach((task) => {
       const taskDueDate = formatDate(dayjs(task.dueDate!));
@@ -189,44 +189,47 @@ function TodoList() {
             Overdue
           </Typography>
           {/* todo sorting needed to ensure the dates are in correct order  */}
-          {Object.keys(sortedTasksOverdue).map((key) => (
-            <Box ml={2} key={key}>
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                width="100%"
-                alignItems="center"
-              >
-                <SectionHeader mt={2}>{key}</SectionHeader>
-                <Button
-                  size="small"
-                  startIcon={<ThumbDownIcon />}
-                  onClick={() => handleBulkFailure(key)}
-                  disabled={requestOnGoing}
+          {Object.keys(sortedTasksOverdue)
+            .sort((a, b) => dayjs(a) - dayjs(b))
+            .map((key) => (
+              <Box ml={2} key={key}>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  width="100%"
+                  alignItems="center"
                 >
-                  Fail all
-                </Button>
+                  <SectionHeader mt={2}>{key}</SectionHeader>
+                  <Button
+                    size="small"
+                    startIcon={<ThumbDownIcon color="error" />}
+                    onClick={() => handleBulkFailure(key)}
+                    disabled={requestOnGoing}
+                    color="error"
+                  >
+                    Fail all
+                  </Button>
+                </Box>
+                <List>
+                  {sortedTasksOverdue[key].map((task) => (
+                    <React.Fragment key={task.id}>
+                      <TodoListItem
+                        isCompleted={task.completionStatus === 'COMPLETE'}
+                        onChange={(e) => handleTaskToggle(e, task)}
+                        taskTitle={task.title}
+                        showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
+                        onFail={() => onTaskFailure(task.id)}
+                        onReschedule={(rescheduledTime) =>
+                          onTaskReschedule(task.id, rescheduledTime)
+                        }
+                        onTaskEdit={() => handleTaskEdit(task.id)}
+                      />
+                      <Divider />
+                    </React.Fragment>
+                  ))}
+                </List>
               </Box>
-              <List>
-                {sortedTasksOverdue[key].map((task) => (
-                  <React.Fragment key={task.id}>
-                    <TodoListItem
-                      isCompleted={task.completionStatus === 'COMPLETE'}
-                      onChange={(e) => handleTaskToggle(e, task)}
-                      taskTitle={task.title}
-                      showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
-                      onFail={() => onTaskFailure(task.id)}
-                      onReschedule={(rescheduledTime) =>
-                        onTaskReschedule(task.id, rescheduledTime)
-                      }
-                      onTaskEdit={() => handleTaskEdit(task.id)}
-                    />
-                    <Divider />
-                  </React.Fragment>
-                ))}
-              </List>
-            </Box>
-          ))}
+            ))}
         </>
       )}
       <Typography variant="h6" mt={2}>
