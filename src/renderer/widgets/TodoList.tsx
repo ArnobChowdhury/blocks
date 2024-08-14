@@ -190,7 +190,7 @@ function TodoList() {
           </Typography>
           {/* todo sorting needed to ensure the dates are in correct order  */}
           {Object.keys(sortedTasksOverdue)
-            .sort((a, b) => dayjs(a) - dayjs(b))
+            .sort((a, b) => dayjs(a).diff(dayjs(b)))
             .map((key) => (
               <Box ml={2} key={key}>
                 <Box
@@ -256,6 +256,7 @@ function TodoList() {
               pt: timeOfDay ? 2 : 0,
               mt: timeOfDay ? 2 : 0,
             }}
+            key={bg}
           >
             {timeOfDay && (
               <SectionHeader sx={{ textTransform: 'capitalize' }}>
