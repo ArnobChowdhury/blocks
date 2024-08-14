@@ -24,8 +24,14 @@ import {
   DescriptionEditor,
   SectionHeader,
   SmallCheckbox,
+  TimeOfDaySelector,
 } from '../components';
-import { TaskScheduleTypeEnum, DaysInAWeek, ChannelsEnum } from '../types';
+import {
+  TaskScheduleTypeEnum,
+  TimeOfDay,
+  DaysInAWeek,
+  ChannelsEnum,
+} from '../types';
 import { useApp } from '../context/AppProvider';
 
 interface IAddTaskProps {
@@ -38,6 +44,9 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
     useState<TaskScheduleTypeEnum>(TaskScheduleTypeEnum.Unscheduled);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>();
   const [selectedDays, setSelectedDays] = useState<DaysInAWeek[]>([]);
+  const [selectedTimeOfDay, setSelectedTimeOfDay] = useState<TimeOfDay | null>(
+    null,
+  );
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(false);
   const { setNotifier } = useApp();
@@ -98,6 +107,10 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
     );
   };
 
+  const handleTimeToggle = (time: TimeOfDay) => {
+    setSelectedTimeOfDay((prev) => (prev === time ? null : time));
+  };
+
   const showDate = Boolean(dateAnchorEl);
   const datePopOverId = showDate ? 'datepicker-popover' : undefined;
 
@@ -119,6 +132,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       days: selectedDays,
       dueDate,
       shouldBeScored,
+      timeOfDay: selectedTimeOfDay,
     };
 
     try {
@@ -227,6 +241,11 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
             <CalendarChip date={selectedDate} />
           </>
         )}
+
+        <TimeOfDaySelector
+          selectedTime={selectedTimeOfDay}
+          onTimeClick={handleTimeToggle}
+        />
 
         {(selectedScheduleType === TaskScheduleTypeEnum.Daily ||
           selectedScheduleType ===

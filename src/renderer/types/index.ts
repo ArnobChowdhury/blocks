@@ -8,6 +8,13 @@ export enum DaysInAWeek {
   Saturday = 'saturday',
 }
 
+export enum TimeOfDay {
+  Morning = 'morning',
+  Afternoon = 'afternoon',
+  Evening = 'evening',
+  Night = 'night',
+}
+
 export enum TaskScheduleTypeEnum {
   Unscheduled = 'Unscheduled',
   Once = 'Once',
@@ -23,6 +30,7 @@ export interface ITaskIPC {
   days?: DaysInAWeek[]; // only if the schedule is SpecificDaysInAWeek
   dueDate?: string; // only if the schedule is Once
   shouldBeScored?: boolean; // only if the schedule is Daily or SpecificDaysInAWeek
+  timeOfDay?: TimeOfDay;
 }
 
 export interface IDailyTaskEntry {

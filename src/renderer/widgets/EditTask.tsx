@@ -21,8 +21,9 @@ import {
   DescriptionEditor,
   SectionHeader,
   SmallCheckbox,
+  TimeOfDaySelector,
 } from '../components';
-import { TaskScheduleTypeEnum, ChannelsEnum } from '../types';
+import { TaskScheduleTypeEnum, ChannelsEnum, TimeOfDay } from '../types';
 import { useApp } from '../context/AppProvider';
 
 // eslint-disable-next-line import/no-relative-packages
@@ -37,6 +38,9 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
   const [taskTitle, setTaskTitle] = useState(task.title);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(
     dayjs(task.dueDate),
+  );
+  const [selectedTimeOfDay, setSelectedTimeOfDay] = useState<TimeOfDay | null>(
+    (task.timeOfDay as TimeOfDay) || null,
   );
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(task.shouldBeScored);
@@ -86,6 +90,10 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
     if (isTaskReSchedulable) setDateAnchorEl(e.currentTarget);
   };
 
+  const handleTimeToggle = (time: TimeOfDay) => {
+    setSelectedTimeOfDay((prev) => (prev === time ? null : time));
+  };
+
   const showDate = Boolean(dateAnchorEl);
   const datePopOverId = showDate ? 'datepicker-popover' : undefined;
 
@@ -106,6 +114,7 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
       description: stringifiedDescription,
       dueDate,
       shouldBeScored,
+      timeOfDay: selectedTimeOfDay,
     };
 
     try {
@@ -151,6 +160,11 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
             onClick={openDueDatePicker}
           />
         )}
+
+        <TimeOfDaySelector
+          selectedTime={selectedTimeOfDay}
+          onTimeClick={handleTimeToggle}
+        />
 
         {(task.schedule === TaskScheduleTypeEnum.Daily ||
           task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) && (
