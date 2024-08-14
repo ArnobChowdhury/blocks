@@ -15,8 +15,8 @@ import dayjs from 'dayjs';
 
 // eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
-import { TaskScheduleTypeEnum, ChannelsEnum } from '../types';
-import { TodoListItem, TaskScoring } from '../components';
+import { TaskScheduleTypeEnum, ChannelsEnum, TimeOfDay } from '../types';
+import { TodoListItem, TaskScoring, SectionHeader } from '../components';
 import { formatDate, refreshTodayPageTasks } from '../utils';
 import {
   useBulkFailure,
@@ -24,10 +24,18 @@ import {
   useTaskFailure,
   useTaskReschedule,
 } from '../hooks';
+import { TimeColors } from '../constants';
 import { useApp } from '../context/AppProvider';
 
 function TodoList() {
-  const [tasksToday, setTasksToday] = useState<Task[]>([]);
+  const [tasksMorning, setTasksMorning] = useState<Task[]>([]);
+  const [tasksAfternoon, setTasksAfternoon] = useState<Task[]>([]);
+  const [tasksEvening, setTasksEvening] = useState<Task[]>([]);
+  const [tasksNight, setTasksNight] = useState<Task[]>([]);
+  const [tasksWithoutTimeOfDay, setTasksWithoutTimeOfDay] = useState<Task[]>(
+    [],
+  );
+
   const [tasksOverdue, setTasksOverdue] = useState<Task[]>([]);
   const [sortedTasksOverdue, setSortedTasksOverdue] = useState<{
     [key: string]: Task[];
@@ -40,8 +48,31 @@ function TodoList() {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_TODAY,
       (response) => {
-        // todo need error handling
-        setTasksToday(response as Task[]);
+        const tasks = response as Task[];
+        const morningTasks: Task[] = [];
+        const afternoonTasks: Task[] = [];
+        const eveningTasks: Task[] = [];
+        const nightTasks: Task[] = [];
+        const tasksWithoutTime: Task[] = [];
+
+        tasks.forEach((task) => {
+          if (task.timeOfDay === TimeOfDay.Morning) {
+            morningTasks.push(task);
+          } else if (task.timeOfDay === TimeOfDay.Afternoon) {
+            afternoonTasks.push(task);
+          } else if (task.timeOfDay === TimeOfDay.Evening) {
+            eveningTasks.push(task);
+          } else if (task.timeOfDay === TimeOfDay.Night) {
+            nightTasks.push(task);
+          } else {
+            tasksWithoutTime.push(task);
+          }
+        });
+        setTasksMorning(morningTasks);
+        setTasksAfternoon(afternoonTasks);
+        setTasksEvening(eveningTasks);
+        setTasksNight(nightTasks);
+        setTasksWithoutTimeOfDay(tasksWithoutTime);
       },
     );
 
@@ -166,9 +197,7 @@ function TodoList() {
                 width="100%"
                 alignItems="center"
               >
-                <Typography variant="body1" mt={2} sx={{ fontWeight: 500 }}>
-                  {key}
-                </Typography>
+                <SectionHeader mt={2}>{key}</SectionHeader>
                 <Button
                   size="small"
                   startIcon={<ThumbDownIcon />}
@@ -203,24 +232,55 @@ function TodoList() {
       <Typography variant="h6" mt={2}>
         {todayFormatted}
       </Typography>
-      <List>
-        {tasksToday.map((task) => (
-          <React.Fragment key={task.id}>
-            <TodoListItem
-              isCompleted={task.completionStatus === 'COMPLETE'}
-              onChange={(e) => handleTaskToggle(e, task)}
-              taskTitle={task.title}
-              showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
-              onFail={() => onTaskFailure(task.id)}
-              onReschedule={(rescheduledTime) =>
-                onTaskReschedule(task.id, rescheduledTime)
-              }
-              onTaskEdit={() => handleTaskEdit(task.id)}
-            />
-            <Divider />
-          </React.Fragment>
-        ))}
-      </List>
+      {[
+        tasksMorning,
+        tasksAfternoon,
+        tasksEvening,
+        tasksNight,
+        tasksWithoutTimeOfDay,
+      ].map((tasks) => {
+        if (tasks.length === 0) return null;
+
+        const { timeOfDay } = tasks[0];
+        const bg = timeOfDay ? TimeColors[timeOfDay] : 'none';
+        const header = tasks[0].timeOfDay;
+        return (
+          <Box
+            sx={{
+              background: bg,
+              borderRadius: '4px',
+              px: 2,
+              pt: timeOfDay ? 2 : 0,
+              mt: timeOfDay ? 2 : 0,
+            }}
+          >
+            {timeOfDay && (
+              <SectionHeader sx={{ textTransform: 'capitalize' }}>
+                {header}
+              </SectionHeader>
+            )}
+            <List>
+              {tasks.map((task, index) => (
+                <React.Fragment key={task.id}>
+                  <TodoListItem
+                    isCompleted={task.completionStatus === 'COMPLETE'}
+                    onChange={(e) => handleTaskToggle(e, task)}
+                    taskTitle={task.title}
+                    showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
+                    onFail={() => onTaskFailure(task.id)}
+                    onReschedule={(rescheduledTime) =>
+                      onTaskReschedule(task.id, rescheduledTime)
+                    }
+                    onTaskEdit={() => handleTaskEdit(task.id)}
+                  />
+                  {index !== tasks.length - 1 && <Divider />}
+                </React.Fragment>
+              ))}
+            </List>
+          </Box>
+        );
+      })}
+
       <Dialog
         open={Boolean(taskForScoring)}
         onClose={handleScoreDialogClose}
