@@ -9,8 +9,12 @@ import {
   Typography,
   Paper,
   Popover,
-  Divider,
   FormControlLabel,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  styled,
 } from '@mui/material';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -23,11 +27,21 @@ import {
   SmallCheckbox,
   TimeOfDaySelector,
 } from '../components';
-import { TaskScheduleTypeEnum, ChannelsEnum, TimeOfDay } from '../types';
+import {
+  TaskScheduleTypeEnum,
+  ChannelsEnum,
+  TimeOfDay,
+  TaskCompletionStatusEnum,
+} from '../types';
 import { useApp } from '../context/AppProvider';
 
 // eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
+
+const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
+  textTransform: 'capitalize',
+  fontSize: theme.typography.body2.fontSize,
+}));
 
 interface IEditTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
@@ -44,6 +58,10 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
   );
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(task.shouldBeScored);
+  const [completionStatus, setCompletionStatus] =
+    useState<TaskCompletionStatusEnum>(
+      task.completionStatus as TaskCompletionStatusEnum,
+    );
   const { setNotifier } = useApp();
 
   // todo editor to be reused as a hook between AddTask and EditTask
@@ -168,21 +186,52 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
 
         {(task.schedule === TaskScheduleTypeEnum.Daily ||
           task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) && (
-          <>
-            <Divider sx={{ my: 2 }} />
-            <FormControlLabel
-              control={
-                <SmallCheckbox
-                  name="scoreHabit"
-                  checked={Boolean(shouldBeScored)}
-                  onChange={(e) => setShouldBeScored(e.target.checked)}
-                />
-              }
-              label={<Typography variant="body2">Score your habit?</Typography>}
-              sx={{ alignSelf: 'flex-end' }}
-            />
-          </>
+          <FormControlLabel
+            control={
+              <SmallCheckbox
+                name="scoreHabit"
+                checked={Boolean(shouldBeScored)}
+                onChange={(e) => setShouldBeScored(e.target.checked)}
+              />
+            }
+            label={<Typography variant="body2">Score your habit?</Typography>}
+            sx={{ alignSelf: 'flex-end', pl: 0.2, mt: 1 }}
+          />
         )}
+        <FormControl sx={{ minWidth: 120, mt: 2, display: 'block' }}>
+          {/* todo:  change id  */}
+          <InputLabel id="demo-simple-select-helper-label">
+            Completion Status
+          </InputLabel>
+          <Select
+            labelId="demo-simple-select-helper-label"
+            //  change id
+            id="demo-simple-select-helper"
+            value={completionStatus}
+            label="Completion Status"
+            onChange={(event) =>
+              setCompletionStatus(
+                event.target.value as TaskCompletionStatusEnum,
+              )
+            }
+            sx={{
+              minWidth: '200px',
+              textTransform: 'capitalize',
+            }}
+            size="small"
+          >
+            <MenuItemStyled value={TaskCompletionStatusEnum.COMPLETE}>
+              {TaskCompletionStatusEnum.COMPLETE.toLowerCase()}
+            </MenuItemStyled>
+            <MenuItemStyled value={TaskCompletionStatusEnum.INCOMPLETE}>
+              {TaskCompletionStatusEnum.INCOMPLETE.toLowerCase()}
+            </MenuItemStyled>
+            <MenuItemStyled value={TaskCompletionStatusEnum.FAILED}>
+              {TaskCompletionStatusEnum.FAILED.toLowerCase()}
+            </MenuItemStyled>
+          </Select>
+        </FormControl>
+
         <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
           <Button
             variant="outlined"
