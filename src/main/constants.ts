@@ -4,7 +4,6 @@ import { app } from 'electron';
 export const isDev = process.env.NODE_ENV === 'development';
 export const dbPath = path.join(app.getPath('userData'), 'app.db');
 export const dbUrl = isDev ? process.env.DATABASE_URL! : `file:${dbPath}`;
-console.log('dbPath', dbPath);
 
 // Hacky, but putting this here because otherwise at query time the Prisma client
 // gives an error "Environment variable not found: DATABASE_URL" despite us passing
@@ -12,7 +11,7 @@ console.log('dbPath', dbPath);
 process.env.DATABASE_URL = dbUrl;
 
 // This needs to be updated every time you create a migration!
-export const latestMigration = '20240708070457_initial';
+export const latestMigration = '20240813095625_add_time_of_day';
 export const platformToExecutables: any = {
   win32: {
     migrationEngine: 'node_modules/@prisma/engines/schema-engine-windows.exe',
