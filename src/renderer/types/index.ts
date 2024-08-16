@@ -22,6 +22,12 @@ export enum TaskScheduleTypeEnum {
   SpecificDaysInAWeek = 'Specific Days in a Week',
 }
 
+export enum TaskCompletionStatusEnum {
+  INCOMPLETE = 'INCOMPLETE',
+  COMPLETE = 'COMPLETE',
+  FAILED = 'FAILED',
+}
+
 export interface ITaskIPC {
   id?: number;
   title: string;
@@ -31,6 +37,7 @@ export interface ITaskIPC {
   dueDate?: string; // only if the schedule is Once
   shouldBeScored?: boolean; // only if the schedule is Daily or SpecificDaysInAWeek
   timeOfDay?: TimeOfDay;
+  completionStatus?: TaskCompletionStatusEnum;
 }
 
 export interface IDailyTaskEntry {
@@ -41,12 +48,6 @@ export interface IDailyTaskEntry {
   score: number | null;
   createdAt: Date;
   lastModifiedAt: Date;
-}
-
-export enum TaskCompletionStatusEnum {
-  INCOMPLETE = 'INCOMPLETE',
-  COMPLETE = 'COMPLETE',
-  FAILED = 'FAILED',
 }
 
 /**
