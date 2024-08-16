@@ -410,7 +410,15 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_TASK,
   async (event, task: ITaskIPC) => {
-    const { id, title, description, dueDate, shouldBeScored, timeOfDay } = task;
+    const {
+      id,
+      title,
+      description,
+      dueDate,
+      shouldBeScored,
+      timeOfDay,
+      completionStatus,
+    } = task;
     try {
       await prisma.task.update({
         where: {
@@ -422,6 +430,7 @@ ipcMain.handle(
           dueDate,
           shouldBeScored,
           timeOfDay,
+          completionStatus,
         },
       });
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);

@@ -133,6 +133,7 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
       dueDate,
       shouldBeScored,
       timeOfDay: selectedTimeOfDay,
+      completionStatus,
     };
 
     try {
@@ -199,14 +200,11 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
           />
         )}
         <FormControl sx={{ minWidth: 120, mt: 2, display: 'block' }}>
-          {/* todo:  change id  */}
-          <InputLabel id="demo-simple-select-helper-label">
+          <InputLabel id="task-completion-status-id">
             Completion Status
           </InputLabel>
           <Select
-            labelId="demo-simple-select-helper-label"
-            //  change id
-            id="demo-simple-select-helper"
+            labelId="task-completion-status-id"
             value={completionStatus}
             label="Completion Status"
             onChange={(event) =>
