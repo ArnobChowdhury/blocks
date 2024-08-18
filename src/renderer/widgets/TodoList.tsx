@@ -3,14 +3,13 @@ import {
   List,
   Divider,
   Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
+  IconButton,
   Box,
+  Popover,
 } from '@mui/material';
 import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
+import CheckIcon from '@mui/icons-material/Check';
 import dayjs from 'dayjs';
 
 // eslint-disable-next-line import/no-relative-packages
@@ -40,7 +39,7 @@ function TodoList() {
   const [sortedTasksOverdue, setSortedTasksOverdue] = useState<{
     [key: string]: Task[];
   }>({});
-  const [taskForScoring, setTaskIndexForScoring] = useState<Task>();
+  const [taskForScoring, setTaskForScoring] = useState<Task>();
   const [score, setScore] = useState<number | null>(null);
   const { setNotifier, setTaskIdForEdit } = useApp();
 
@@ -150,12 +149,17 @@ function TodoList() {
     setSortedTasksOverdue(tasksOverdueByDate);
   }, [tasksOverdue]);
 
+  const [scoreAnchorEl, setScoreAnchorEl] =
+    React.useState<HTMLInputElement | null>(null);
+
   const handleTaskToggle = (
     e: React.ChangeEvent<HTMLInputElement>,
     task: Task,
   ) => {
-    if (task.shouldBeScored && e.target.checked) setTaskIndexForScoring(task);
-    else
+    if (task.shouldBeScored && e.target.checked) {
+      setTaskForScoring(task);
+      setScoreAnchorEl(e.target);
+    } else
       onToggleTaskCompletionStatus(
         task.id,
         e.target.checked,
@@ -164,7 +168,7 @@ function TodoList() {
   };
 
   const handleScoreDialogClose = () => {
-    setTaskIndexForScoring(undefined);
+    setTaskForScoring(undefined);
     setScore(null);
   };
 
@@ -179,6 +183,20 @@ function TodoList() {
     if (taskId) {
       setTaskIdForEdit(taskId);
     }
+  };
+
+  const handleScoreSelection = (index: number) => {
+    if (score === index) {
+      setScore(null);
+      return;
+    }
+    setScore(index);
+  };
+
+  const handleScoreSubmission = () => {
+    if (score === null || !taskForScoring) return;
+    onToggleTaskCompletionStatus(taskForScoring.id, true, score);
+    handleScoreDialogClose();
   };
 
   return (
@@ -284,37 +302,33 @@ function TodoList() {
           </Box>
         );
       })}
-
-      <Dialog
+      <Popover
         open={Boolean(taskForScoring)}
+        anchorEl={scoreAnchorEl}
         onClose={handleScoreDialogClose}
-        title="Score dialog"
-        sx={{ padding: 2 }}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
       >
-        <DialogTitle fontSize="16px">Score your task</DialogTitle>
-        {taskForScoring && (
-          <DialogContent>
-            <Typography variant="body1">{taskForScoring.title}</Typography>
-          </DialogContent>
-        )}
-        <Box px={3} minWidth={450}>
-          <Typography variant="h6">Score:</Typography>
-          <TaskScoring selected={score} onScoreSelection={setScore} />
-        </Box>
-        <DialogActions>
-          <Button
-            variant="text"
+        <Box p={2} display="flex" alignItems="center">
+          <Typography variant="body2" mr={1}>
+            Score:
+          </Typography>
+          <TaskScoring
+            selected={score}
+            onScoreSelection={handleScoreSelection}
+          />
+          <IconButton
+            size="small"
             disabled={score === null}
-            onClick={() => {
-              if (score === null || !taskForScoring) return;
-              onToggleTaskCompletionStatus(taskForScoring.id, true, score);
-              handleScoreDialogClose();
-            }}
+            color="primary"
+            onClick={handleScoreSubmission}
           >
-            Done
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <CheckIcon />
+          </IconButton>
+        </Box>
+      </Popover>
     </>
   );
 }

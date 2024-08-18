@@ -10,34 +10,34 @@ interface CircleProps {
 /* Rectangle 2487 */
 
 const Circle = styled(IconButton)<CircleProps>(({ bgcolor, selected }) => ({
-  width: 24,
-  height: 24,
+  width: 8,
+  height: 8,
   borderRadius: '50%',
   backgroundColor: bgcolor,
+  padding: 6,
   // marginRight: theme.spacing(3),
-  border: selected ? '4px solid white' : '4px solid transparent',
-  boxShadow: selected ? `0 0 0 3px ${bgcolor}` : 'none',
+  border: selected ? '3px solid white' : '3px solid transparent',
+  boxShadow: selected ? `0 0 0 2px ${bgcolor}` : 'none',
   '&:hover': {
     backgroundColor: bgcolor,
   },
 }));
 
 interface ITaskScoringProps {
-  onScoreSelection: React.Dispatch<React.SetStateAction<number | null>>;
+  onScoreSelection: (index: number) => void;
   selected: number | null;
 }
 
 function TaskScoring({ selected, onScoreSelection }: ITaskScoringProps) {
   return (
-    <Box display="flex" mt={1}>
+    <Box display="flex" gap={1} mr={0.5}>
       {scoreColors.map((color, index) => (
         <Box
-          width={24}
-          height={24}
+          width={20}
+          height={20}
           display="flex"
           justifyContent="center"
           alignItems="center"
-          mr={1}
           key={color}
         >
           <Circle
