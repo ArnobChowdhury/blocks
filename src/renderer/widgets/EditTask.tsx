@@ -14,6 +14,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Checkbox,
   styled,
 } from '@mui/material';
 import { StaticDatePicker } from '@mui/x-date-pickers';
@@ -24,7 +25,6 @@ import {
   CalendarChip,
   DescriptionEditor,
   SectionHeader,
-  SmallCheckbox,
   TimeOfDaySelector,
 } from '../components';
 import {
@@ -189,7 +189,8 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
           task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) && (
           <FormControlLabel
             control={
-              <SmallCheckbox
+              <Checkbox
+                size="small"
                 name="scoreHabit"
                 checked={Boolean(shouldBeScored)}
                 onChange={(e) => setShouldBeScored(e.target.checked)}

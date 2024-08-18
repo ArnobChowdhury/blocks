@@ -10,12 +10,12 @@ import {
   Tooltip,
   Popover,
   Chip,
+  Checkbox,
   useTheme,
 } from '@mui/material';
 import { LocalizationProvider, StaticDatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
-import SmallCheckbox from './SmallCheckbox';
 import Clock from '../icons/Clock';
 import Close from '../icons/Close';
 import { TaskScheduleTypeEnum, DaysInAWeek } from '../types';
@@ -86,7 +86,11 @@ function TodoListItem({
             {!isAHabit && (
               <FormControlLabel
                 control={
-                  <SmallCheckbox checked={isCompleted} onChange={onChange} />
+                  <Checkbox
+                    size="small"
+                    checked={isCompleted}
+                    onChange={onChange}
+                  />
                 }
                 label={
                   <Typography

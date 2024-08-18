@@ -12,6 +12,7 @@ import {
   Paper,
   Popover,
   Divider,
+  Checkbox,
   FormControlLabel,
 } from '@mui/material';
 import { StaticDatePicker } from '@mui/x-date-pickers';
@@ -23,7 +24,6 @@ import {
   CalendarChip,
   DescriptionEditor,
   SectionHeader,
-  SmallCheckbox,
   TimeOfDaySelector,
 } from '../components';
 import {
@@ -252,7 +252,8 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
             TaskScheduleTypeEnum.SpecificDaysInAWeek) && (
           <FormControlLabel
             control={
-              <SmallCheckbox
+              <Checkbox
+                size="small"
                 name="scoreHabit"
                 checked={shouldBeScored}
                 onChange={(e) => setShouldBeScored(e.target.checked)}
