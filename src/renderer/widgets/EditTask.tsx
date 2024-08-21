@@ -5,6 +5,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import {
   Button,
   Box,
+  Grid,
   TextField,
   Typography,
   Paper,
@@ -32,11 +33,13 @@ import {
   ChannelsEnum,
   TimeOfDay,
   TaskCompletionStatusEnum,
+  DaysInAWeek,
 } from '../types';
+import CustomChip from '../components/CustomChip';
 import { useApp } from '../context/AppProvider';
 
 // eslint-disable-next-line import/no-relative-packages
-import { Task } from '../../generated/client';
+import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 
 const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
   textTransform: 'capitalize',
@@ -45,13 +48,30 @@ const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
 
 interface IEditTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
-  task: Task;
+  task: Task | RepetitiveTaskTemplate;
 }
 
 function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
+  const isRepetitiveTaskTemplate = !('repetitiveTaskTemplateId' in task);
+  const isRepetitiveTaskTemplateAndSpecificDaysInAWeek =
+    isRepetitiveTaskTemplate &&
+    task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek;
+
+  const days: DaysInAWeek[] = [];
+  if (isRepetitiveTaskTemplateAndSpecificDaysInAWeek) {
+    if (task.monday) days.push(DaysInAWeek.Monday);
+    if (task.tuesday) days.push(DaysInAWeek.Tuesday);
+    if (task.wednesday) days.push(DaysInAWeek.Wednesday);
+    if (task.thursday) days.push(DaysInAWeek.Thursday);
+    if (task.friday) days.push(DaysInAWeek.Friday);
+    if (task.saturday) days.push(DaysInAWeek.Saturday);
+    if (task.sunday) days.push(DaysInAWeek.Sunday);
+  }
+
   const [taskTitle, setTaskTitle] = useState(task.title);
+  const [selectedDays, setSelectedDays] = useState<DaysInAWeek[]>(days);
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(
-    dayjs(task.dueDate),
+    'dueDate' in task && task.dueDate ? dayjs(task.dueDate) : null,
   );
   const [selectedTimeOfDay, setSelectedTimeOfDay] = useState<TimeOfDay | null>(
     (task.timeOfDay as TimeOfDay) || null,
@@ -59,8 +79,10 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(task.shouldBeScored);
   const [completionStatus, setCompletionStatus] =
-    useState<TaskCompletionStatusEnum>(
-      task.completionStatus as TaskCompletionStatusEnum,
+    useState<TaskCompletionStatusEnum | null>(
+      'completionStatus' in task
+        ? (task.completionStatus as TaskCompletionStatusEnum)
+        : null,
     );
   const { setNotifier } = useApp();
 
@@ -85,14 +107,21 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
   });
 
   const isSaveButtonDisabled = useMemo(() => {
-    if (!taskTitle) {
-      return true;
-    }
-    if (task.schedule === TaskScheduleTypeEnum.Once) {
-      return !selectedDate;
-    }
+    if (!taskTitle) return true;
+
+    if (task.schedule === TaskScheduleTypeEnum.Once) return !selectedDate;
+
+    if (isRepetitiveTaskTemplateAndSpecificDaysInAWeek)
+      return !selectedDays.length;
+
     return false;
-  }, [taskTitle, selectedDate, task.schedule]);
+  }, [
+    taskTitle,
+    selectedDate,
+    task.schedule,
+    selectedDays,
+    isRepetitiveTaskTemplateAndSpecificDaysInAWeek,
+  ]);
 
   /**
    * todo:
@@ -106,6 +135,12 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
     if (isTaskReSchedulable) setDateAnchorEl(e.currentTarget);
+  };
+
+  const handleDayToggle = (day: DaysInAWeek) => {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
+    );
   };
 
   const handleTimeToggle = (time: TimeOfDay) => {
@@ -126,21 +161,34 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
       stringifiedDescription = editor.getHTML();
     }
 
-    const editedTask = {
+    const editedTask: Record<string, any> = {
       id: task.id,
       title: taskTitle,
       description: stringifiedDescription,
-      dueDate,
       shouldBeScored,
       timeOfDay: selectedTimeOfDay,
-      completionStatus,
     };
 
+    if (!isRepetitiveTaskTemplateAndSpecificDaysInAWeek) {
+      editedTask.dueDate = dueDate;
+      editedTask.completionStatus = completionStatus;
+    }
+
+    if (isRepetitiveTaskTemplateAndSpecificDaysInAWeek)
+      editedTask.days = selectedDays;
+
     try {
-      await window.electron.ipcRenderer.invoke(
-        ChannelsEnum.REQUEST_UPDATE_TASK,
-        editedTask,
-      );
+      if (!isRepetitiveTaskTemplate)
+        await window.electron.ipcRenderer.invoke(
+          ChannelsEnum.REQUEST_UPDATE_TASK,
+          editedTask,
+        );
+      else {
+        await window.electron.ipcRenderer.invoke(
+          ChannelsEnum.REQUEST_UPDATE_REPETITIVE_TASK,
+          editedTask,
+        );
+      }
 
       widgetCloseFunc(false);
     } catch (err: any) {
@@ -167,17 +215,38 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
         <DescriptionEditor editor={editor} />
 
         <Box sx={{ mt: 2 }} display="flex">
-          <SectionHeader mr={0.5}>Schedule:</SectionHeader>
+          <SectionHeader sx={{ marginBottom: 0 }} mr={0.5}>
+            Schedule:
+          </SectionHeader>
           <Typography variant="body2">{task.schedule}</Typography>
         </Box>
 
         {task.schedule !== TaskScheduleTypeEnum.Unscheduled && selectedDate && (
           <CalendarChip
             clickable={isTaskReSchedulable}
-            sx={{ opacity: isTaskReSchedulable ? 1 : 0.6 }}
+            sx={{ opacity: isTaskReSchedulable ? 1 : 0.6, marginTop: 1 }}
             date={selectedDate}
             onClick={openDueDatePicker}
           />
+        )}
+
+        {isRepetitiveTaskTemplateAndSpecificDaysInAWeek && (
+          <Box sx={{ mt: 2 }}>
+            <SectionHeader>Select Days</SectionHeader>
+            <Grid container spacing={1}>
+              {Object.values(DaysInAWeek).map((day) => (
+                <Grid item key={day}>
+                  <CustomChip
+                    label={day}
+                    clickable
+                    sx={{ textTransform: 'capitalize' }}
+                    color={selectedDays.includes(day) ? 'primary' : 'default'}
+                    onClick={() => handleDayToggle(day)}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
         )}
 
         <TimeOfDaySelector
@@ -200,36 +269,38 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
             sx={{ alignSelf: 'flex-end', pl: 0.2, mt: 1 }}
           />
         )}
-        <FormControl sx={{ minWidth: 120, mt: 2, display: 'block' }}>
-          <InputLabel id="task-completion-status-id">
-            Completion Status
-          </InputLabel>
-          <Select
-            labelId="task-completion-status-id"
-            value={completionStatus}
-            label="Completion Status"
-            onChange={(event) =>
-              setCompletionStatus(
-                event.target.value as TaskCompletionStatusEnum,
-              )
-            }
-            sx={{
-              minWidth: '200px',
-              textTransform: 'capitalize',
-            }}
-            size="small"
-          >
-            <MenuItemStyled value={TaskCompletionStatusEnum.COMPLETE}>
-              {TaskCompletionStatusEnum.COMPLETE.toLowerCase()}
-            </MenuItemStyled>
-            <MenuItemStyled value={TaskCompletionStatusEnum.INCOMPLETE}>
-              {TaskCompletionStatusEnum.INCOMPLETE.toLowerCase()}
-            </MenuItemStyled>
-            <MenuItemStyled value={TaskCompletionStatusEnum.FAILED}>
-              {TaskCompletionStatusEnum.FAILED.toLowerCase()}
-            </MenuItemStyled>
-          </Select>
-        </FormControl>
+        {!isRepetitiveTaskTemplate && (
+          <FormControl sx={{ minWidth: 120, mt: 3, display: 'block' }}>
+            <InputLabel id="task-completion-status-id">
+              Completion Status
+            </InputLabel>
+            <Select
+              labelId="task-completion-status-id"
+              value={completionStatus}
+              label="Completion Status"
+              onChange={(event) =>
+                setCompletionStatus(
+                  event.target.value as TaskCompletionStatusEnum,
+                )
+              }
+              sx={{
+                minWidth: '200px',
+                textTransform: 'capitalize',
+              }}
+              size="small"
+            >
+              <MenuItemStyled value={TaskCompletionStatusEnum.COMPLETE}>
+                {TaskCompletionStatusEnum.COMPLETE.toLowerCase()}
+              </MenuItemStyled>
+              <MenuItemStyled value={TaskCompletionStatusEnum.INCOMPLETE}>
+                {TaskCompletionStatusEnum.INCOMPLETE.toLowerCase()}
+              </MenuItemStyled>
+              <MenuItemStyled value={TaskCompletionStatusEnum.FAILED}>
+                {TaskCompletionStatusEnum.FAILED.toLowerCase()}
+              </MenuItemStyled>
+            </Select>
+          </FormControl>
+        )}
 
         <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
           <Button

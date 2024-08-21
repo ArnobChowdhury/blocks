@@ -82,6 +82,7 @@ export enum ChannelsEnum {
   RESPONSE_CREATE_OR_UPDATE_TASK = 'response_create-task',
 
   REQUEST_UPDATE_TASK = 'request_task_update',
+  REQUEST_UPDATE_REPETITIVE_TASK = 'request_update_repetitive_task',
 
   REQUEST_TASKS_TODAY = 'request-tasks-today',
   RESPONSE_TASKS_TODAY = 'response-tasks-today',
@@ -118,4 +119,6 @@ export enum ChannelsEnum {
   REQUEST_BULK_TASK_FAILURE = 'request_bulk_task_failure',
 
   REQUEST_TASK_DETAILS = 'request_task_details',
+
+  REQUEST_REPETITIVE_TASK_DETAILS = 'request_repetitive_task_details',
 }

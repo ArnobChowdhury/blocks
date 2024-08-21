@@ -10,7 +10,7 @@ import { handlePageTaskRefresh } from '../utils';
 import { ChannelsEnum } from '../types';
 
 // eslint-disable-next-line import/no-relative-packages
-import { Task } from '../../generated/client';
+import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 
 const AppContextFn = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
@@ -21,6 +21,11 @@ const AppContextFn = () => {
   const [showAddTask, setShowAddTask] = useState(false);
   const [taskIdForEdit, setTaskIdForEdit] = useState<number>();
   const [taskForEdit, setTaskForEdit] = useState<Task>();
+
+  const [repetitiveTaskTemplateIdForEdit, setRepetitiveTaskTemplateIdForEdit] =
+    useState<number>();
+  const [repetitiveTaskTemplateForEdit, setRepetitiveTaskTemplateForEdit] =
+    useState<RepetitiveTaskTemplate>();
   /**
    * Add event listeners... for page refresh events' errors and set notifiers
    */
@@ -48,6 +53,27 @@ const AppContextFn = () => {
   }, [taskForEdit, taskIdForEdit, setNotifier]);
 
   useEffect(() => {
+    if (repetitiveTaskTemplateIdForEdit && !repetitiveTaskTemplateForEdit) {
+      // fetch the task if taskIdForEdit is undefined
+      window.electron.ipcRenderer
+        .invoke(
+          ChannelsEnum.REQUEST_REPETITIVE_TASK_DETAILS,
+          repetitiveTaskTemplateIdForEdit,
+        )
+        .then((res) => {
+          return setRepetitiveTaskTemplateForEdit(res);
+        })
+        .catch((err: any) => {
+          setNotifier(err.message, 'error');
+        });
+    }
+  }, [
+    repetitiveTaskTemplateForEdit,
+    repetitiveTaskTemplateIdForEdit,
+    setNotifier,
+  ]);
+
+  useEffect(() => {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK,
       () => {
@@ -72,6 +98,9 @@ const AppContextFn = () => {
     taskForEdit,
     setTaskIdForEdit,
     setTaskForEdit,
+    repetitiveTaskTemplateForEdit,
+    setRepetitiveTaskTemplateIdForEdit,
+    setRepetitiveTaskTemplateForEdit,
   };
 };
 

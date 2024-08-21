@@ -25,10 +25,18 @@ import {
   DaysInAWeek,
   ChannelsEnum,
 } from '../renderer/types';
-import { getTodayStart, getTodayEnd } from './helpers';
+import {
+  getTodayStart,
+  getTodayEnd,
+  getDaysForSpecificDaysInAWeekTasks,
+  getDaysForDailyTasks,
+} from './helpers';
 
 // const prisma = new PrismaClient();
 import { prisma, runPrismaCommand } from './prisma';
+
+// eslint-disable-next-line import/no-relative-packages
+import { RepetitiveTaskTemplate } from '../generated/client';
 
 class AppUpdater {
   constructor() {
@@ -343,43 +351,13 @@ ipcMain.handle(
         let sunday;
 
         if (schedule === TaskScheduleTypeEnum.Daily) {
-          monday = true;
-          tuesday = true;
-          wednesday = true;
-          thursday = true;
-          friday = true;
-          saturday = true;
-          sunday = true;
+          ({ monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
+            getDaysForDailyTasks());
         }
 
-        if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) {
-          days?.forEach((day) => {
-            switch (day) {
-              case 'monday':
-                monday = true;
-                break;
-              case 'tuesday':
-                tuesday = true;
-                break;
-              case 'wednesday':
-                wednesday = true;
-                break;
-              case 'thursday':
-                thursday = true;
-                break;
-              case 'friday':
-                friday = true;
-                break;
-              case 'saturday':
-                saturday = true;
-                break;
-              case 'sunday':
-                sunday = true;
-                break;
-              default:
-                break;
-            }
-          });
+        if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek && days) {
+          ({ monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
+            getDaysForSpecificDaysInAWeekTasks(days));
         }
 
         await prisma.repetitiveTaskTemplate.create({
@@ -433,6 +411,83 @@ ipcMain.handle(
           completionStatus,
         },
       });
+      event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
+    } catch (err) {
+      log.error(err);
+      throw err;
+    }
+  },
+);
+
+ipcMain.handle(
+  ChannelsEnum.REQUEST_UPDATE_REPETITIVE_TASK,
+  async (event, task: ITaskIPC) => {
+    const { id, title, description, shouldBeScored, timeOfDay, days } = task;
+    let repetitiveTaskTemplate: RepetitiveTaskTemplate | null;
+
+    try {
+      repetitiveTaskTemplate = await prisma.repetitiveTaskTemplate.findFirst({
+        where: {
+          id,
+        },
+      });
+
+      if (!repetitiveTaskTemplate)
+        throw new Error('Repetitive Task Template not found');
+    } catch (err) {
+      log.error(err);
+      throw err;
+    }
+
+    let monday;
+    let tuesday;
+    let wednesday;
+    let thursday;
+    let friday;
+    let saturday;
+    let sunday;
+
+    const { schedule } = repetitiveTaskTemplate;
+    if (schedule === TaskScheduleTypeEnum.Daily) {
+      ({ monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
+        getDaysForDailyTasks());
+    }
+
+    if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek && days) {
+      ({ monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
+        getDaysForSpecificDaysInAWeekTasks(days));
+    }
+
+    console.log({
+      monday,
+      tuesday,
+      wednesday,
+      thursday,
+      friday,
+      saturday,
+      sunday,
+    });
+
+    try {
+      await prisma.repetitiveTaskTemplate.update({
+        where: {
+          id,
+        },
+        data: {
+          title,
+          description,
+          shouldBeScored,
+          monday,
+          tuesday,
+          wednesday,
+          thursday,
+          friday,
+          saturday,
+          sunday,
+          timeOfDay,
+        },
+      });
+
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
     } catch (err) {
       log.error(err);
@@ -716,6 +771,22 @@ ipcMain.handle(
   async (_event, taskId: number) => {
     try {
       return await prisma.task.findUniqueOrThrow({
+        where: {
+          id: taskId,
+        },
+      });
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
+ipcMain.handle(
+  ChannelsEnum.REQUEST_REPETITIVE_TASK_DETAILS,
+  async (_event, taskId: number) => {
+    try {
+      return await prisma.repetitiveTaskTemplate.findUniqueOrThrow({
         where: {
           id: taskId,
         },

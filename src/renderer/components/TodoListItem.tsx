@@ -76,13 +76,28 @@ function TodoListItem({
 
   const theme = useTheme();
 
+  const handleEditClick = (
+    e: React.MouseEvent<HTMLSpanElement, MouseEvent>,
+  ) => {
+    e.preventDefault();
+    onTaskEdit();
+  };
+
   return (
     <ListItem onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       {/* todo we may not need LocalizationProvider everywhere, wrapping it at the top should do it   */}
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Box display="flex" justifyContent="space-between" width="100%">
           <Box display="flex" alignItems="center">
-            {isAHabit && <Typography variant="body2">{taskTitle}</Typography>}
+            {isAHabit && (
+              <Typography
+                sx={{ cursor: 'pointer' }}
+                variant="body2"
+                onClick={handleEditClick}
+              >
+                {taskTitle}
+              </Typography>
+            )}
             {!isAHabit && (
               <FormControlLabel
                 control={
@@ -98,10 +113,7 @@ function TodoListItem({
                       textDecoration: isCompleted ? 'line-through' : 'none',
                     }}
                     variant="body2"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onTaskEdit();
-                    }}
+                    onClick={handleEditClick}
                   >
                     {taskTitle}
                   </Typography>

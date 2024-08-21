@@ -102,11 +102,19 @@ function Navigation() {
     taskForEdit,
     setTaskIdForEdit,
     setTaskForEdit,
+    repetitiveTaskTemplateForEdit,
+    setRepetitiveTaskTemplateIdForEdit,
+    setRepetitiveTaskTemplateForEdit,
   } = useApp();
 
   const handleEditTaskCancel = () => {
     setTaskForEdit(undefined);
     setTaskIdForEdit(undefined);
+  };
+
+  const handleEditRepetitiveTaskTemplateCancel = () => {
+    setRepetitiveTaskTemplateForEdit(undefined);
+    setRepetitiveTaskTemplateIdForEdit(undefined);
   };
 
   return (
@@ -164,6 +172,14 @@ function Navigation() {
       <Dialog open={Boolean(taskForEdit)}>
         {taskForEdit && (
           <EditTask task={taskForEdit} widgetCloseFunc={handleEditTaskCancel} />
+        )}
+      </Dialog>
+      <Dialog open={Boolean(repetitiveTaskTemplateForEdit)}>
+        {repetitiveTaskTemplateForEdit && (
+          <EditTask
+            task={repetitiveTaskTemplateForEdit}
+            widgetCloseFunc={handleEditRepetitiveTaskTemplateCancel}
+          />
         )}
       </Dialog>
     </>

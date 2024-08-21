@@ -33,7 +33,8 @@ function AllTasks() {
     handlePageTaskRefresh,
   );
 
-  const { setNotifier } = useApp();
+  const { setNotifier, setTaskIdForEdit, setRepetitiveTaskTemplateIdForEdit } =
+    useApp();
 
   useEffect(() => {
     const unsubscribeUnscheduledActiveTasks = window.electron.ipcRenderer.on(
@@ -105,6 +106,14 @@ function AllTasks() {
     }
   }, [setNotifier, taskRescheduleError]);
 
+  const handleTaskEdit = (taskId: number) => {
+    setTaskIdForEdit(taskId);
+  };
+
+  const handleRepetitiveTaskEdit = (taskId: number) => {
+    setRepetitiveTaskTemplateIdForEdit(taskId);
+  };
+
   return (
     <div>
       <Typography mt={2} mb={1} variant="h6">
@@ -135,6 +144,7 @@ function AllTasks() {
                   onReschedule={(rescheduledTime) =>
                     onTaskReschedule(task.id, rescheduledTime)
                   }
+                  onTaskEdit={() => handleTaskEdit(task.id)}
                   showClock
                   key={task.id}
                 />
@@ -173,6 +183,7 @@ function AllTasks() {
                   onReschedule={(rescheduledTime) =>
                     onTaskReschedule(task.id, rescheduledTime)
                   }
+                  onTaskEdit={() => handleTaskEdit(task.id)}
                   showClock
                   key={task.id}
                   dueDateLabel={task.dueDate}
@@ -200,6 +211,7 @@ function AllTasks() {
                   taskTitle={task.title}
                   onChange={() => {}}
                   key={task.id}
+                  onTaskEdit={() => handleRepetitiveTaskEdit(task.id)}
                 />
                 <Divider />
               </Fragment>
@@ -225,6 +237,7 @@ function AllTasks() {
                   schedule={task.schedule as TaskScheduleTypeEnum}
                   taskTitle={task.title}
                   onChange={() => {}}
+                  onTaskEdit={() => handleRepetitiveTaskEdit(task.id)}
                   showClock
                   key={task.id}
                   dayLabels={days}

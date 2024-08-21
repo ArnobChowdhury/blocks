@@ -2,6 +2,7 @@ import log from 'electron-log';
 import path from 'path';
 import { fork } from 'child_process';
 // import { PrismaClient } from '@prisma/client';
+// eslint-disable-next-line import/no-relative-packages
 import { PrismaClient } from '../generated/client';
 import { dbUrl as dbUrlConstant, mePath, qePath } from './constants';
 
