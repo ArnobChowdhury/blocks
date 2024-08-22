@@ -798,6 +798,27 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle(
+  ChannelsEnum.REQUEST_STOP_REPETITIVE_TASK,
+  async (event, taskId: number) => {
+    try {
+      await prisma.repetitiveTaskTemplate.update({
+        where: {
+          id: taskId,
+        },
+        data: {
+          isActive: false,
+        },
+      });
+
+      event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed

@@ -196,6 +196,18 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
     }
   };
 
+  const handleStopRepetitiveTask = async () => {
+    try {
+      await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_STOP_REPETITIVE_TASK,
+        task.id,
+      );
+      widgetCloseFunc(false);
+    } catch (err: any) {
+      setNotifier(err.message, 'error');
+    }
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Paper sx={{ padding: 2.5, minWidth: '600px' }} variant="outlined">
@@ -303,6 +315,15 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
         )}
 
         <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
+          {isRepetitiveTaskTemplate && (
+            <Button
+              variant="outlined"
+              onClick={handleStopRepetitiveTask}
+              sx={{ mr: 1 }}
+            >
+              Stop Repetitive Task
+            </Button>
+          )}
           <Button
             variant="outlined"
             onClick={() => widgetCloseFunc(false)}
