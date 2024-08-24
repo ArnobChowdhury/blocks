@@ -819,6 +819,15 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle(ChannelsEnum.REQUEST_ALL_TAGS, async () => {
+  try {
+    return await prisma.tag.findMany();
+  } catch (err: any) {
+    log.error(err?.message);
+    throw err;
+  }
+});
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed

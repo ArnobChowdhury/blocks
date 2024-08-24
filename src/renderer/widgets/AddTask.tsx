@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -25,6 +25,7 @@ import {
   DescriptionEditor,
   SectionHeader,
   TimeOfDaySelector,
+  TagSelector,
 } from '../components';
 import {
   TaskScheduleTypeEnum,
@@ -33,6 +34,9 @@ import {
   ChannelsEnum,
 } from '../types';
 import { useApp } from '../context/AppProvider';
+
+// eslint-disable-next-line import/no-relative-packages
+import { Tag } from '../../generated/client';
 
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
@@ -49,7 +53,10 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   );
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<readonly Tag[]>([]);
   const { setNotifier } = useApp();
+
+  const [allTags, setAllTags] = useState<Tag[]>([]);
 
   const editor: Editor | null = useEditor({
     extensions: [
@@ -146,6 +153,18 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       setNotifier(err.message, 'error');
     }
   };
+
+  const handleLoadingTags = useCallback(async () => {
+    try {
+      const tags = await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_ALL_TAGS,
+      );
+      console.log('tags', tags);
+      setAllTags(tags);
+    } catch (err: any) {
+      setNotifier(err.message, 'error');
+    }
+  }, [setNotifier]);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -263,6 +282,9 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
             sx={{ alignSelf: 'flex-end', my: 2 }}
           />
         )}
+        <Box mt={2}>
+          <TagSelector tags={allTags} onOpen={handleLoadingTags} />
+        </Box>
         <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
           <Button
             variant="outlined"

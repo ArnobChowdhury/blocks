@@ -123,4 +123,6 @@ export enum ChannelsEnum {
   REQUEST_REPETITIVE_TASK_DETAILS = 'request_repetitive_task_details',
 
   REQUEST_STOP_REPETITIVE_TASK = 'request_stop_repetitive_task',
+
+  REQUEST_ALL_TAGS = 'request_all_tags',
 }
