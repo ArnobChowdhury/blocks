@@ -166,6 +166,21 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
     }
   }, [setNotifier]);
 
+  const handleTagCreation = async (tagName: string) => {
+    // todo move at the widget level
+    try {
+      console.log('handleTagCreation', tagName);
+      await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_CREATE_TAG,
+        tagName,
+      );
+    } catch (err: any) {
+      setNotifier(err.message, 'error');
+    }
+
+    await handleLoadingTags();
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Paper sx={{ padding: 2.5, minWidth: '600px' }} variant="outlined">
@@ -283,7 +298,11 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
           />
         )}
         <Box mt={2}>
-          <TagSelector tags={allTags} onOpen={handleLoadingTags} />
+          <TagSelector
+            tags={allTags}
+            onOpen={handleLoadingTags}
+            onTagCreation={handleTagCreation}
+          />
         </Box>
         <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
           <Button

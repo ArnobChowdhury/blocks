@@ -819,6 +819,22 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle(
+  ChannelsEnum.REQUEST_CREATE_TAG,
+  async (_event, tagName: string) => {
+    try {
+      return await prisma.tag.create({
+        data: {
+          name: tagName,
+        },
+      });
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
 ipcMain.handle(ChannelsEnum.REQUEST_ALL_TAGS, async () => {
   try {
     return await prisma.tag.findMany();
