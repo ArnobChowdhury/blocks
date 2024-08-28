@@ -125,4 +125,8 @@ export enum ChannelsEnum {
   REQUEST_STOP_REPETITIVE_TASK = 'request_stop_repetitive_task',
 
   REQUEST_ALL_TAGS = 'request_all_tags',
+
+  REQUEST_CREATE_TAG = 'request_create_tag',
+
+  RESPONSE_CREATE_OR_UPDATE_TAG = 'response_create_or_update_tag',
 }

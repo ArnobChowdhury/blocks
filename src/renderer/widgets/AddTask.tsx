@@ -53,10 +53,10 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   );
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<readonly Tag[]>([]);
   const { setNotifier } = useApp();
 
   const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   const editor: Editor | null = useEditor({
     extensions: [
@@ -169,16 +169,15 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const handleTagCreation = async (tagName: string) => {
     // todo move at the widget level
     try {
-      console.log('handleTagCreation', tagName);
-      await window.electron.ipcRenderer.invoke(
+      const createdTag: Tag = await window.electron.ipcRenderer.invoke(
         ChannelsEnum.REQUEST_CREATE_TAG,
         tagName,
       );
+      await handleLoadingTags();
+      setSelectedTags((prev) => [...prev, createdTag]);
     } catch (err: any) {
       setNotifier(err.message, 'error');
     }
-
-    await handleLoadingTags();
   };
 
   return (
@@ -300,8 +299,10 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
         <Box mt={2}>
           <TagSelector
             tags={allTags}
+            selectedTags={selectedTags}
             onOpen={handleLoadingTags}
             onTagCreation={handleTagCreation}
+            onChange={setSelectedTags}
           />
         </Box>
         <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
