@@ -5,6 +5,8 @@ import {
   DaysInAWeek,
   TaskCompletionStatusEnum,
   ChannelsEnum,
+  TaskWithTags,
+  RepetitiveTaskWithTags,
 } from '../types';
 import { TodoListItem } from '../components';
 import { handlePageTaskRefresh } from '../utils';
@@ -15,11 +17,8 @@ import {
 } from '../hooks';
 import { useApp } from '../context/AppProvider';
 
-// eslint-disable-next-line import/no-relative-packages
-import { Task, RepetitiveTaskTemplate } from '../../generated/client';
-
 function AllTasks() {
-  const [unscheduledTasks, setUnscheduledTasks] = useState<Task[]>([]);
+  const [unscheduledTasks, setUnscheduledTasks] = useState<TaskWithTags[]>([]);
   const {
     onToggleTaskCompletionStatus,
     error: toggleTaskCompletionStatusError,
@@ -40,33 +39,33 @@ function AllTasks() {
     const unsubscribeUnscheduledActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS,
       (response) => {
-        setUnscheduledTasks(response as Task[]);
+        setUnscheduledTasks(response as TaskWithTags[]);
       },
     );
 
     return unsubscribeUnscheduledActiveTasks;
   }, []);
 
-  const [oneOffTasks, setOneOffTasks] = useState<Task[]>([]);
+  const [oneOffTasks, setOneOffTasks] = useState<TaskWithTags[]>([]);
 
   useEffect(() => {
     const unsubscribeOneOffActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS,
       (response) => {
-        setOneOffTasks(response as Task[]);
+        setOneOffTasks(response as TaskWithTags[]);
       },
     );
 
     return unsubscribeOneOffActiveTasks;
   }, []);
 
-  const [dailyTasks, setDailyTasks] = useState<RepetitiveTaskTemplate[]>([]);
+  const [dailyTasks, setDailyTasks] = useState<RepetitiveTaskWithTags[]>([]);
 
   useEffect(() => {
     const unsubscribeDailyActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_DAILY_ACTIVE_TASKS,
       (response) => {
-        setDailyTasks(response as RepetitiveTaskTemplate[]);
+        setDailyTasks(response as RepetitiveTaskWithTags[]);
       },
     );
 
@@ -74,14 +73,14 @@ function AllTasks() {
   }, []);
 
   const [specificDaysInAWeekTasks, setSpecificDaysInAWeekTasks] = useState<
-    RepetitiveTaskTemplate[]
+    RepetitiveTaskWithTags[]
   >([]);
 
   useEffect(() => {
     const unsubscribeSpecificDaysInAWeek = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
       (response) => {
-        setSpecificDaysInAWeekTasks(response as RepetitiveTaskTemplate[]);
+        setSpecificDaysInAWeekTasks(response as RepetitiveTaskWithTags[]);
       },
     );
 
@@ -130,6 +129,7 @@ function AllTasks() {
                 <TodoListItem
                   schedule={task.schedule as TaskScheduleTypeEnum}
                   taskTitle={task.title}
+                  tags={task.tags}
                   isCompleted={
                     task.completionStatus === TaskCompletionStatusEnum.COMPLETE
                   }
@@ -169,6 +169,7 @@ function AllTasks() {
                 <TodoListItem
                   schedule={task.schedule as TaskScheduleTypeEnum}
                   taskTitle={task.title}
+                  tags={task.tags}
                   isCompleted={
                     task.completionStatus === TaskCompletionStatusEnum.COMPLETE
                   }
@@ -209,6 +210,7 @@ function AllTasks() {
                 <TodoListItem
                   schedule={task.schedule as TaskScheduleTypeEnum}
                   taskTitle={task.title}
+                  tags={task.tags}
                   onChange={() => {}}
                   key={task.id}
                   onTaskEdit={() => handleRepetitiveTaskEdit(task.id)}
@@ -236,6 +238,7 @@ function AllTasks() {
                 <TodoListItem
                   schedule={task.schedule as TaskScheduleTypeEnum}
                   taskTitle={task.title}
+                  tags={task.tags}
                   onChange={() => {}}
                   onTaskEdit={() => handleRepetitiveTaskEdit(task.id)}
                   showClock

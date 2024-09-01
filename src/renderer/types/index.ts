@@ -1,3 +1,9 @@
+// eslint-disable-next-line import/no-relative-packages
+import { Task, RepetitiveTaskTemplate, Tag } from '../../generated/client';
+
+export type TaskWithTags = Task & { tags: Tag[] };
+export type RepetitiveTaskWithTags = RepetitiveTaskTemplate & { tags: Tag[] };
+
 export enum DaysInAWeek {
   Sunday = 'sunday',
   Monday = 'monday',
@@ -38,6 +44,7 @@ export interface ITaskIPC {
   shouldBeScored?: boolean; // only if the schedule is Daily or SpecificDaysInAWeek
   timeOfDay?: TimeOfDay;
   completionStatus?: TaskCompletionStatusEnum;
+  tagIds: { id: number }[];
 }
 
 export interface IDailyTaskEntry {

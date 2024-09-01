@@ -132,6 +132,8 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       stringifiedJson = editor.getHTML();
     }
 
+    const selectedTagIds = selectedTags.map((tag) => ({ id: tag.id }));
+
     const task = {
       title: taskTitle,
       description: stringifiedJson,
@@ -140,6 +142,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       dueDate,
       shouldBeScored,
       timeOfDay: selectedTimeOfDay,
+      tagIds: selectedTagIds,
     };
 
     try {
@@ -159,7 +162,6 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       const tags = await window.electron.ipcRenderer.invoke(
         ChannelsEnum.REQUEST_ALL_TAGS,
       );
-      console.log('tags', tags);
       setAllTags(tags);
     } catch (err: any) {
       setNotifier(err.message, 'error');
