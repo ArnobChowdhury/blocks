@@ -14,17 +14,21 @@ import {
   useTheme,
 } from '@mui/material';
 import { LocalizationProvider, StaticDatePicker } from '@mui/x-date-pickers';
+import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import Clock from '../icons/Clock';
-import Close from '../icons/Close';
 import { TaskScheduleTypeEnum, DaysInAWeek } from '../types';
 import CustomChip from './CustomChip';
+
+// eslint-disable-next-line import/no-relative-packages
+import { Tag } from '../../generated/client';
 
 interface ITodoListItemProps {
   isCompleted?: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   taskTitle: string;
+  tags: Tag[];
   showClock?: boolean;
   schedule?: TaskScheduleTypeEnum;
   dayLabels?: DaysInAWeek[];
@@ -38,6 +42,7 @@ function TodoListItem({
   isCompleted,
   onChange,
   taskTitle,
+  tags = [],
   showClock = true,
   schedule,
   dayLabels,
@@ -148,9 +153,33 @@ function TodoListItem({
                 </Box>
               )}
             </Box>
+            <Fade in={showOptions} timeout={200}>
+              <Box display="flex" alignItems="center">
+                {tags.map((tag) => (
+                  <CustomChip
+                    key={tag.id}
+                    label={tag.name}
+                    size="small"
+                    sx={{
+                      mr: 1,
+                      fontSize: '12px',
+                      backgroundColor: '#CCE7E5',
+                      color: theme.palette.primary.main,
+                      px: 0.5,
+                      py: 0.5,
+                    }}
+                  />
+                ))}
+              </Box>
+            </Fade>
           </Box>
           <Fade in={showOptions} timeout={200}>
-            <Box display="flex">
+            <Box
+              display="flex"
+              width="80px"
+              justifyContent="flex-end"
+              alignItems="center"
+            >
               {showClock && (
                 <>
                   <Tooltip
@@ -173,6 +202,7 @@ function TodoListItem({
                     <IconButton
                       size="small"
                       onClick={(e) => setDateAnchorEl(e.currentTarget)}
+                      sx={{ width: '32px', height: '32px' }}
                     >
                       <Clock />
                     </IconButton>
@@ -229,8 +259,12 @@ function TodoListItem({
                   },
                 }}
               >
-                <IconButton size="small" onClick={onFail}>
-                  <Close />
+                <IconButton
+                  size="small"
+                  onClick={onFail}
+                  sx={{ width: '32px', height: '32px' }}
+                >
+                  <ThumbDownIcon sx={{ width: '16px' }} color="error" />
                 </IconButton>
               </Tooltip>
             </Box>

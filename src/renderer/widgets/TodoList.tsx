@@ -12,9 +12,12 @@ import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import dayjs from 'dayjs';
 
-// eslint-disable-next-line import/no-relative-packages
-import { Task } from '../../generated/client';
-import { TaskScheduleTypeEnum, ChannelsEnum, TimeOfDay } from '../types';
+import {
+  TaskScheduleTypeEnum,
+  ChannelsEnum,
+  TimeOfDay,
+  TaskWithTags,
+} from '../types';
 import { TodoListItem, TaskScoring, SectionHeader } from '../components';
 import { formatDate, refreshTodayPageTasks } from '../utils';
 import {
@@ -27,19 +30,19 @@ import { TimeColors } from '../constants';
 import { useApp } from '../context/AppProvider';
 
 function TodoList() {
-  const [tasksMorning, setTasksMorning] = useState<Task[]>([]);
-  const [tasksAfternoon, setTasksAfternoon] = useState<Task[]>([]);
-  const [tasksEvening, setTasksEvening] = useState<Task[]>([]);
-  const [tasksNight, setTasksNight] = useState<Task[]>([]);
-  const [tasksWithoutTimeOfDay, setTasksWithoutTimeOfDay] = useState<Task[]>(
-    [],
-  );
+  const [tasksMorning, setTasksMorning] = useState<TaskWithTags[]>([]);
+  const [tasksAfternoon, setTasksAfternoon] = useState<TaskWithTags[]>([]);
+  const [tasksEvening, setTasksEvening] = useState<TaskWithTags[]>([]);
+  const [tasksNight, setTasksNight] = useState<TaskWithTags[]>([]);
+  const [tasksWithoutTimeOfDay, setTasksWithoutTimeOfDay] = useState<
+    TaskWithTags[]
+  >([]);
 
-  const [tasksOverdue, setTasksOverdue] = useState<Task[]>([]);
+  const [tasksOverdue, setTasksOverdue] = useState<TaskWithTags[]>([]);
   const [sortedTasksOverdue, setSortedTasksOverdue] = useState<{
-    [key: string]: Task[];
+    [key: string]: TaskWithTags[];
   }>({});
-  const [taskForScoring, setTaskForScoring] = useState<Task>();
+  const [taskForScoring, setTaskForScoring] = useState<TaskWithTags>();
   const [score, setScore] = useState<number | null>(null);
   const { setNotifier, setTaskIdForEdit } = useApp();
 
@@ -47,12 +50,12 @@ function TodoList() {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_TODAY,
       (response) => {
-        const tasks = response as Task[];
-        const morningTasks: Task[] = [];
-        const afternoonTasks: Task[] = [];
-        const eveningTasks: Task[] = [];
-        const nightTasks: Task[] = [];
-        const tasksWithoutTime: Task[] = [];
+        const tasks = response as TaskWithTags[];
+        const morningTasks: TaskWithTags[] = [];
+        const afternoonTasks: TaskWithTags[] = [];
+        const eveningTasks: TaskWithTags[] = [];
+        const nightTasks: TaskWithTags[] = [];
+        const tasksWithoutTime: TaskWithTags[] = [];
 
         tasks.forEach((task) => {
           if (task.timeOfDay === TimeOfDay.Morning) {
@@ -83,7 +86,7 @@ function TodoList() {
       ChannelsEnum.RESPONSE_TASKS_OVERDUE,
       (response) => {
         // todo need error handling
-        setTasksOverdue(response as Task[]);
+        setTasksOverdue(response as TaskWithTags[]);
       },
     );
 
@@ -134,7 +137,7 @@ function TodoList() {
   }, [taskRescheduleError, setNotifier]);
 
   useEffect(() => {
-    const tasksOverdueByDate: Record<string, Task[]> = {};
+    const tasksOverdueByDate: Record<string, TaskWithTags[]> = {};
 
     tasksOverdue.forEach((task) => {
       const taskDueDate = formatDate(dayjs(task.dueDate!));
@@ -154,7 +157,7 @@ function TodoList() {
 
   const handleTaskToggle = (
     e: React.ChangeEvent<HTMLInputElement>,
-    task: Task,
+    task: TaskWithTags,
   ) => {
     if (task.shouldBeScored && e.target.checked) {
       setTaskForScoring(task);
@@ -235,6 +238,7 @@ function TodoList() {
                         isCompleted={task.completionStatus === 'COMPLETE'}
                         onChange={(e) => handleTaskToggle(e, task)}
                         taskTitle={task.title}
+                        tags={task.tags}
                         showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
                         onFail={() => onTaskFailure(task.id)}
                         onReschedule={(rescheduledTime) =>
@@ -288,6 +292,7 @@ function TodoList() {
                     isCompleted={task.completionStatus === 'COMPLETE'}
                     onChange={(e) => handleTaskToggle(e, task)}
                     taskTitle={task.title}
+                    tags={task.tags}
                     showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
                     onFail={() => onTaskFailure(task.id)}
                     onReschedule={(rescheduledTime) =>

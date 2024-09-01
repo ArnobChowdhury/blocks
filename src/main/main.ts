@@ -229,6 +229,9 @@ const generateDueRepetitiveTasks = async () => {
         { lastDateOfTaskGeneration: null },
       ],
     },
+    include: {
+      tags: true,
+    },
   });
 
   await Promise.all(
@@ -241,6 +244,7 @@ const generateDueRepetitiveTasks = async () => {
         shouldBeScored,
         createdAt,
         timeOfDay,
+        tags,
       } = repetitiveTask;
 
       let lastDateOfTaskGeneration: Dayjs | Date | null;
@@ -290,6 +294,9 @@ const generateDueRepetitiveTasks = async () => {
                 schedule,
                 shouldBeScored,
                 timeOfDay,
+                tags: {
+                  connect: tags.map((tag) => ({ id: tag.id })),
+                },
               },
               update: {},
             });
@@ -323,7 +330,9 @@ ipcMain.handle(
       days,
       shouldBeScored,
       timeOfDay,
+      tagIds,
     } = task;
+
     try {
       if (
         schedule === TaskScheduleTypeEnum.Once ||
@@ -339,6 +348,9 @@ ipcMain.handle(
             createdAt: new Date(),
             dueDate,
             timeOfDay,
+            tags: {
+              connect: tagIds,
+            },
           },
         });
       } else {
@@ -374,6 +386,9 @@ ipcMain.handle(
             saturday,
             sunday,
             timeOfDay,
+            tags: {
+              connect: tagIds,
+            },
           },
         });
       }
@@ -514,6 +529,9 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
       completionStatus: {
         not: TaskCompletionStatusEnum.FAILED,
       },
+    },
+    include: {
+      tags: true,
     },
   });
 
@@ -818,6 +836,31 @@ ipcMain.handle(
     }
   },
 );
+
+ipcMain.handle(
+  ChannelsEnum.REQUEST_CREATE_TAG,
+  async (_event, tagName: string) => {
+    try {
+      return await prisma.tag.create({
+        data: {
+          name: tagName,
+        },
+      });
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
+ipcMain.handle(ChannelsEnum.REQUEST_ALL_TAGS, async () => {
+  try {
+    return await prisma.tag.findMany();
+  } catch (err: any) {
+    log.error(err?.message);
+    throw err;
+  }
+});
 
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even

@@ -34,6 +34,7 @@ model RepetitiveTaskTemplate {
   lastDateOfTaskGeneration DateTime?
   createdAt                DateTime  @default(now())
   modifiedAt               DateTime  @updatedAt
+  tags                     Tag[]
   Task                     Task[]
 }
 
@@ -53,6 +54,16 @@ model Task {
   repetitiveTaskTemplateId Int?
   createdAt                DateTime                @default(now())
   modifiedAt               DateTime                @updatedAt
+  tags                     Tag[]
 
   @@unique([repetitiveTaskTemplateId, dueDate])
+}
+
+model Tag {
+  id              Int                      @id @default(autoincrement())
+  name            String
+  tasks           Task[]
+  repetitiveTasks RepetitiveTaskTemplate[]
+  createdAt       DateTime                 @default(now())
+  modifiedAt      DateTime                 @updatedAt
 }

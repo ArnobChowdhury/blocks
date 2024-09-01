@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -25,6 +25,7 @@ import {
   DescriptionEditor,
   SectionHeader,
   TimeOfDaySelector,
+  TagSelector,
 } from '../components';
 import {
   TaskScheduleTypeEnum,
@@ -33,6 +34,9 @@ import {
   ChannelsEnum,
 } from '../types';
 import { useApp } from '../context/AppProvider';
+
+// eslint-disable-next-line import/no-relative-packages
+import { Tag } from '../../generated/client';
 
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
@@ -50,6 +54,9 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(false);
   const { setNotifier } = useApp();
+
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   const editor: Editor | null = useEditor({
     extensions: [
@@ -125,6 +132,8 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       stringifiedJson = editor.getHTML();
     }
 
+    const selectedTagIds = selectedTags.map((tag) => ({ id: tag.id }));
+
     const task = {
       title: taskTitle,
       description: stringifiedJson,
@@ -133,6 +142,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       dueDate,
       shouldBeScored,
       timeOfDay: selectedTimeOfDay,
+      tagIds: selectedTagIds,
     };
 
     try {
@@ -142,6 +152,31 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       );
 
       widgetCloseFunc(false);
+    } catch (err: any) {
+      setNotifier(err.message, 'error');
+    }
+  };
+
+  const handleLoadingTags = useCallback(async () => {
+    try {
+      const tags = await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_ALL_TAGS,
+      );
+      setAllTags(tags);
+    } catch (err: any) {
+      setNotifier(err.message, 'error');
+    }
+  }, [setNotifier]);
+
+  const handleTagCreation = async (tagName: string) => {
+    // todo move at the widget level
+    try {
+      const createdTag: Tag = await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_CREATE_TAG,
+        tagName,
+      );
+      await handleLoadingTags();
+      setSelectedTags((prev) => [...prev, createdTag]);
     } catch (err: any) {
       setNotifier(err.message, 'error');
     }
@@ -263,6 +298,15 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
             sx={{ alignSelf: 'flex-end', my: 2 }}
           />
         )}
+        <Box mt={2}>
+          <TagSelector
+            tags={allTags}
+            selectedTags={selectedTags}
+            onOpen={handleLoadingTags}
+            onTagCreation={handleTagCreation}
+            onChange={setSelectedTags}
+          />
+        </Box>
         <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
           <Button
             variant="outlined"
