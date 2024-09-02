@@ -411,7 +411,9 @@ ipcMain.handle(
       shouldBeScored,
       timeOfDay,
       completionStatus,
+      tagIds,
     } = task;
+
     try {
       await prisma.task.update({
         where: {
@@ -424,6 +426,9 @@ ipcMain.handle(
           shouldBeScored,
           timeOfDay,
           completionStatus,
+          tags: {
+            set: tagIds,
+          },
         },
       });
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
@@ -437,8 +442,11 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_REPETITIVE_TASK,
   async (event, task: ITaskIPC) => {
-    const { id, title, description, shouldBeScored, timeOfDay, days } = task;
+    const { id, title, description, shouldBeScored, timeOfDay, days, tagIds } =
+      task;
     let repetitiveTaskTemplate: RepetitiveTaskTemplate | null;
+
+    console.log('tag ids', tagIds);
 
     try {
       repetitiveTaskTemplate = await prisma.repetitiveTaskTemplate.findFirst({
@@ -473,16 +481,6 @@ ipcMain.handle(
         getDaysForSpecificDaysInAWeekTasks(days));
     }
 
-    console.log({
-      monday,
-      tuesday,
-      wednesday,
-      thursday,
-      friday,
-      saturday,
-      sunday,
-    });
-
     try {
       await prisma.repetitiveTaskTemplate.update({
         where: {
@@ -500,6 +498,9 @@ ipcMain.handle(
           saturday,
           sunday,
           timeOfDay,
+          tags: {
+            set: tagIds,
+          },
         },
       });
 
@@ -792,6 +793,9 @@ ipcMain.handle(
         where: {
           id: taskId,
         },
+        include: {
+          tags: true,
+        },
       });
     } catch (err: any) {
       log.error(err?.message);
@@ -807,6 +811,9 @@ ipcMain.handle(
       return await prisma.repetitiveTaskTemplate.findUniqueOrThrow({
         where: {
           id: taskId,
+        },
+        include: {
+          tags: true,
         },
       });
     } catch (err: any) {

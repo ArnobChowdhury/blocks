@@ -99,6 +99,7 @@ function TagSelector({
         return filtered;
       }}
       renderOption={(props, option, { selected }) => {
+        // @ts-ignore
         // eslint-disable-next-line react/prop-types
         const { key, onClick, ...optionProps } = props;
         const isCreatable = Boolean('inputValue' in option);

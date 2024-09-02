@@ -3,6 +3,7 @@ import { Task, RepetitiveTaskTemplate, Tag } from '../../generated/client';
 
 export type TaskWithTags = Task & { tags: Tag[] };
 export type RepetitiveTaskWithTags = RepetitiveTaskTemplate & { tags: Tag[] };
+export type { Tag };
 
 export enum DaysInAWeek {
   Sunday = 'sunday',

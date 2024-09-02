@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -34,6 +34,7 @@ import {
   ChannelsEnum,
 } from '../types';
 import { useApp } from '../context/AppProvider';
+import { useTags } from '../hooks';
 
 // eslint-disable-next-line import/no-relative-packages
 import { Tag } from '../../generated/client';
@@ -55,8 +56,20 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const [shouldBeScored, setShouldBeScored] = useState(false);
   const { setNotifier } = useApp();
 
-  const [allTags, setAllTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+
+  const {
+    handleLoadingTags,
+    createTag,
+    allTags,
+    error: tagsRequestError,
+  } = useTags();
+
+  useEffect(() => {
+    if (tagsRequestError) {
+      setNotifier(tagsRequestError, 'error');
+    }
+  }, [tagsRequestError, setNotifier]);
 
   const editor: Editor | null = useEditor({
     extensions: [
@@ -157,26 +170,13 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
     }
   };
 
-  const handleLoadingTags = useCallback(async () => {
-    try {
-      const tags = await window.electron.ipcRenderer.invoke(
-        ChannelsEnum.REQUEST_ALL_TAGS,
-      );
-      setAllTags(tags);
-    } catch (err: any) {
-      setNotifier(err.message, 'error');
-    }
-  }, [setNotifier]);
-
   const handleTagCreation = async (tagName: string) => {
-    // todo move at the widget level
     try {
-      const createdTag: Tag = await window.electron.ipcRenderer.invoke(
-        ChannelsEnum.REQUEST_CREATE_TAG,
-        tagName,
-      );
-      await handleLoadingTags();
-      setSelectedTags((prev) => [...prev, createdTag]);
+      const newTag: Tag | null = await createTag(tagName);
+      if (newTag) {
+        await handleLoadingTags();
+        setSelectedTags((prev) => [...prev, newTag]);
+      }
     } catch (err: any) {
       setNotifier(err.message, 'error');
     }

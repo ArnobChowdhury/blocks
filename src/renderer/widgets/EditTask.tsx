@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -17,6 +17,7 @@ import {
   Select,
   Checkbox,
   styled,
+  useTheme,
 } from '@mui/material';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -27,6 +28,7 @@ import {
   DescriptionEditor,
   SectionHeader,
   TimeOfDaySelector,
+  TagSelector,
 } from '../components';
 import {
   TaskScheduleTypeEnum,
@@ -34,12 +36,16 @@ import {
   TimeOfDay,
   TaskCompletionStatusEnum,
   DaysInAWeek,
+  TaskWithTags,
+  RepetitiveTaskWithTags,
+  Tag,
 } from '../types';
 import CustomChip from '../components/CustomChip';
 import { useApp } from '../context/AppProvider';
+import { useTags } from '../hooks';
 
 // eslint-disable-next-line import/no-relative-packages
-import { Task, RepetitiveTaskTemplate } from '../../generated/client';
+// import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 
 const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
   textTransform: 'capitalize',
@@ -48,7 +54,7 @@ const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
 
 interface IEditTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
-  task: Task | RepetitiveTaskTemplate;
+  task: TaskWithTags | RepetitiveTaskWithTags;
 }
 
 function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
@@ -84,7 +90,24 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
         ? (task.completionStatus as TaskCompletionStatusEnum)
         : null,
     );
+
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(task.tags);
   const { setNotifier } = useApp();
+
+  const {
+    allTags,
+    error: tagsRequestError,
+    handleLoadingTags,
+    createTag,
+  } = useTags();
+
+  useEffect(() => {
+    if (tagsRequestError) {
+      setNotifier(tagsRequestError, 'error');
+    }
+  }, [tagsRequestError, setNotifier]);
+
+  const theme = useTheme();
 
   // todo editor to be reused as a hook between AddTask and EditTask
   const editor: Editor | null = useEditor({
@@ -161,12 +184,14 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
       stringifiedDescription = editor.getHTML();
     }
 
+    const selectedTagIds = selectedTags.map((tag) => ({ id: tag.id }));
     const editedTask: Record<string, any> = {
       id: task.id,
       title: taskTitle,
       description: stringifiedDescription,
       shouldBeScored,
       timeOfDay: selectedTimeOfDay,
+      tagIds: selectedTagIds,
     };
 
     if (!isRepetitiveTaskTemplateAndSpecificDaysInAWeek) {
@@ -203,6 +228,18 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
         task.id,
       );
       widgetCloseFunc(false);
+    } catch (err: any) {
+      setNotifier(err.message, 'error');
+    }
+  };
+
+  const handleTagCreation = async (tagName: string) => {
+    try {
+      const newTag: Tag | null = await createTag(tagName);
+      if (newTag) {
+        await handleLoadingTags();
+        setSelectedTags((prev) => [...prev, newTag]);
+      }
     } catch (err: any) {
       setNotifier(err.message, 'error');
     }
@@ -281,38 +318,53 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
             sx={{ alignSelf: 'flex-end', pl: 0.2, mt: 1 }}
           />
         )}
-        {!isRepetitiveTaskTemplate && (
-          <FormControl sx={{ minWidth: 120, mt: 3, display: 'block' }}>
-            <InputLabel id="task-completion-status-id">
-              Completion Status
-            </InputLabel>
-            <Select
-              labelId="task-completion-status-id"
-              value={completionStatus}
-              label="Completion Status"
-              onChange={(event) =>
-                setCompletionStatus(
-                  event.target.value as TaskCompletionStatusEnum,
-                )
-              }
-              sx={{
-                minWidth: '200px',
-                textTransform: 'capitalize',
-              }}
-              size="small"
-            >
-              <MenuItemStyled value={TaskCompletionStatusEnum.COMPLETE}>
-                {TaskCompletionStatusEnum.COMPLETE.toLowerCase()}
-              </MenuItemStyled>
-              <MenuItemStyled value={TaskCompletionStatusEnum.INCOMPLETE}>
-                {TaskCompletionStatusEnum.INCOMPLETE.toLowerCase()}
-              </MenuItemStyled>
-              <MenuItemStyled value={TaskCompletionStatusEnum.FAILED}>
-                {TaskCompletionStatusEnum.FAILED.toLowerCase()}
-              </MenuItemStyled>
-            </Select>
-          </FormControl>
-        )}
+        <Box
+          display="flex"
+          alignItems="center"
+          mt={3}
+          justifyContent="space-between"
+        >
+          {!isRepetitiveTaskTemplate && (
+            <FormControl sx={{ mr: 2, display: 'block', flex: 1 }}>
+              <InputLabel
+                id="task-completion-status-id"
+                sx={{ fontSize: theme.typography.body2.fontSize }}
+              >
+                Completion Status
+              </InputLabel>
+              <Select
+                labelId="task-completion-status-id"
+                value={completionStatus}
+                label="Completion Status"
+                onChange={(event) =>
+                  setCompletionStatus(
+                    event.target.value as TaskCompletionStatusEnum,
+                  )
+                }
+                sx={{ textTransform: 'capitalize', width: '100%' }}
+                size="small"
+              >
+                <MenuItemStyled value={TaskCompletionStatusEnum.COMPLETE}>
+                  {TaskCompletionStatusEnum.COMPLETE.toLowerCase()}
+                </MenuItemStyled>
+                <MenuItemStyled value={TaskCompletionStatusEnum.INCOMPLETE}>
+                  {TaskCompletionStatusEnum.INCOMPLETE.toLowerCase()}
+                </MenuItemStyled>
+                <MenuItemStyled value={TaskCompletionStatusEnum.FAILED}>
+                  {TaskCompletionStatusEnum.FAILED.toLowerCase()}
+                </MenuItemStyled>
+              </Select>
+            </FormControl>
+          )}
+
+          <TagSelector
+            tags={allTags}
+            selectedTags={selectedTags}
+            onOpen={handleLoadingTags}
+            onTagCreation={handleTagCreation}
+            onChange={setSelectedTags}
+          />
+        </Box>
 
         <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
           {isRepetitiveTaskTemplate && (

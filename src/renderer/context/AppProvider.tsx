@@ -7,10 +7,7 @@ import React, {
 } from 'react';
 
 import { handlePageTaskRefresh } from '../utils';
-import { ChannelsEnum } from '../types';
-
-// eslint-disable-next-line import/no-relative-packages
-import { Task, RepetitiveTaskTemplate } from '../../generated/client';
+import { ChannelsEnum, TaskWithTags, RepetitiveTaskWithTags } from '../types';
 
 const AppContextFn = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
@@ -20,12 +17,12 @@ const AppContextFn = () => {
   }>();
   const [showAddTask, setShowAddTask] = useState(false);
   const [taskIdForEdit, setTaskIdForEdit] = useState<number>();
-  const [taskForEdit, setTaskForEdit] = useState<Task>();
+  const [taskForEdit, setTaskForEdit] = useState<TaskWithTags>();
 
   const [repetitiveTaskTemplateIdForEdit, setRepetitiveTaskTemplateIdForEdit] =
     useState<number>();
   const [repetitiveTaskTemplateForEdit, setRepetitiveTaskTemplateForEdit] =
-    useState<RepetitiveTaskTemplate>();
+    useState<RepetitiveTaskWithTags>();
   /**
    * Add event listeners... for page refresh events' errors and set notifiers
    */
