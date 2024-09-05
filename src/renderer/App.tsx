@@ -30,11 +30,15 @@ import {
   Dialog,
   Snackbar,
   Alert,
+  Collapse,
 } from '@mui/material';
 import { styled } from '@mui/system';
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import { PageWrapper } from './layouts';
 import { Today, Inbox, Tracker } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
+import ArrowRight from './icons/ArrowRight';
+import ArrowDown from './icons/ArrowDown';
 import CalendarToday from './icons/CalendarToday';
 import InboxIcon from './icons/Inbox';
 import TrackerIcon from './icons/Tracker';
@@ -42,6 +46,7 @@ import Plus from './icons/Plus';
 import { AddTask, EditTask } from './widgets';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
+import { useTags } from './hooks';
 
 const MyStyledListItemText = styled(ListItemText)({
   color: 'red', // Change this to the color you want
@@ -117,6 +122,14 @@ function Navigation() {
     setRepetitiveTaskTemplateIdForEdit(undefined);
   };
 
+  const { allTags, handleLoadingTags } = useTags();
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleTagsExpand = async () => {
+    await handleLoadingTags();
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <>
       <List>
@@ -165,6 +178,35 @@ function Navigation() {
           </ListItemIcon>
           <ListItemText primary="Tracker" />
         </ListItemButton>
+        <ListItemButton sx={{ mt: 2 }} onClick={handleTagsExpand}>
+          <ListItemIcon>
+            {isExpanded ? <ArrowDown /> : <ArrowRight />}
+          </ListItemIcon>
+          <ListItemText
+            primary="Tags"
+            primaryTypographyProps={{ fontWeight: 500 }}
+          />
+        </ListItemButton>
+        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {allTags.map((tag) => (
+              <ListItemButton
+                key={`${tag.name}-${tag.id}`}
+                sx={{ py: 0.5, pl: 4 }}
+              >
+                <ListItemIcon>
+                  <LocalOfferOutlinedIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText
+                  primary={tag.name}
+                  primaryTypographyProps={{
+                    fontSize: theme.typography.body2.fontSize,
+                  }}
+                />
+              </ListItemButton>
+            ))}
+          </List>
+        </Collapse>
       </List>
       <Dialog open={showAddTask}>
         <AddTask widgetCloseFunc={setShowAddTask} />
