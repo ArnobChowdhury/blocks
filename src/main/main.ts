@@ -631,9 +631,7 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS, async (event) => {
       where: {
         isActive: true,
         schedule: TaskScheduleTypeEnum.Unscheduled,
-        completionStatus: {
-          not: TaskCompletionStatusEnum.FAILED,
-        },
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
       },
     });
 
