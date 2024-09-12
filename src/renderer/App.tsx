@@ -35,7 +35,7 @@ import {
 import { styled } from '@mui/system';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import { PageWrapper } from './layouts';
-import { Today, Inbox, Tracker } from './pages';
+import { Today, Inbox, Tracker, TaggedTodos } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
 import ArrowRight from './icons/ArrowRight';
 import ArrowDown from './icons/ArrowDown';
@@ -187,12 +187,18 @@ function Navigation() {
             primaryTypographyProps={{ fontWeight: 500 }}
           />
         </ListItemButton>
+        {/* tags */}
         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {allTags.map((tag) => (
               <ListItemButton
                 key={`${tag.name}-${tag.id}`}
                 sx={{ py: 0.5, pl: 4 }}
+                component={Link}
+                to={`/tagged-todos/${tag.id}/${tag.name}`}
+                selected={
+                  location.pathname === `/tagged-todos/${tag.id}/${tag.name}`
+                }
               >
                 <ListItemIcon>
                   <LocalOfferOutlinedIcon fontSize="small" />
@@ -275,6 +281,10 @@ function App() {
                 <Route path="/" element={<Today />} />
                 <Route path="/inbox" element={<Inbox />} />
                 <Route path="/tracker" element={<Tracker />} />
+                <Route
+                  path="/tagged-todos/:tagId/:tagName"
+                  element={<TaggedTodos />}
+                />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </PageWrapper>
