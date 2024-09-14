@@ -132,7 +132,7 @@ function Navigation() {
 
   return (
     <>
-      <List>
+      <List dense>
         <ListItemButton onClick={() => setShowAddTask(true)} sx={{ mb: 1 }}>
           <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
             <Plus />
@@ -189,7 +189,7 @@ function Navigation() {
         </ListItemButton>
         {/* tags */}
         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
+          <List dense component="div" disablePadding>
             {allTags.map((tag) => (
               <ListItemButton
                 key={`${tag.name}-${tag.id}`}
