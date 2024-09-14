@@ -89,7 +89,11 @@ function TodoListItem({
   };
 
   return (
-    <ListItem onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <ListItem
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      dense
+    >
       {/* todo we may not need LocalizationProvider everywhere, wrapping it at the top should do it   */}
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Box display="flex" justifyContent="space-between" width="100%">
