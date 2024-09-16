@@ -1,6 +1,6 @@
 import Today from './Today';
-import Inbox from './Inbox';
+import Active from './Active';
 import Tracker from './Tracker';
 import TaggedTodos from './TaggedTodos';
 
-export { Today, Inbox, Tracker, TaggedTodos };
+export { Today, Active, Tracker, TaggedTodos };

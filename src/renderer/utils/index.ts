@@ -43,7 +43,7 @@ export const refreshTagsPageTasks = (tagId: number) => {
 
 export const handlePageTaskRefresh = () => {
   const location = window.location.pathname;
-  if (location === '/inbox') {
+  if (location === '/active') {
     refreshAllTasks();
   }
   if (location === '/') {

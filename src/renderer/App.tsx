@@ -34,13 +34,13 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/system';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
+import RunCircleIcon from '@mui/icons-material/RunCircle';
 import { PageWrapper } from './layouts';
-import { Today, Inbox, Tracker, TaggedTodos } from './pages';
+import { Today, Active, Tracker, TaggedTodos } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
 import ArrowRight from './icons/ArrowRight';
 import ArrowDown from './icons/ArrowDown';
 import CalendarToday from './icons/CalendarToday';
-import InboxIcon from './icons/Inbox';
 import TrackerIcon from './icons/Tracker';
 import Plus from './icons/Plus';
 import { AddTask, EditTask } from './widgets';
@@ -160,13 +160,13 @@ function Navigation() {
         </ListItemButton>
         <ListItemButton
           component={Link}
-          to="/inbox"
-          selected={location.pathname === '/inbox'}
+          to="/active"
+          selected={location.pathname === '/active'}
         >
           <ListItemIcon>
-            <InboxIcon />
+            <RunCircleIcon color="primary" />
           </ListItemIcon>
-          <ListItemText primary="Inbox" />
+          <ListItemText primary="Active" />
         </ListItemButton>
         <ListItemButton
           component={Link}
@@ -279,7 +279,7 @@ function App() {
             >
               <Routes>
                 <Route path="/" element={<Today />} />
-                <Route path="/inbox" element={<Inbox />} />
+                <Route path="/active" element={<Active />} />
                 <Route path="/tracker" element={<Tracker />} />
                 <Route
                   path="/tagged-todos/:tagId/:tagName"

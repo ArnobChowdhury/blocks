@@ -4,7 +4,7 @@ import { TasksBySchedule } from '../widgets';
 import { refreshAllTasks } from '../utils';
 import { ChannelsEnum, TaskWithTags, RepetitiveTaskWithTags } from '../types';
 
-function Inbox() {
+function Active() {
   useEffect(() => {
     refreshAllTasks();
   }, []);
@@ -62,7 +62,7 @@ function Inbox() {
 
   return (
     <>
-      <PageHeader>Inbox</PageHeader>
+      <PageHeader>Active</PageHeader>
       <TasksBySchedule
         unscheduledTasks={unscheduledTasks}
         oneOffTasks={oneOffTasks}
@@ -73,4 +73,4 @@ function Inbox() {
   );
 }
 
-export default Inbox;
+export default Active;
