@@ -446,8 +446,6 @@ ipcMain.handle(
       task;
     let repetitiveTaskTemplate: RepetitiveTaskTemplate | null;
 
-    console.log('tag ids', tagIds);
-
     try {
       repetitiveTaskTemplate = await prisma.repetitiveTaskTemplate.findFirst({
         where: {
