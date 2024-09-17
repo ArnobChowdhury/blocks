@@ -93,20 +93,14 @@ function TodoListItem({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       dense
+      onClick={handleEditClick}
+      sx={{ cursor: 'pointer' }}
     >
       {/* todo we may not need LocalizationProvider everywhere, wrapping it at the top should do it   */}
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Box display="flex" justifyContent="space-between" width="100%">
           <Box display="flex" alignItems="center">
-            {isAHabit && (
-              <Typography
-                sx={{ cursor: 'pointer' }}
-                variant="body2"
-                onClick={handleEditClick}
-              >
-                {taskTitle}
-              </Typography>
-            )}
+            {isAHabit && <Typography variant="body2">{taskTitle}</Typography>}
             {!isAHabit && (
               <FormControlLabel
                 control={
@@ -114,6 +108,9 @@ function TodoListItem({
                     size="small"
                     checked={isCompleted}
                     onChange={onChange}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
                   />
                 }
                 label={
