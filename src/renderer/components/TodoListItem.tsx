@@ -202,7 +202,10 @@ function TodoListItem({
                   >
                     <IconButton
                       size="small"
-                      onClick={(e) => setDateAnchorEl(e.currentTarget)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDateAnchorEl(e.currentTarget);
+                      }}
                       sx={{ width: '32px', height: '32px' }}
                     >
                       <Clock />
@@ -211,6 +214,7 @@ function TodoListItem({
 
                   <Popover
                     id={datePopOverId}
+                    onClick={(e) => e.stopPropagation()}
                     open={showDate}
                     anchorEl={dateAnchorEl}
                     onClose={() => setDateAnchorEl(null)}
@@ -262,7 +266,10 @@ function TodoListItem({
               >
                 <IconButton
                   size="small"
-                  onClick={onFail}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onFail) onFail();
+                  }}
                   sx={{ width: '32px', height: '32px' }}
                 >
                   <ThumbDownIcon sx={{ width: '16px' }} color="error" />
