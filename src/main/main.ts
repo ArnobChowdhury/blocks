@@ -678,13 +678,6 @@ ipcMain.on(
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_RESCHEDULE,
   async (event, { id, dueDate }) => {
-    /**
-     * Todos for rescheduling
-     * 1. todo add a check that the task is not a Daily task. We don't allow rescheduling for Daily tasks
-     * 2. in case of rescheduling a weekly task, we need to create a new task for the new dueDate
-     * and mark the previous one as failed. That way our habit tracker will show the right representation.
-     *   */
-
     try {
       const task = await prisma.task.findFirstOrThrow({
         where: {
@@ -693,14 +686,7 @@ ipcMain.handle(
       });
 
       if (task.schedule === TaskScheduleTypeEnum.Daily) {
-        return;
-        // todo add error handling
-      }
-
-      if (task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) {
-        // need logic: a task can be delayed if the rescheduled day is prior to the next iteration
-        return;
-        // todo add error handling
+        throw new Error('Daily tasks cannot be rescheduled');
       }
 
       const data: { [key: string]: any } = { dueDate };
