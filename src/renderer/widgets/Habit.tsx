@@ -1,18 +1,13 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Typography, styled, Box, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
-// eslint-disable-next-line import/no-relative-packages
-import { Task, RepetitiveTaskTemplate } from '../../generated/client';
 import {
   TaskScheduleTypeEnum,
   TaskCompletionStatusEnum,
-  ChannelsEnum,
+  Task,
+  ExtendedRepetitiveTaskTemplate,
 } from '../types';
 import { scoreColors } from '../constants';
-
-interface ExtendedRepetitiveTaskTemplate extends RepetitiveTaskTemplate {
-  Task: Task[];
-}
 
 const StyledTh = styled('th')({
   height: '20px',
@@ -38,30 +33,16 @@ const StyledTd = styled('td')({
   backgroundColor: '#EEE',
 });
 
-function HabitTracker() {
-  const [habits, setHabits] = useState<ExtendedRepetitiveTaskTemplate[]>();
+interface HabitTrackerProps {
+  habits: ExtendedRepetitiveTaskTemplate[];
+  header: string;
+}
+
+function HabitTracker({ habits, header }: HabitTrackerProps) {
   const [hoveredHabit, setHoveredHabit] =
     useState<ExtendedRepetitiveTaskTemplate | null>(null);
 
   const theme = useTheme();
-
-  useEffect(() => {
-    const monthIndex = dayjs().month();
-    window.electron.ipcRenderer.sendMessage(
-      ChannelsEnum.REQUEST_MONTHLY_REPORT,
-      {
-        monthIndex,
-      },
-    );
-
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_MONTHLY_REPORT,
-      (response) => {
-        setHabits(response as ExtendedRepetitiveTaskTemplate[]);
-      },
-    );
-    return unsubscribe;
-  }, []);
 
   const daysInCurrentMonth = useMemo(() => {
     return dayjs().daysInMonth();
@@ -83,7 +64,9 @@ function HabitTracker() {
   return (
     <>
       <Box display="flex" mt={3} mb={1} justifyContent="center">
-        <Typography variant="h6">{dayjs().format('MMMM')}</Typography>
+        <Typography variant="h6">
+          {header} - {dayjs().format('MMMM')}
+        </Typography>
       </Box>
       <table style={{ borderSpacing: '6px' }}>
         <tr>

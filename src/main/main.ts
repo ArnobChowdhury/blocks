@@ -706,21 +706,16 @@ ipcMain.handle(
   },
 );
 
-ipcMain.on(
-  ChannelsEnum.REQUEST_MONTHLY_REPORT,
-  async (event, { monthIndex }) => {
+ipcMain.handle(
+  ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT,
+  async (_event, { monthIndex }) => {
     const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();
     const endOfMonth = dayjs().month(monthIndex).endOf('month').toDate();
 
     try {
-      const tasks = await prisma.repetitiveTaskTemplate.findMany({
+      return await prisma.repetitiveTaskTemplate.findMany({
         where: {
-          schedule: {
-            in: [
-              TaskScheduleTypeEnum.Daily,
-              TaskScheduleTypeEnum.SpecificDaysInAWeek,
-            ],
-          },
+          schedule: TaskScheduleTypeEnum.Daily,
         },
         include: {
           Task: {
@@ -736,10 +731,43 @@ ipcMain.on(
           },
         },
       });
+    } catch (err: any) {
+      // we do something here
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
 
-      event.reply(ChannelsEnum.RESPONSE_MONTHLY_REPORT, tasks);
-    } catch (err) {
-      event.reply(ChannelsEnum.ERROR_MONTHLY_REPORT);
+ipcMain.handle(
+  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_DAILY_TASKS_MONTHLY_REPORT,
+  async (_event, { monthIndex }) => {
+    const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();
+    const endOfMonth = dayjs().month(monthIndex).endOf('month').toDate();
+
+    try {
+      return await prisma.repetitiveTaskTemplate.findMany({
+        where: {
+          schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+        },
+        include: {
+          Task: {
+            orderBy: {
+              dueDate: 'asc',
+            },
+            where: {
+              dueDate: {
+                gte: startOfMonth,
+                lte: endOfMonth,
+              },
+            },
+          },
+        },
+      });
+    } catch (err: any) {
+      // we do something here
+      log.error(err?.message);
+      throw err;
     }
   },
 );

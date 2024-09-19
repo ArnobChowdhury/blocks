@@ -3,6 +3,9 @@ import { Task, RepetitiveTaskTemplate, Tag } from '../../generated/client';
 
 export type TaskWithTags = Task & { tags: Tag[] };
 export type RepetitiveTaskWithTags = RepetitiveTaskTemplate & { tags: Tag[] };
+export interface ExtendedRepetitiveTaskTemplate extends RepetitiveTaskTemplate {
+  Task: Task[];
+}
 export type { Tag, Task };
 
 export enum DaysInAWeek {
@@ -97,9 +100,8 @@ export enum ChannelsEnum {
 
   REQUEST_TOGGLE_TASK_COMPLETION_STATUS = 'request-toggle-task-completion-status',
 
-  REQUEST_MONTHLY_REPORT = 'request-monthly-report',
-  RESPONSE_MONTHLY_REPORT = 'response-monthly-report',
-  ERROR_MONTHLY_REPORT = 'error-monthly-report',
+  REQUEST_DAILY_TASKS_MONTHLY_REPORT = 'request_daily_tasks_monthly_report',
+  REQUEST_SPECIFIC_DAYS_IN_A_WEEK_DAILY_TASKS_MONTHLY_REPORT = 'request_specific_days_in_a_week_daily_tasks_monthly_report',
 
   REQUEST_TASKS_OVERDUE = 'request-tasks-overdue',
   RESPONSE_TASKS_OVERDUE = 'response-tasks-overdue',
