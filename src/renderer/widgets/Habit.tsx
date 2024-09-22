@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Typography, styled, Box, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import {
@@ -44,12 +44,17 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
 
   const theme = useTheme();
 
-  const daysInCurrentMonth = useMemo(() => {
-    return dayjs().daysInMonth();
-  }, []);
+  const timestamps: number[] = [];
 
-  const dates = [...Array(daysInCurrentMonth).keys()].map((day) => day + 1);
-  const dateToday = new Date().getDate();
+  // Loop through the last 30 days in reverse order
+  for (let i = 29; i > 0; i -= 1) {
+    // Calculate the start of the day for each day
+    const startOfDay = dayjs().subtract(i, 'day').startOf('day').valueOf();
+    timestamps.push(startOfDay);
+  }
+
+  // Add today as the last entry
+  timestamps.push(dayjs().startOf('day').valueOf());
 
   /**
    * Todos
@@ -64,23 +69,12 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
   return (
     <>
       <Box display="flex" mt={3} mb={1} justifyContent="center">
-        <Typography variant="h6">
-          {header} - {dayjs().format('MMMM')}
-        </Typography>
+        <Typography variant="h6">{header}</Typography>
       </Box>
       <table style={{ borderSpacing: '6px' }}>
         <tr>
-          {dates.map((date) => {
-            return (
-              <StyledTh
-                sx={{
-                  color: date === dateToday ? 'red' : 'inherit',
-                  fontWeight: date === dateToday ? 'bold' : 400,
-                }}
-              >
-                {date}
-              </StyledTh>
-            );
+          {timestamps.map((timestamp) => {
+            return <StyledTh>{new Date(timestamp).getDate()}</StyledTh>;
           })}
           <StyledTh sx={{ textAlign: 'left', fontWeight: 'bold' }}>
             Habits
@@ -93,7 +87,7 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
           habit?.Task.forEach((taskEntry) => {
             const { dueDate } = taskEntry;
             if (dueDate) {
-              const dateOfTask = dueDate.getDate();
+              const dateOfTask = dayjs(dueDate).startOf('day').valueOf();
               entriesByDate[dateOfTask] = taskEntry;
             }
           });
@@ -103,8 +97,8 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
               onMouseEnter={() => setHoveredHabit(habit)}
               onMouseLeave={() => setHoveredHabit(null)}
             >
-              {dates.map((date) => {
-                const entry = entriesByDate[date];
+              {timestamps.map((timestamp) => {
+                const entry = entriesByDate[timestamp];
                 if (!entry) {
                   return <StyledTd />;
                 }

@@ -258,10 +258,9 @@ const generateDueRepetitiveTasks = async () => {
         else lastDateOfTaskGeneration = createdAt;
       }
 
-      const daysSinceLastTaskGeneration = dayjs().diff(
-        dayjs(lastDateOfTaskGeneration),
-        'day',
-      );
+      const daysSinceLastTaskGeneration = dayjs()
+        .startOf('day')
+        .diff(dayjs(lastDateOfTaskGeneration).startOf('day'), 'day');
 
       const dayArray = Array.from(
         { length: daysSinceLastTaskGeneration },
@@ -706,49 +705,62 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle(
-  ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT,
-  async (_event, { monthIndex }) => {
-    const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();
-    const endOfMonth = dayjs().month(monthIndex).endOf('month').toDate();
+ipcMain.handle(ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT, async () => {
+  const startDate = dayjs().subtract(30, 'day').toDate(); // 30 days ago
+  const endDate = getTodayEnd();
 
-    try {
-      return await prisma.repetitiveTaskTemplate.findMany({
-        where: {
-          schedule: TaskScheduleTypeEnum.Daily,
-        },
-        include: {
-          Task: {
-            orderBy: {
-              dueDate: 'asc',
-            },
-            where: {
-              dueDate: {
-                gte: startOfMonth,
-                lte: endOfMonth,
-              },
+  try {
+    return await prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        schedule: TaskScheduleTypeEnum.Daily,
+        Task: {
+          some: {
+            dueDate: {
+              gte: startDate,
+              lte: endDate,
             },
           },
         },
-      });
-    } catch (err: any) {
-      // we do something here
-      log.error(err?.message);
-      throw err;
-    }
-  },
-);
+      },
+      include: {
+        Task: {
+          orderBy: {
+            dueDate: 'asc',
+          },
+          where: {
+            dueDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+        },
+      },
+    });
+  } catch (err: any) {
+    // we do something here
+    log.error(err?.message);
+    throw err;
+  }
+});
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_DAILY_TASKS_MONTHLY_REPORT,
-  async (_event, { monthIndex }) => {
-    const startOfMonth = dayjs().month(monthIndex).startOf('month').toDate();
-    const endOfMonth = dayjs().month(monthIndex).endOf('month').toDate();
+  async () => {
+    const startDate = dayjs().subtract(30, 'day').toDate(); // 30 days ago
+    const endDate = getTodayEnd();
 
     try {
       return await prisma.repetitiveTaskTemplate.findMany({
         where: {
           schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+          Task: {
+            some: {
+              dueDate: {
+                gte: startDate,
+                lte: endDate,
+              },
+            },
+          },
         },
         include: {
           Task: {
@@ -757,8 +769,8 @@ ipcMain.handle(
             },
             where: {
               dueDate: {
-                gte: startOfMonth,
-                lte: endOfMonth,
+                gte: startDate,
+                lte: endDate,
               },
             },
           },
