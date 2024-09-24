@@ -54,7 +54,7 @@ function Tracker() {
   return (
     <>
       <PageHeader>Habit Tracker</PageHeader>
-      <HabitTracker habits={habitsDaily} header="Daily Habits" />
+      <HabitTracker habits={habitsDaily} header="Daily" />
       <HabitTracker
         habits={habitsSpecificDaysInAWeek}
         header="Specific Days In a Week"

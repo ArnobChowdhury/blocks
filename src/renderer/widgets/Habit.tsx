@@ -80,154 +80,138 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
    */
 
   return (
-    <>
-      <Box display="flex" mt={3} mb={1} justifyContent="center">
-        <Typography variant="h6">{header}</Typography>
-      </Box>
-      <table style={{ borderSpacing: '2px' }}>
-        <thead>
-          <tr>
-            {months.map(([month, days]) => {
-              return (
-                <th
-                  colSpan={days}
-                  key={month}
-                  style={{
-                    textAlign: 'left',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    paddingLeft: '4px',
-                  }}
-                >
-                  {month}
-                </th>
-              );
-            })}
-          </tr>
-          <tr>
-            {timestamps.map((timestamp) => {
-              return (
-                <StyledTh key={timestamp}>
-                  {new Date(timestamp).getDate()}
-                </StyledTh>
-              );
-            })}
-            <StyledTh sx={{ textAlign: 'left', fontWeight: 'bold' }}>
-              Habits
-            </StyledTh>
-          </tr>
-        </thead>
-        <tbody>
-          {habits?.map((habit) => {
-            const entriesByDate: { [key: number]: Task } = {};
-
-            // todo  can its time complexity be improved?
-            habit?.Task.forEach((taskEntry) => {
-              const { dueDate } = taskEntry;
-              if (dueDate) {
-                const dateOfTask = dayjs(dueDate).startOf('day').valueOf();
-                entriesByDate[dateOfTask] = taskEntry;
-              }
-            });
-
+    <table
+      style={{ borderSpacing: '2px', marginTop: '30px', marginBottom: '4px' }}
+    >
+      <thead>
+        <tr>
+          <th colSpan={30}>{header}</th>
+        </tr>
+        <tr>
+          {months.map(([month, days]) => {
             return (
-              <tr
-                onMouseEnter={() => setHoveredHabit(habit)}
-                onMouseLeave={() => setHoveredHabit(null)}
-                key={`${habit.title}-${habit.id}`}
+              <th
+                colSpan={days}
+                key={month}
+                style={{
+                  textAlign: 'left',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  paddingLeft: '4px',
+                }}
               >
-                {timestamps.map((timestamp) => {
-                  const entry = entriesByDate[timestamp];
-                  if (!entry) {
-                    return (
-                      <StyledTd key={`${timestamp}-${habit.id}-no-entry`} />
-                    );
-                  }
-                  const key = `${timestamp}-${entry.id}`;
-
-                  // daily task logic
-                  if (habit?.schedule === TaskScheduleTypeEnum.Daily) {
-                    if (
-                      entry.completionStatus ===
-                      TaskCompletionStatusEnum.COMPLETE
-                    ) {
-                      if (entry.score !== null) {
-                        const bg = scoreColors[entry.score];
-                        return (
-                          <StyledTd sx={{ backgroundColor: bg }} key={key} />
-                        );
-                      }
-                      return (
-                        <StyledTd
-                          sx={{ backgroundColor: '#B6D7A8' }}
-                          key={key}
-                        />
-                      );
-                    }
-                    if (
-                      entry.completionStatus === TaskCompletionStatusEnum.FAILED
-                    ) {
-                      return (
-                        <StyledTd
-                          sx={{ backgroundColor: '#FFDADA' }}
-                          key={key}
-                        />
-                      );
-                    }
-                  } else {
-                    // logic for specific tasks in a week
-                    if (
-                      entry.completionStatus ===
-                      TaskCompletionStatusEnum.COMPLETE
-                    ) {
-                      return (
-                        <StyledTd
-                          sx={{ backgroundColor: '#B6D7A8' }}
-                          key={key}
-                        />
-                      );
-                    }
-                    if (
-                      entry.completionStatus === TaskCompletionStatusEnum.FAILED
-                    ) {
-                      return (
-                        <StyledTd
-                          sx={{ backgroundColor: '#FFDADA' }}
-                          key={key}
-                        />
-                      );
-                    }
-                    return <StyledTd key={key} />;
-                  }
-                  return <StyledTd key={key} />;
-                })}
-
-                <StyledTd
-                  style={{
-                    minWidth: '150px',
-                    fontSize: '13px',
-                    backgroundColor: 'white',
-                    border: '1px solid transparent',
-                    textAlign: 'left',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    color:
-                      hoveredHabit?.id === habit?.id
-                        ? theme.palette.primary.main
-                        : 'inherit',
-                    fontWeight: hoveredHabit?.id === habit?.id ? 'bold' : 400,
-                    transition: 'all ease-in 0.1s',
-                  }}
-                >
-                  {habit?.title}
-                </StyledTd>
-              </tr>
+                {month}
+              </th>
             );
           })}
-        </tbody>
-      </table>
-    </>
+        </tr>
+        <tr>
+          {timestamps.map((timestamp) => {
+            return (
+              <StyledTh key={timestamp}>
+                {new Date(timestamp).getDate()}
+              </StyledTh>
+            );
+          })}
+          <StyledTh sx={{ textAlign: 'left', fontWeight: 'bold' }}>
+            Habits
+          </StyledTh>
+        </tr>
+      </thead>
+      <tbody>
+        {habits?.map((habit) => {
+          const entriesByDate: { [key: number]: Task } = {};
+
+          // todo  can its time complexity be improved?
+          habit?.Task.forEach((taskEntry) => {
+            const { dueDate } = taskEntry;
+            if (dueDate) {
+              const dateOfTask = dayjs(dueDate).startOf('day').valueOf();
+              entriesByDate[dateOfTask] = taskEntry;
+            }
+          });
+
+          return (
+            <tr
+              onMouseEnter={() => setHoveredHabit(habit)}
+              onMouseLeave={() => setHoveredHabit(null)}
+              key={`${habit.title}-${habit.id}`}
+            >
+              {timestamps.map((timestamp) => {
+                const entry = entriesByDate[timestamp];
+                if (!entry) {
+                  return <StyledTd key={`${timestamp}-${habit.id}-no-entry`} />;
+                }
+                const key = `${timestamp}-${entry.id}`;
+
+                // daily task logic
+                if (habit?.schedule === TaskScheduleTypeEnum.Daily) {
+                  if (
+                    entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
+                  ) {
+                    if (entry.score !== null) {
+                      const bg = scoreColors[entry.score];
+                      return (
+                        <StyledTd sx={{ backgroundColor: bg }} key={key} />
+                      );
+                    }
+                    return (
+                      <StyledTd sx={{ backgroundColor: '#B6D7A8' }} key={key} />
+                    );
+                  }
+                  if (
+                    entry.completionStatus === TaskCompletionStatusEnum.FAILED
+                  ) {
+                    return (
+                      <StyledTd sx={{ backgroundColor: '#FFDADA' }} key={key} />
+                    );
+                  }
+                } else {
+                  // logic for specific tasks in a week
+                  if (
+                    entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
+                  ) {
+                    return (
+                      <StyledTd sx={{ backgroundColor: '#B6D7A8' }} key={key} />
+                    );
+                  }
+                  if (
+                    entry.completionStatus === TaskCompletionStatusEnum.FAILED
+                  ) {
+                    return (
+                      <StyledTd sx={{ backgroundColor: '#FFDADA' }} key={key} />
+                    );
+                  }
+                  return <StyledTd key={key} />;
+                }
+                return <StyledTd key={key} />;
+              })}
+
+              <StyledTd
+                style={{
+                  minWidth: '150px',
+                  fontSize: '13px',
+                  backgroundColor: 'white',
+                  border: '1px solid transparent',
+                  textAlign: 'left',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  color:
+                    hoveredHabit?.id === habit?.id
+                      ? theme.palette.primary.main
+                      : 'inherit',
+                  fontWeight: hoveredHabit?.id === habit?.id ? 'bold' : 400,
+                  transition: 'all ease-in 0.1s',
+                }}
+              >
+                {habit?.title}
+              </StyledTd>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
 
