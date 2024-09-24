@@ -84,7 +84,7 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
       <Box display="flex" mt={3} mb={1} justifyContent="center">
         <Typography variant="h6">{header}</Typography>
       </Box>
-      <table style={{ borderSpacing: '6px' }}>
+      <table style={{ borderSpacing: '2px' }}>
         <thead>
           <tr>
             {months.map(([month, days]) => {
@@ -106,7 +106,11 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
           </tr>
           <tr>
             {timestamps.map((timestamp) => {
-              return <StyledTh>{new Date(timestamp).getDate()}</StyledTh>;
+              return (
+                <StyledTh key={timestamp}>
+                  {new Date(timestamp).getDate()}
+                </StyledTh>
+              );
             })}
             <StyledTh sx={{ textAlign: 'left', fontWeight: 'bold' }}>
               Habits
@@ -130,12 +134,16 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
               <tr
                 onMouseEnter={() => setHoveredHabit(habit)}
                 onMouseLeave={() => setHoveredHabit(null)}
+                key={`${habit.title}-${habit.id}`}
               >
                 {timestamps.map((timestamp) => {
                   const entry = entriesByDate[timestamp];
                   if (!entry) {
-                    return <StyledTd />;
+                    return (
+                      <StyledTd key={`${timestamp}-${habit.id}-no-entry`} />
+                    );
                   }
+                  const key = `${timestamp}-${entry.id}`;
 
                   // daily task logic
                   if (habit?.schedule === TaskScheduleTypeEnum.Daily) {
@@ -145,14 +153,26 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
                     ) {
                       if (entry.score !== null) {
                         const bg = scoreColors[entry.score];
-                        return <StyledTd sx={{ backgroundColor: bg }} />;
+                        return (
+                          <StyledTd sx={{ backgroundColor: bg }} key={key} />
+                        );
                       }
-                      return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
+                      return (
+                        <StyledTd
+                          sx={{ backgroundColor: '#B6D7A8' }}
+                          key={key}
+                        />
+                      );
                     }
                     if (
                       entry.completionStatus === TaskCompletionStatusEnum.FAILED
                     ) {
-                      return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
+                      return (
+                        <StyledTd
+                          sx={{ backgroundColor: '#FFDADA' }}
+                          key={key}
+                        />
+                      );
                     }
                   } else {
                     // logic for specific tasks in a week
@@ -160,16 +180,26 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
                       entry.completionStatus ===
                       TaskCompletionStatusEnum.COMPLETE
                     ) {
-                      return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
+                      return (
+                        <StyledTd
+                          sx={{ backgroundColor: '#B6D7A8' }}
+                          key={key}
+                        />
+                      );
                     }
                     if (
                       entry.completionStatus === TaskCompletionStatusEnum.FAILED
                     ) {
-                      return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
+                      return (
+                        <StyledTd
+                          sx={{ backgroundColor: '#FFDADA' }}
+                          key={key}
+                        />
+                      );
                     }
-                    return <StyledTd />;
+                    return <StyledTd key={key} />;
                   }
-                  return <StyledTd />;
+                  return <StyledTd key={key} />;
                 })}
 
                 <StyledTd
