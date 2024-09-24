@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography, styled, Box, useTheme } from '@mui/material';
+import { styled, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import {
   TaskScheduleTypeEnum,
