@@ -56,6 +56,19 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
   // Add today as the last entry
   timestamps.push(dayjs().startOf('day').valueOf());
 
+  const months: [string, number][] = [];
+  timestamps.forEach((timestamp, index) => {
+    const monthName = dayjs(timestamp).format('MMMM');
+    if (index === 0) {
+      months.push([monthName, 30]);
+    } else if (dayjs(timestamp).format('D') === '1') {
+      if (months.length > 0) {
+        months[months.length - 1][1] = index;
+      }
+      months.push([monthName, 30 - index]);
+    }
+  });
+
   /**
    * Todos
    * 1. make a useHabit hook?
@@ -72,93 +85,117 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
         <Typography variant="h6">{header}</Typography>
       </Box>
       <table style={{ borderSpacing: '6px' }}>
-        <tr>
-          {timestamps.map((timestamp) => {
-            return <StyledTh>{new Date(timestamp).getDate()}</StyledTh>;
-          })}
-          <StyledTh sx={{ textAlign: 'left', fontWeight: 'bold' }}>
-            Habits
-          </StyledTh>
-        </tr>
-        {habits?.map((habit) => {
-          const entriesByDate: { [key: number]: Task } = {};
+        <thead>
+          <tr>
+            {months.map(([month, days]) => {
+              return (
+                <th
+                  colSpan={days}
+                  key={month}
+                  style={{
+                    textAlign: 'left',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    paddingLeft: '4px',
+                  }}
+                >
+                  {month}
+                </th>
+              );
+            })}
+          </tr>
+          <tr>
+            {timestamps.map((timestamp) => {
+              return <StyledTh>{new Date(timestamp).getDate()}</StyledTh>;
+            })}
+            <StyledTh sx={{ textAlign: 'left', fontWeight: 'bold' }}>
+              Habits
+            </StyledTh>
+          </tr>
+        </thead>
+        <tbody>
+          {habits?.map((habit) => {
+            const entriesByDate: { [key: number]: Task } = {};
 
-          // todo  can its time complexity be improved?
-          habit?.Task.forEach((taskEntry) => {
-            const { dueDate } = taskEntry;
-            if (dueDate) {
-              const dateOfTask = dayjs(dueDate).startOf('day').valueOf();
-              entriesByDate[dateOfTask] = taskEntry;
-            }
-          });
+            // todo  can its time complexity be improved?
+            habit?.Task.forEach((taskEntry) => {
+              const { dueDate } = taskEntry;
+              if (dueDate) {
+                const dateOfTask = dayjs(dueDate).startOf('day').valueOf();
+                entriesByDate[dateOfTask] = taskEntry;
+              }
+            });
 
-          return (
-            <tr
-              onMouseEnter={() => setHoveredHabit(habit)}
-              onMouseLeave={() => setHoveredHabit(null)}
-            >
-              {timestamps.map((timestamp) => {
-                const entry = entriesByDate[timestamp];
-                if (!entry) {
-                  return <StyledTd />;
-                }
-
-                // daily task logic
-                if (habit?.schedule === TaskScheduleTypeEnum.Daily) {
-                  if (
-                    entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
-                  ) {
-                    if (entry.score !== null) {
-                      const bg = scoreColors[entry.score];
-                      return <StyledTd sx={{ backgroundColor: bg }} />;
-                    }
-                    return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
-                  }
-                  if (
-                    entry.completionStatus === TaskCompletionStatusEnum.FAILED
-                  ) {
-                    return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
-                  }
-                } else {
-                  // logic for specific tasks in a week
-                  if (
-                    entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
-                  ) {
-                    return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
-                  }
-                  if (
-                    entry.completionStatus === TaskCompletionStatusEnum.FAILED
-                  ) {
-                    return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
-                  }
-                  return <StyledTd />;
-                }
-                return <StyledTd />;
-              })}
-
-              <StyledTd
-                style={{
-                  minWidth: '150px',
-                  fontSize: '13px',
-                  backgroundColor: 'white',
-                  border: '1px solid transparent',
-                  textAlign: 'left',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  color:
-                    hoveredHabit?.id === habit?.id
-                      ? theme.palette.primary.main
-                      : 'inherit',
-                  fontWeight: hoveredHabit?.id === habit?.id ? 'bold' : 400,
-                  transition: 'all ease-in 0.1s',
-                }}
+            return (
+              <tr
+                onMouseEnter={() => setHoveredHabit(habit)}
+                onMouseLeave={() => setHoveredHabit(null)}
               >
-                {habit?.title}
-              </StyledTd>
-            </tr>
-          );
-        })}
+                {timestamps.map((timestamp) => {
+                  const entry = entriesByDate[timestamp];
+                  if (!entry) {
+                    return <StyledTd />;
+                  }
+
+                  // daily task logic
+                  if (habit?.schedule === TaskScheduleTypeEnum.Daily) {
+                    if (
+                      entry.completionStatus ===
+                      TaskCompletionStatusEnum.COMPLETE
+                    ) {
+                      if (entry.score !== null) {
+                        const bg = scoreColors[entry.score];
+                        return <StyledTd sx={{ backgroundColor: bg }} />;
+                      }
+                      return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
+                    }
+                    if (
+                      entry.completionStatus === TaskCompletionStatusEnum.FAILED
+                    ) {
+                      return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
+                    }
+                  } else {
+                    // logic for specific tasks in a week
+                    if (
+                      entry.completionStatus ===
+                      TaskCompletionStatusEnum.COMPLETE
+                    ) {
+                      return <StyledTd sx={{ backgroundColor: '#B6D7A8' }} />;
+                    }
+                    if (
+                      entry.completionStatus === TaskCompletionStatusEnum.FAILED
+                    ) {
+                      return <StyledTd sx={{ backgroundColor: '#FFDADA' }} />;
+                    }
+                    return <StyledTd />;
+                  }
+                  return <StyledTd />;
+                })}
+
+                <StyledTd
+                  style={{
+                    minWidth: '150px',
+                    fontSize: '13px',
+                    backgroundColor: 'white',
+                    border: '1px solid transparent',
+                    textAlign: 'left',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    color:
+                      hoveredHabit?.id === habit?.id
+                        ? theme.palette.primary.main
+                        : 'inherit',
+                    fontWeight: hoveredHabit?.id === habit?.id ? 'bold' : 400,
+                    transition: 'all ease-in 0.1s',
+                  }}
+                >
+                  {habit?.title}
+                </StyledTd>
+              </tr>
+            );
+          })}
+        </tbody>
       </table>
     </>
   );
