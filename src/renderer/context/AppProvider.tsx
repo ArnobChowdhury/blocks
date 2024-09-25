@@ -6,7 +6,10 @@ import React, {
   useCallback,
 } from 'react';
 
-import { handlePageTaskRefresh } from '../utils';
+import {
+  handlePageTaskRefresh,
+  getMillisecondsUntilNextMidnight,
+} from '../utils';
 import { ChannelsEnum, TaskWithTags, RepetitiveTaskWithTags } from '../types';
 
 const AppContextFn = () => {
@@ -85,6 +88,25 @@ const AppContextFn = () => {
     setNotification(undefined);
   }, []);
 
+  const [shouldRefresh, setShouldRefresh] = useState(false);
+  const scheduleMidnightReload = useCallback(() => {
+    const timeUntilMidnight = getMillisecondsUntilNextMidnight();
+
+    setTimeout(() => {
+      setShouldRefresh(true);
+      scheduleMidnightReload();
+    }, timeUntilMidnight);
+  }, []);
+
+  useEffect(() => {
+    scheduleMidnightReload();
+  }, [scheduleMidnightReload]);
+
+  const handlePageRefresh = () => {
+    handlePageTaskRefresh();
+    setShouldRefresh(false);
+  };
+
   return {
     showSnackbar,
     notification,
@@ -98,6 +120,8 @@ const AppContextFn = () => {
     repetitiveTaskTemplateForEdit,
     setRepetitiveTaskTemplateIdForEdit,
     setRepetitiveTaskTemplateForEdit,
+    shouldRefresh,
+    handlePageRefresh,
   };
 };
 

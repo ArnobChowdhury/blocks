@@ -28,6 +28,11 @@ import {
   Typography,
   useTheme,
   Dialog,
+  DialogActions,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  Button,
   Snackbar,
   Alert,
   Collapse,
@@ -110,6 +115,8 @@ function Navigation() {
     repetitiveTaskTemplateForEdit,
     setRepetitiveTaskTemplateIdForEdit,
     setRepetitiveTaskTemplateForEdit,
+    shouldRefresh,
+    handlePageRefresh,
   } = useApp();
 
   const handleEditTaskCancel = () => {
@@ -229,6 +236,17 @@ function Navigation() {
             widgetCloseFunc={handleEditRepetitiveTaskTemplateCancel}
           />
         )}
+      </Dialog>
+      <Dialog open={shouldRefresh}>
+        <DialogTitle>New Day!</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            It is a new day. You need to refresh the page to see the new tasks.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handlePageRefresh}>Ok, refresh</Button>
+        </DialogActions>
       </Dialog>
     </>
   );

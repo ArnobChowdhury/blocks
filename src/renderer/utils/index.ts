@@ -1,4 +1,4 @@
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { ChannelsEnum } from '../types';
 
 export const refreshTodayPageTasks = () => {
@@ -64,4 +64,10 @@ export const formatErrorMessage = (msg: string) => {
   const splitMsg = msg.split('Error: ');
   if (splitMsg[1]) return splitMsg[1];
   return 'Something went wrong!';
+};
+
+export const getMillisecondsUntilNextMidnight = () => {
+  const now = dayjs();
+  const nextMidnight = dayjs().endOf('day').add(1, 'second');
+  return nextMidnight.diff(now);
 };
