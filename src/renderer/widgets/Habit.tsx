@@ -95,12 +95,12 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
                 key={month}
                 style={{
                   textAlign: 'left',
-                  fontSize: '12px',
+                  fontSize: days < 2 ? '9px' : '12px',
                   fontWeight: 'bold',
                   paddingLeft: '4px',
                 }}
               >
-                {month}
+                {days < 4 ? month.slice(0, 3) : month}
               </th>
             );
           })}
