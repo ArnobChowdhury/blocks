@@ -42,10 +42,12 @@ export const refreshTagsPageTasks = (tagId: number) => {
 };
 
 export const handlePageTaskRefresh = () => {
-  const location = window.location.pathname;
+  const location = window.location.hash.replace('#', '');
+
   if (location === '/active') {
     refreshAllTasks();
   }
+
   if (location === '/') {
     refreshTodayPageTasks();
   }
