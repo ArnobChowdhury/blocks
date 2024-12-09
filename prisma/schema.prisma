@@ -36,6 +36,8 @@ model RepetitiveTaskTemplate {
   modifiedAt               DateTime  @updatedAt
   tags                     Tag[]
   Task                     Task[]
+  space                    Space?    @relation(fields: [spaceId], references: [id])
+  spaceId                  Int?
 }
 
 model Task {
@@ -55,6 +57,8 @@ model Task {
   createdAt                DateTime                @default(now())
   modifiedAt               DateTime                @updatedAt
   tags                     Tag[]
+  space                    Space?                  @relation(fields: [spaceId], references: [id])
+  spaceId                  Int?
 
   @@unique([repetitiveTaskTemplateId, dueDate])
 }
@@ -62,6 +66,15 @@ model Task {
 model Tag {
   id              Int                      @id @default(autoincrement())
   name            String
+  tasks           Task[]
+  repetitiveTasks RepetitiveTaskTemplate[]
+  createdAt       DateTime                 @default(now())
+  modifiedAt      DateTime                 @updatedAt
+}
+
+model Space {
+  id              Int                      @id @default(autoincrement())
+  title           String                   @unique
   tasks           Task[]
   repetitiveTasks RepetitiveTaskTemplate[]
   createdAt       DateTime                 @default(now())
