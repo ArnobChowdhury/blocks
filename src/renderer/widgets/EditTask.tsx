@@ -28,7 +28,7 @@ import {
   DescriptionEditor,
   SectionHeader,
   TimeOfDaySelector,
-  TagSelector,
+  Selector,
 } from '../components';
 import {
   TaskScheduleTypeEnum,
@@ -357,9 +357,10 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
             </FormControl>
           )}
 
-          <TagSelector
-            tags={allTags}
-            selectedTags={selectedTags}
+          <Selector
+            options={allTags}
+            multiple={false}
+            value={selectedTags}
             onOpen={handleLoadingTags}
             onTagCreation={handleTagCreation}
             onChange={setSelectedTags}

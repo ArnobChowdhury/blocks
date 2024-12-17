@@ -51,7 +51,7 @@ import Plus from './icons/Plus';
 import { AddTask, EditTask } from './widgets';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
-import { useTags } from './hooks';
+import { useSpace } from './hooks';
 
 const MyStyledListItemText = styled(ListItemText)({
   color: 'red', // Change this to the color you want
@@ -129,11 +129,12 @@ function Navigation() {
     setRepetitiveTaskTemplateIdForEdit(undefined);
   };
 
-  const { allTags, handleLoadingTags } = useTags();
+  // const { allTags, handleLoadingTags } = useTags();
+  const { allSpaces, handleLoadingSpaces } = useSpace();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleTagsExpand = async () => {
-    await handleLoadingTags();
+  const handleSpacesExpand = async () => {
+    await handleLoadingSpaces();
     setIsExpanded(!isExpanded);
   };
 
@@ -185,7 +186,7 @@ function Navigation() {
           </ListItemIcon>
           <ListItemText primary="Tracker" />
         </ListItemButton>
-        <ListItemButton sx={{ mt: 2 }} onClick={handleTagsExpand}>
+        <ListItemButton sx={{ mt: 2 }} onClick={handleSpacesExpand}>
           <ListItemIcon>
             {isExpanded ? <ArrowDown /> : <ArrowRight />}
           </ListItemIcon>
@@ -197,7 +198,7 @@ function Navigation() {
         {/* tags */}
         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
           <List dense component="div" disablePadding>
-            {allTags.map((tag) => (
+            {allSpaces.map((tag) => (
               <ListItemButton
                 key={`${tag.name}-${tag.id}`}
                 sx={{ py: 0.5, pl: 4 }}

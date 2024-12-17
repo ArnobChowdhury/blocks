@@ -10,26 +10,39 @@ import { createFilterOptions } from '@mui/material/Autocomplete';
 import AddIcon from '@mui/icons-material/Add';
 
 // eslint-disable-next-line import/no-relative-packages
-import { Tag } from '../../generated/client';
+import { Tag, Space } from '../../generated/client';
 
-interface TagSelectorProps {
-  tags: Tag[];
-  // eslint-disable-next-line react/require-default-props
-  selectedTags: Tag[];
-  onChange: (value: Tag[]) => void;
-  onOpen: () => Promise<void>;
-  onTagCreation: (tagName: string) => void;
-}
+type SelectorProps =
+  | {
+      label: string;
+      options: Tag[] | Space[];
+      multiple: true;
+      value: Tag[] | Space[];
+      onChange: (value: Tag[] | Space[]) => void;
+      onOpen: () => Promise<void>;
+      onOptionCreation: (optionName: string) => void;
+    }
+  | {
+      label: string;
+      options: Tag[] | Space[];
+      multiple: false;
+      value?: Tag | Space;
+      onChange: (value: Tag | Space) => void;
+      onOpen: () => Promise<void>;
+      onOptionCreation: (optionName: string) => void;
+    };
 
-const filter = createFilterOptions<Tag>();
+const filter = createFilterOptions<Tag | Space>();
 
-function TagSelector({
-  tags,
-  selectedTags,
+function Selector({
+  label,
+  options,
+  value,
   onOpen,
-  onTagCreation,
+  onOptionCreation,
   onChange,
-}: TagSelectorProps) {
+  multiple,
+}: SelectorProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
@@ -45,16 +58,23 @@ function TagSelector({
 
   return (
     <Autocomplete
-      multiple
+      multiple={multiple}
       limitTags={2}
       disableCloseOnSelect
       size="small"
       id="asynchronous-demo"
       sx={{ width: 300 }}
       open={open}
-      value={selectedTags}
-      onChange={(_, value) => {
-        onChange(value);
+      value={value}
+      onChange={(_, changedValue) => {
+        if (!changedValue) return;
+        if (multiple) {
+          if (Array.isArray(changedValue)) {
+            onChange(changedValue as Tag[] | Space[]); // Safe
+          }
+        } else if (!Array.isArray(changedValue)) {
+          onChange(changedValue); // Safe
+        }
       }}
       onOpen={() => {
         setOpen(true);
@@ -63,7 +83,9 @@ function TagSelector({
         setOpen(false);
       }}
       // needs to be worked on
-      isOptionEqualToValue={(option, value) => option.id === value.id}
+      isOptionEqualToValue={(option, val) =>
+        (option as Tag | Space).id === (val as Tag | Space).id
+      }
       // getOptionLabel={(option) => option.name}
       getOptionLabel={(option) => {
         // Value selected with enter, right from the input
@@ -77,18 +99,20 @@ function TagSelector({
         }
 
         // Regular option
-        return option.name;
+        return (option as Tag | Space).name;
       }}
-      options={tags}
+      options={options}
       loading={loading}
       clearOnBlur
       selectOnFocus
-      filterOptions={(options, params) => {
-        const filtered = filter(options, params);
+      filterOptions={(filterOptions, params) => {
+        const filtered = filter(filterOptions as Tag[] | Space[], params);
 
         const { inputValue } = params;
         // Suggest the creation of a new value
-        const isExisting = options.some((option) => inputValue === option.name);
+        const isExisting = filterOptions.some(
+          (option) => inputValue === (option as Tag | Space).name,
+        );
         if (inputValue !== '' && !isExisting) {
           filtered.push({
             inputValue,
@@ -110,7 +134,7 @@ function TagSelector({
             key={key}
             onClick={
               'inputValue' in option
-                ? () => onTagCreation(option.inputValue as string)
+                ? () => onOptionCreation(option.inputValue as string)
                 : onClick
             }
             {...optionProps}
@@ -128,7 +152,7 @@ function TagSelector({
             {isCreatable && (
               <AddIcon color="primary" fontSize="small" sx={{ mr: 1 }} />
             )}
-            {option.name}
+            {(option as Tag | Space).name}
           </li>
         );
       }}
@@ -136,7 +160,7 @@ function TagSelector({
         <TextField
           // eslint-disable-next-line react/jsx-props-no-spreading
           {...params}
-          label="Tags"
+          label={label}
           size="small"
           InputLabelProps={{
             ...params.InputLabelProps,
@@ -165,4 +189,4 @@ function TagSelector({
   );
 }
 
-export default TagSelector;
+export default Selector;

@@ -1,7 +1,7 @@
 -- CreateTable
 CREATE TABLE "Space" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "title" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "modifiedAt" DATETIME NOT NULL
 );
@@ -61,4 +61,4 @@ PRAGMA foreign_keys=ON;
 PRAGMA defer_foreign_keys=OFF;
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Space_title_key" ON "Space"("title");
+CREATE UNIQUE INDEX "Space_name_key" ON "Space"("name");

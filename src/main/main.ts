@@ -315,9 +315,6 @@ const generateDueRepetitiveTasks = async () => {
   );
 };
 
-/**
- * todo: add error handling
- */
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_TASK,
   async (event, task: ITaskIPC) => {
@@ -330,6 +327,7 @@ ipcMain.handle(
       shouldBeScored,
       timeOfDay,
       tagIds,
+      spaceId,
     } = task;
 
     try {
@@ -350,6 +348,7 @@ ipcMain.handle(
             tags: {
               connect: tagIds,
             },
+            spaceId,
           },
         });
       } else {
@@ -388,6 +387,7 @@ ipcMain.handle(
             tags: {
               connect: tagIds,
             },
+            spaceId,
           },
         });
       }
@@ -883,6 +883,31 @@ ipcMain.handle(
 ipcMain.handle(ChannelsEnum.REQUEST_ALL_TAGS, async () => {
   try {
     return await prisma.tag.findMany();
+  } catch (err: any) {
+    log.error(err?.message);
+    throw err;
+  }
+});
+
+ipcMain.handle(
+  ChannelsEnum.REQUEST_CREATE_SPACE,
+  async (_event, spaceName: string) => {
+    try {
+      return await prisma.space.create({
+        data: {
+          name: spaceName,
+        },
+      });
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
+ipcMain.handle(ChannelsEnum.REQUEST_ALL_SPACES, async () => {
+  try {
+    return await prisma.space.findMany();
   } catch (err: any) {
     log.error(err?.message);
     throw err;
