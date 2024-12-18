@@ -245,6 +245,7 @@ const generateDueRepetitiveTasks = async () => {
         createdAt,
         timeOfDay,
         tags,
+        spaceId,
       } = repetitiveTask;
 
       let lastDateOfTaskGeneration: Dayjs | Date | null;
@@ -296,6 +297,7 @@ const generateDueRepetitiveTasks = async () => {
                 tags: {
                   connect: tags.map((tag) => ({ id: tag.id })),
                 },
+                spaceId,
               },
               update: {},
             });
@@ -411,6 +413,7 @@ ipcMain.handle(
       timeOfDay,
       completionStatus,
       tagIds,
+      spaceId,
     } = task;
 
     try {
@@ -428,6 +431,7 @@ ipcMain.handle(
           tags: {
             set: tagIds,
           },
+          spaceId,
         },
       });
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
@@ -441,8 +445,16 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_REPETITIVE_TASK,
   async (event, task: ITaskIPC) => {
-    const { id, title, description, shouldBeScored, timeOfDay, days, tagIds } =
-      task;
+    const {
+      id,
+      title,
+      description,
+      shouldBeScored,
+      timeOfDay,
+      days,
+      tagIds,
+      spaceId,
+    } = task;
     let repetitiveTaskTemplate: RepetitiveTaskTemplate | null;
 
     try {
@@ -498,6 +510,7 @@ ipcMain.handle(
           tags: {
             set: tagIds,
           },
+          spaceId,
         },
       });
 
@@ -815,6 +828,7 @@ ipcMain.handle(
         },
         include: {
           tags: true,
+          space: true,
         },
       });
     } catch (err: any) {
@@ -834,6 +848,7 @@ ipcMain.handle(
         },
         include: {
           tags: true,
+          space: true,
         },
       });
     } catch (err: any) {

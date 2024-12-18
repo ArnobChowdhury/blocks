@@ -129,7 +129,6 @@ function Navigation() {
     setRepetitiveTaskTemplateIdForEdit(undefined);
   };
 
-  // const { allTags, handleLoadingTags } = useTags();
   const { allSpaces, handleLoadingSpaces } = useSpace();
   const [isExpanded, setIsExpanded] = useState(false);
 

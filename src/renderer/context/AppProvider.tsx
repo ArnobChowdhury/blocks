@@ -10,7 +10,11 @@ import {
   handlePageTaskRefresh,
   getMillisecondsUntilNextMidnight,
 } from '../utils';
-import { ChannelsEnum, TaskWithTags, RepetitiveTaskWithTags } from '../types';
+import {
+  ChannelsEnum,
+  TaskWithTagsAndSpace,
+  RepetitiveTaskWithTagsAndSpace,
+} from '../types';
 
 const AppContextFn = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
@@ -20,12 +24,12 @@ const AppContextFn = () => {
   }>();
   const [showAddTask, setShowAddTask] = useState(false);
   const [taskIdForEdit, setTaskIdForEdit] = useState<number>();
-  const [taskForEdit, setTaskForEdit] = useState<TaskWithTags>();
+  const [taskForEdit, setTaskForEdit] = useState<TaskWithTagsAndSpace>();
 
   const [repetitiveTaskTemplateIdForEdit, setRepetitiveTaskTemplateIdForEdit] =
     useState<number>();
   const [repetitiveTaskTemplateForEdit, setRepetitiveTaskTemplateForEdit] =
-    useState<RepetitiveTaskWithTags>();
+    useState<RepetitiveTaskWithTagsAndSpace>();
   /**
    * Add event listeners... for page refresh events' errors and set notifiers
    */

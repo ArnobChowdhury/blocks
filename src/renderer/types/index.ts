@@ -8,6 +8,13 @@ import {
 
 export type TaskWithTags = Task & { tags: Tag[] };
 export type RepetitiveTaskWithTags = RepetitiveTaskTemplate & { tags: Tag[] };
+// We may merge the above 2 type with the below 2 types in the future if there are no cases where we get tags and not the spaces
+export type TaskWithTagsAndSpace = Task & { tags: Tag[]; space: Space };
+export type RepetitiveTaskWithTagsAndSpace = RepetitiveTaskTemplate & {
+  tags: Tag[];
+  space: Space;
+};
+
 export interface ExtendedRepetitiveTaskTemplate extends RepetitiveTaskTemplate {
   Task: Task[];
 }

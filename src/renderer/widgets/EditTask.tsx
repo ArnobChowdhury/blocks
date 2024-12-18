@@ -36,16 +36,13 @@ import {
   TimeOfDay,
   TaskCompletionStatusEnum,
   DaysInAWeek,
-  TaskWithTags,
-  RepetitiveTaskWithTags,
-  Tag,
+  TaskWithTagsAndSpace,
+  RepetitiveTaskWithTagsAndSpace,
+  Space,
 } from '../types';
 import CustomChip from '../components/CustomChip';
 import { useApp } from '../context/AppProvider';
-import { useTags } from '../hooks';
-
-// eslint-disable-next-line import/no-relative-packages
-// import { Task, RepetitiveTaskTemplate } from '../../generated/client';
+import { useSpace } from '../hooks';
 
 const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
   textTransform: 'capitalize',
@@ -54,7 +51,7 @@ const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
 
 interface IEditTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
-  task: TaskWithTags | RepetitiveTaskWithTags;
+  task: TaskWithTagsAndSpace | RepetitiveTaskWithTagsAndSpace;
 }
 
 function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
@@ -91,21 +88,21 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
         : null,
     );
 
-  const [selectedTags, setSelectedTags] = useState<Tag[]>(task.tags);
+  const [selectedSpace, setSelectedSpace] = useState<Space>(task.space);
   const { setNotifier } = useApp();
 
   const {
-    allTags,
-    error: tagsRequestError,
-    handleLoadingTags,
-    createTag,
-  } = useTags();
+    allSpaces,
+    error: spaceRequestError,
+    handleLoadingSpaces,
+    createSpace,
+  } = useSpace();
 
   useEffect(() => {
-    if (tagsRequestError) {
-      setNotifier(tagsRequestError, 'error');
+    if (spaceRequestError) {
+      setNotifier(spaceRequestError, 'error');
     }
-  }, [tagsRequestError, setNotifier]);
+  }, [spaceRequestError, setNotifier]);
 
   const theme = useTheme();
 
@@ -184,14 +181,15 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
       stringifiedDescription = editor.getHTML();
     }
 
-    const selectedTagIds = selectedTags.map((tag) => ({ id: tag.id }));
+    // const selectedTagIds = selectedSpace.map((tag) => ({ id: tag.id }));
     const editedTask: Record<string, any> = {
       id: task.id,
       title: taskTitle,
       description: stringifiedDescription,
       shouldBeScored,
       timeOfDay: selectedTimeOfDay,
-      tagIds: selectedTagIds,
+      // tagIds: selectedTagIds,
+      spaceId: selectedSpace?.id,
     };
 
     if (!isRepetitiveTaskTemplateAndSpecificDaysInAWeek) {
@@ -201,6 +199,8 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
 
     if (isRepetitiveTaskTemplateAndSpecificDaysInAWeek)
       editedTask.days = selectedDays;
+
+    // update: both REQUEST_UPDATE_TASK and REQUEST_UPDATE_REPETITIVE_TASK
 
     try {
       if (!isRepetitiveTaskTemplate)
@@ -233,12 +233,12 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
     }
   };
 
-  const handleTagCreation = async (tagName: string) => {
+  const handleSpaceCreation = async (spaceName: string) => {
     try {
-      const newTag: Tag | null = await createTag(tagName);
-      if (newTag) {
-        await handleLoadingTags();
-        setSelectedTags((prev) => [...prev, newTag]);
+      const newSpace: Space | null = await createSpace(spaceName);
+      if (newSpace) {
+        await handleLoadingSpaces();
+        setSelectedSpace(newSpace);
       }
     } catch (err: any) {
       setNotifier(err.message, 'error');
@@ -358,12 +358,13 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
           )}
 
           <Selector
-            options={allTags}
+            label="Space"
+            options={allSpaces}
             multiple={false}
-            value={selectedTags}
-            onOpen={handleLoadingTags}
-            onTagCreation={handleTagCreation}
-            onChange={setSelectedTags}
+            value={selectedSpace}
+            onOpen={handleLoadingSpaces}
+            onOptionCreation={handleSpaceCreation}
+            onChange={setSelectedSpace}
           />
         </Box>
 
