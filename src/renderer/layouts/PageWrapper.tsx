@@ -33,7 +33,7 @@ function PageWrapper({
         <Container
           sx={{
             // maxWidth: '600px', // Limit the container width
-            width: '1000px', // Make sure it takes full width within the maxWidth
+            width: '800px', // Make sure it takes full width within the maxWidth
             padding: 2, // Add some padding
           }}
         >
