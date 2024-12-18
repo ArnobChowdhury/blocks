@@ -25,19 +25,17 @@ import {
   DescriptionEditor,
   SectionHeader,
   TimeOfDaySelector,
-  TagSelector,
+  Selector,
 } from '../components';
 import {
   TaskScheduleTypeEnum,
   TimeOfDay,
   DaysInAWeek,
   ChannelsEnum,
+  Space,
 } from '../types';
 import { useApp } from '../context/AppProvider';
-import { useTags } from '../hooks';
-
-// eslint-disable-next-line import/no-relative-packages
-import { Tag } from '../../generated/client';
+import { useSpace } from '../hooks';
 
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
@@ -56,20 +54,20 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
   const [shouldBeScored, setShouldBeScored] = useState(false);
   const { setNotifier } = useApp();
 
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [selectedSpace, setSelectedSpace] = useState<Space>();
 
   const {
-    handleLoadingTags,
-    createTag,
-    allTags,
-    error: tagsRequestError,
-  } = useTags();
+    handleLoadingSpaces,
+    createSpace,
+    allSpaces,
+    error: spaceRequestError,
+  } = useSpace();
 
   useEffect(() => {
-    if (tagsRequestError) {
-      setNotifier(tagsRequestError, 'error');
+    if (spaceRequestError) {
+      setNotifier(spaceRequestError, 'error');
     }
-  }, [tagsRequestError, setNotifier]);
+  }, [spaceRequestError, setNotifier]);
 
   const editor: Editor | null = useEditor({
     extensions: [
@@ -145,7 +143,7 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       stringifiedJson = editor.getHTML();
     }
 
-    const selectedTagIds = selectedTags.map((tag) => ({ id: tag.id }));
+    // const selectedTagIds = selectedTags.map((tag) => ({ id: tag.id }));
 
     const task = {
       title: taskTitle,
@@ -155,7 +153,8 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
       dueDate,
       shouldBeScored,
       timeOfDay: selectedTimeOfDay,
-      tagIds: selectedTagIds,
+      // tagIds: selectedTagIds,
+      spaceId: selectedSpace?.id,
     };
 
     try {
@@ -170,12 +169,12 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
     }
   };
 
-  const handleTagCreation = async (tagName: string) => {
+  const handleSpaceCreation = async (spaceName: string) => {
     try {
-      const newTag: Tag | null = await createTag(tagName);
-      if (newTag) {
-        await handleLoadingTags();
-        setSelectedTags((prev) => [...prev, newTag]);
+      const newSpace: Space | null = await createSpace(spaceName);
+      if (newSpace) {
+        await handleLoadingSpaces();
+        setSelectedSpace(newSpace);
       }
     } catch (err: any) {
       setNotifier(err.message, 'error');
@@ -299,12 +298,14 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
           />
         )}
         <Box mt={2}>
-          <TagSelector
-            tags={allTags}
-            selectedTags={selectedTags}
-            onOpen={handleLoadingTags}
-            onTagCreation={handleTagCreation}
-            onChange={setSelectedTags}
+          <Selector
+            label="Space"
+            options={allSpaces}
+            multiple={false}
+            value={selectedSpace}
+            onOpen={handleLoadingSpaces}
+            onOptionCreation={handleSpaceCreation}
+            onChange={setSelectedSpace}
           />
         </Box>
         <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>

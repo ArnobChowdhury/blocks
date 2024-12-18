@@ -5,7 +5,7 @@ import CalendarChip from './CalendarChip';
 import DescriptionEditor from './DescriptionEditor.tsx';
 import SectionHeader from './SectionHeader';
 import TimeOfDaySelector from './TimeOfDaySelector';
-import TagSelector from './TagSelector';
+import Selector from './Selector';
 
 export {
   TaskScoring,
@@ -15,5 +15,5 @@ export {
   DescriptionEditor,
   SectionHeader,
   TimeOfDaySelector,
-  TagSelector,
+  Selector,
 };

@@ -245,6 +245,7 @@ const generateDueRepetitiveTasks = async () => {
         createdAt,
         timeOfDay,
         tags,
+        spaceId,
       } = repetitiveTask;
 
       let lastDateOfTaskGeneration: Dayjs | Date | null;
@@ -296,6 +297,7 @@ const generateDueRepetitiveTasks = async () => {
                 tags: {
                   connect: tags.map((tag) => ({ id: tag.id })),
                 },
+                spaceId,
               },
               update: {},
             });
@@ -315,9 +317,6 @@ const generateDueRepetitiveTasks = async () => {
   );
 };
 
-/**
- * todo: add error handling
- */
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_TASK,
   async (event, task: ITaskIPC) => {
@@ -330,6 +329,7 @@ ipcMain.handle(
       shouldBeScored,
       timeOfDay,
       tagIds,
+      spaceId,
     } = task;
 
     try {
@@ -350,6 +350,7 @@ ipcMain.handle(
             tags: {
               connect: tagIds,
             },
+            spaceId,
           },
         });
       } else {
@@ -388,6 +389,7 @@ ipcMain.handle(
             tags: {
               connect: tagIds,
             },
+            spaceId,
           },
         });
       }
@@ -411,6 +413,7 @@ ipcMain.handle(
       timeOfDay,
       completionStatus,
       tagIds,
+      spaceId,
     } = task;
 
     try {
@@ -428,6 +431,7 @@ ipcMain.handle(
           tags: {
             set: tagIds,
           },
+          spaceId,
         },
       });
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
@@ -441,8 +445,16 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_REPETITIVE_TASK,
   async (event, task: ITaskIPC) => {
-    const { id, title, description, shouldBeScored, timeOfDay, days, tagIds } =
-      task;
+    const {
+      id,
+      title,
+      description,
+      shouldBeScored,
+      timeOfDay,
+      days,
+      tagIds,
+      spaceId,
+    } = task;
     let repetitiveTaskTemplate: RepetitiveTaskTemplate | null;
 
     try {
@@ -498,6 +510,7 @@ ipcMain.handle(
           tags: {
             set: tagIds,
           },
+          spaceId,
         },
       });
 
@@ -815,6 +828,7 @@ ipcMain.handle(
         },
         include: {
           tags: true,
+          space: true,
         },
       });
     } catch (err: any) {
@@ -834,6 +848,7 @@ ipcMain.handle(
         },
         include: {
           tags: true,
+          space: true,
         },
       });
     } catch (err: any) {
@@ -889,24 +904,45 @@ ipcMain.handle(ChannelsEnum.REQUEST_ALL_TAGS, async () => {
   }
 });
 
+ipcMain.handle(
+  ChannelsEnum.REQUEST_CREATE_SPACE,
+  async (_event, spaceName: string) => {
+    try {
+      return await prisma.space.create({
+        data: {
+          name: spaceName,
+        },
+      });
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
+ipcMain.handle(ChannelsEnum.REQUEST_ALL_SPACES, async () => {
+  try {
+    return await prisma.space.findMany();
+  } catch (err: any) {
+    log.error(err?.message);
+    throw err;
+  }
+});
+
 ipcMain.on(
-  ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_TAG_ID,
-  async (event, tagId: number) => {
+  ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
+  async (event, spaceId: number) => {
     try {
       const tasks = await prisma.task.findMany({
         where: {
-          tags: {
-            some: {
-              id: tagId,
-            },
-          },
+          spaceId,
           isActive: true,
           completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
           schedule: TaskScheduleTypeEnum.Unscheduled,
         },
       });
       event.reply(
-        ChannelsEnum.RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_TAG_ID,
+        ChannelsEnum.RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
         tasks,
       );
     } catch (err: any) {
@@ -917,23 +953,19 @@ ipcMain.on(
 );
 
 ipcMain.on(
-  ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_TAG_ID,
-  async (event, tagId: number) => {
+  ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
+  async (event, spaceId: number) => {
     try {
       const tasks = await prisma.task.findMany({
         where: {
-          tags: {
-            some: {
-              id: tagId,
-            },
-          },
+          spaceId,
           isActive: true,
           completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
           schedule: TaskScheduleTypeEnum.Once,
         },
       });
       event.reply(
-        ChannelsEnum.RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_TAG_ID,
+        ChannelsEnum.RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
         tasks,
       );
     } catch (err: any) {
@@ -944,21 +976,20 @@ ipcMain.on(
 );
 
 ipcMain.on(
-  ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITH_TAG_ID,
-  async (event, tagId: number) => {
+  ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
+  async (event, spaceId: number) => {
     try {
       const tasks = await prisma.repetitiveTaskTemplate.findMany({
         where: {
-          tags: {
-            some: {
-              id: tagId,
-            },
-          },
+          spaceId,
           isActive: true,
           schedule: TaskScheduleTypeEnum.Daily,
         },
       });
-      event.reply(ChannelsEnum.RESPONSE_DAILY_ACTIVE_TASKS_WITH_TAG_ID, tasks);
+      event.reply(
+        ChannelsEnum.RESPONSE_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
+        tasks,
+      );
     } catch (err: any) {
       log.error(err?.message);
       throw err;
@@ -967,22 +998,18 @@ ipcMain.on(
 );
 
 ipcMain.on(
-  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_TAG_ID,
-  async (event, tagId: number) => {
+  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
+  async (event, spaceId: number) => {
     try {
       const tasks = await prisma.repetitiveTaskTemplate.findMany({
         where: {
-          tags: {
-            some: {
-              id: tagId,
-            },
-          },
+          spaceId,
           isActive: true,
           schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
         },
       });
       event.reply(
-        ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_TAG_ID,
+        ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
         tasks,
       );
     } catch (err: any) {

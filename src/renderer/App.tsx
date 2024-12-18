@@ -41,7 +41,7 @@ import { styled } from '@mui/system';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import RunCircleIcon from '@mui/icons-material/RunCircle';
 import { PageWrapper } from './layouts';
-import { Today, Active, Tracker, TaggedTodos } from './pages';
+import { Today, Active, Tracker, Space } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
 import ArrowRight from './icons/ArrowRight';
 import ArrowDown from './icons/ArrowDown';
@@ -51,7 +51,7 @@ import Plus from './icons/Plus';
 import { AddTask, EditTask } from './widgets';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
-import { useTags } from './hooks';
+import { useSpace } from './hooks';
 
 const MyStyledListItemText = styled(ListItemText)({
   color: 'red', // Change this to the color you want
@@ -129,11 +129,11 @@ function Navigation() {
     setRepetitiveTaskTemplateIdForEdit(undefined);
   };
 
-  const { allTags, handleLoadingTags } = useTags();
+  const { allSpaces, handleLoadingSpaces } = useSpace();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleTagsExpand = async () => {
-    await handleLoadingTags();
+  const handleSpacesExpand = async () => {
+    await handleLoadingSpaces();
     setIsExpanded(!isExpanded);
   };
 
@@ -185,33 +185,32 @@ function Navigation() {
           </ListItemIcon>
           <ListItemText primary="Tracker" />
         </ListItemButton>
-        <ListItemButton sx={{ mt: 2 }} onClick={handleTagsExpand}>
+        <ListItemButton sx={{ mt: 2 }} onClick={handleSpacesExpand}>
           <ListItemIcon>
             {isExpanded ? <ArrowDown /> : <ArrowRight />}
           </ListItemIcon>
           <ListItemText
-            primary="Tags"
+            primary="Spaces"
             primaryTypographyProps={{ fontWeight: 500 }}
           />
         </ListItemButton>
-        {/* tags */}
         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
           <List dense component="div" disablePadding>
-            {allTags.map((tag) => (
+            {allSpaces.map((space) => (
               <ListItemButton
-                key={`${tag.name}-${tag.id}`}
+                key={`${space.name}-${space.id}`}
                 sx={{ py: 0.5, pl: 4 }}
                 component={Link}
-                to={`/tagged-todos/${tag.id}/${tag.name}`}
+                to={`/space/${space.id}/${space.name}`}
                 selected={
-                  location.pathname === `/tagged-todos/${tag.id}/${tag.name}`
+                  location.pathname === `/space/${space.id}/${space.name}`
                 }
               >
                 <ListItemIcon>
                   <LocalOfferOutlinedIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
-                  primary={tag.name}
+                  primary={space.name}
                   primaryTypographyProps={{
                     fontSize: theme.typography.body2.fontSize,
                   }}
@@ -299,10 +298,7 @@ function App() {
                 <Route path="/" element={<Today />} />
                 <Route path="/active" element={<Active />} />
                 <Route path="/tracker" element={<Tracker />} />
-                <Route
-                  path="/tagged-todos/:tagId/:tagName"
-                  element={<TaggedTodos />}
-                />
+                <Route path="/space/:spaceId/:spaceName" element={<Space />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </PageWrapper>
