@@ -41,7 +41,7 @@ import { styled } from '@mui/system';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import RunCircleIcon from '@mui/icons-material/RunCircle';
 import { PageWrapper } from './layouts';
-import { Today, Active, Tracker, TaggedTodos } from './pages';
+import { Today, Active, Tracker, Space } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
 import ArrowRight from './icons/ArrowRight';
 import ArrowDown from './icons/ArrowDown';
@@ -191,28 +191,27 @@ function Navigation() {
             {isExpanded ? <ArrowDown /> : <ArrowRight />}
           </ListItemIcon>
           <ListItemText
-            primary="Tags"
+            primary="Spaces"
             primaryTypographyProps={{ fontWeight: 500 }}
           />
         </ListItemButton>
-        {/* tags */}
         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
           <List dense component="div" disablePadding>
-            {allSpaces.map((tag) => (
+            {allSpaces.map((space) => (
               <ListItemButton
-                key={`${tag.name}-${tag.id}`}
+                key={`${space.name}-${space.id}`}
                 sx={{ py: 0.5, pl: 4 }}
                 component={Link}
-                to={`/tagged-todos/${tag.id}/${tag.name}`}
+                to={`/space/${space.id}/${space.name}`}
                 selected={
-                  location.pathname === `/tagged-todos/${tag.id}/${tag.name}`
+                  location.pathname === `/space/${space.id}/${space.name}`
                 }
               >
                 <ListItemIcon>
                   <LocalOfferOutlinedIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
-                  primary={tag.name}
+                  primary={space.name}
                   primaryTypographyProps={{
                     fontSize: theme.typography.body2.fontSize,
                   }}
@@ -300,10 +299,7 @@ function App() {
                 <Route path="/" element={<Today />} />
                 <Route path="/active" element={<Active />} />
                 <Route path="/tracker" element={<Tracker />} />
-                <Route
-                  path="/tagged-todos/:tagId/:tagName"
-                  element={<TaggedTodos />}
-                />
+                <Route path="/space/:spaceId/:spaceName" element={<Space />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </PageWrapper>

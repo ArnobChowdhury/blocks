@@ -1,6 +1,6 @@
 import Today from './Today';
 import Active from './Active';
 import Tracker from './Tracker';
-import TaggedTodos from './TaggedTodos';
+import Space from './Space';
 
-export { Today, Active, Tracker, TaggedTodos };
+export { Today, Active, Tracker, Space };

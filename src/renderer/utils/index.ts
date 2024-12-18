@@ -22,22 +22,25 @@ export const refreshAllTasks = () => {
   );
 };
 
-export const refreshTagsPageTasks = (tagId: number) => {
+export const refreshSpace = (spaceId: number) => {
   window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_TAG_ID,
-    tagId,
+    ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
+    spaceId,
   );
+
   window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_TAG_ID,
-    tagId,
+    ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
+    spaceId,
   );
+
   window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITH_TAG_ID,
-    tagId,
+    ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
+    spaceId,
   );
+
   window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_TAG_ID,
-    tagId,
+    ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
+    spaceId,
   );
 };
 
@@ -52,9 +55,9 @@ export const handlePageTaskRefresh = () => {
     refreshTodayPageTasks();
   }
 
-  if (location.includes('/tagged-todos')) {
-    const tagId = Number(location.split('/')[2]);
-    refreshTagsPageTasks(tagId);
+  if (location.includes('/space')) {
+    const spaceId = Number(location.split('/')[2]);
+    refreshSpace(spaceId);
   }
 };
 

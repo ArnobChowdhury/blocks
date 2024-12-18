@@ -150,19 +150,19 @@ export enum ChannelsEnum {
 
   RESPONSE_CREATE_OR_UPDATE_TAG = 'response_create_or_update_tag',
 
-  REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_TAG_ID = 'request_unscheduled_active_tasks_with_tag_id',
-  RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_TAG_ID = 'response_unscheduled_active_tasks_with_tag_id',
-  ERROR_UNSCHEDULED_ACTIVE_TASKS_WITH_TAG_ID = 'error_unscheduled_active_tasks_with_tag_id',
+  REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID = 'request_unscheduled_active_tasks_with_space_id',
+  RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID = 'response_unscheduled_active_tasks_with_space_id',
+  ERROR_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID = 'error_unscheduled_active_tasks_with_space_id',
 
-  REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_TAG_ID = 'request_one_off_active_tasks_with_tag_id',
-  RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_TAG_ID = 'response_one_off_active_tasks_with_tag_id',
-  ERROR_ONE_OFF_ACTIVE_TASKS_WITH_TAG_ID = 'error_one_off_active_tasks_with_tag_id',
+  REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID = 'request_one_off_active_tasks_with_space_id',
+  RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID = 'response_one_off_active_tasks_with_space_id',
+  ERROR_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID = 'error_one_off_active_tasks_with_space_id',
 
-  REQUEST_DAILY_ACTIVE_TASKS_WITH_TAG_ID = 'request_daily_active_tasks_with_tag_id',
-  RESPONSE_DAILY_ACTIVE_TASKS_WITH_TAG_ID = 'response_daily_active_tasks_with_tag_id',
-  ERROR_DAILY_ACTIVE_TASKS_WITH_TAG_ID = 'error_daily_active_tasks_with_tag_id',
+  REQUEST_DAILY_ACTIVE_TASKS_WITH_SPACE_ID = 'request_daily_active_tasks_with_space_id',
+  RESPONSE_DAILY_ACTIVE_TASKS_WITH_SPACE_ID = 'response_daily_active_tasks_with_space_id',
+  ERROR_DAILY_ACTIVE_TASKS_WITH_SPACE_ID = 'error_daily_active_tasks_with_space_id',
 
-  REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_TAG_ID = 'request_specific_days_in_a_week_active_tasks_with_tag_id',
-  RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_TAG_ID = 'response_specific_days_in_a_week_active_tasks_with_tag_id',
-  ERROR_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_TAG_ID = 'error_specific_days_in_a_week_active_tasks_with_tag_id',
+  REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID = 'request_specific_days_in_a_week_active_tasks_with_space_id',
+  RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID = 'response_specific_days_in_a_week_active_tasks_with_space_id',
+  ERROR_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID = 'error_specific_days_in_a_week_active_tasks_with_space_id',
 }
