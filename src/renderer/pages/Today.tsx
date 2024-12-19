@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@mui/material';
-import Plus from '../icons/Plus';
+import { Fab } from '@mui/material';
+import { Add as AddIcon } from '@mui/icons-material';
 import { AddTask, TodoList } from '../widgets';
 import { PageHeader } from '../components';
 import { refreshTodayPageTasks } from '../utils';
@@ -16,15 +16,19 @@ function Today() {
     <>
       <PageHeader>Today</PageHeader>
       <TodoList />
-      {showAddTask && <AddTask widgetCloseFunc={setShowAddTask} />}
+      {showAddTask && <AddTask isToday widgetCloseFunc={setShowAddTask} />}
       {!showAddTask && (
-        <Button
-          startIcon={<Plus />}
-          variant="text"
-          onClick={() => setShowAddTask(true)}
+        <Fab
+          sx={{ position: 'fixed', bottom: 20, right: 20 }}
+          color="primary"
+          size="small"
+          aria-label="add"
         >
-          Add Task
-        </Button>
+          <AddIcon
+            onClick={() => setShowAddTask(true)}
+            sx={{ color: 'white' }}
+          />
+        </Fab>
       )}
     </>
   );

@@ -18,7 +18,7 @@ import {
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import CustomChip from '../components/CustomChip';
 import {
   CalendarChip,
@@ -39,13 +39,18 @@ import { useSpace } from '../hooks';
 
 interface IAddTaskProps {
   widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
+  isToday?: boolean;
 }
 
-function AddTask({ widgetCloseFunc }: IAddTaskProps) {
+function AddTask({ widgetCloseFunc, isToday }: IAddTaskProps) {
   const [taskTitle, setTaskTitle] = useState('');
   const [selectedScheduleType, setSelectedTypeFrequency] =
-    useState<TaskScheduleTypeEnum>(TaskScheduleTypeEnum.Unscheduled);
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>();
+    useState<TaskScheduleTypeEnum>(
+      isToday ? TaskScheduleTypeEnum.Once : TaskScheduleTypeEnum.Unscheduled,
+    );
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null | undefined>(
+    isToday ? dayjs() : undefined,
+  );
   const [selectedDays, setSelectedDays] = useState<DaysInAWeek[]>([]);
   const [selectedTimeOfDay, setSelectedTimeOfDay] = useState<TimeOfDay | null>(
     null,
@@ -330,3 +335,6 @@ function AddTask({ widgetCloseFunc }: IAddTaskProps) {
 }
 
 export default AddTask;
+AddTask.defaultProps = {
+  isToday: false,
+};
