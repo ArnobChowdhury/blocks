@@ -1,5 +1,10 @@
 import dayjs, { Dayjs } from 'dayjs';
 import { ChannelsEnum } from '../types';
+import {
+  ROUTE_ROOT,
+  ROUTE_ACTIVE,
+  ROUTE_TASKS_WITHOUT_A_SPACE,
+} from '../constants';
 
 export const refreshTodayPageTasks = () => {
   window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_TODAY);
@@ -44,15 +49,38 @@ export const refreshSpace = (spaceId: number) => {
   );
 };
 
+export const refreshSpaceForTasksWithoutASpace = () => {
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITHOUT_SPACE,
+  );
+
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITHOUT_SPACE,
+  );
+
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITHOUT_SPACE,
+  );
+
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITHOUT_SPACE,
+  );
+};
+
 export const handlePageTaskRefresh = () => {
   const location = window.location.hash.replace('#', '');
 
-  if (location === '/active') {
+  if (location === ROUTE_ACTIVE) {
     refreshAllTasks();
   }
 
-  if (location === '/') {
+  if (location === ROUTE_ROOT) {
     refreshTodayPageTasks();
+  }
+
+  if (location === ROUTE_TASKS_WITHOUT_A_SPACE) {
+    refreshSpaceForTasksWithoutASpace();
+    return;
   }
 
   if (location.includes('/space')) {

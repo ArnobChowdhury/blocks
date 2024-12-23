@@ -1019,6 +1019,96 @@ ipcMain.on(
   },
 );
 
+ipcMain.on(
+  ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITHOUT_SPACE,
+  async (event) => {
+    try {
+      const tasks = await prisma.task.findMany({
+        where: {
+          spaceId: null,
+          isActive: true,
+          completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+          schedule: TaskScheduleTypeEnum.Unscheduled,
+        },
+      });
+      event.reply(
+        ChannelsEnum.RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
+        tasks,
+      );
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
+ipcMain.on(
+  ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITHOUT_SPACE,
+  async (event) => {
+    try {
+      const tasks = await prisma.task.findMany({
+        where: {
+          spaceId: null,
+          isActive: true,
+          completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+          schedule: TaskScheduleTypeEnum.Once,
+        },
+      });
+      event.reply(
+        ChannelsEnum.RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
+        tasks,
+      );
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
+ipcMain.on(
+  ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITHOUT_SPACE,
+  async (event) => {
+    try {
+      const tasks = await prisma.repetitiveTaskTemplate.findMany({
+        where: {
+          spaceId: null,
+          isActive: true,
+          schedule: TaskScheduleTypeEnum.Daily,
+        },
+      });
+      event.reply(
+        ChannelsEnum.RESPONSE_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
+        tasks,
+      );
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
+ipcMain.on(
+  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITHOUT_SPACE,
+  async (event) => {
+    try {
+      const tasks = await prisma.repetitiveTaskTemplate.findMany({
+        where: {
+          spaceId: null,
+          isActive: true,
+          schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+        },
+      });
+      event.reply(
+        ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
+        tasks,
+      );
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  },
+);
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed

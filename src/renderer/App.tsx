@@ -52,6 +52,12 @@ import { AddTask, EditTask } from './widgets';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
 import { useSpace } from './hooks';
+import {
+  ROUTE_ROOT,
+  ROUTE_ACTIVE,
+  ROUTE_TRACKER,
+  ROUTE_TASKS_WITHOUT_A_SPACE,
+} from './constants';
 
 const MyStyledListItemText = styled(ListItemText)({
   color: 'red', // Change this to the color you want
@@ -157,8 +163,8 @@ function Navigation() {
         </ListItemButton>
         <ListItemButton
           component={Link}
-          to="/"
-          selected={location.pathname === '/'}
+          to={ROUTE_ROOT}
+          selected={location.pathname === ROUTE_ROOT}
         >
           <ListItemIcon>
             <CalendarToday date={new Date().getDate()} />
@@ -167,8 +173,8 @@ function Navigation() {
         </ListItemButton>
         <ListItemButton
           component={Link}
-          to="/active"
-          selected={location.pathname === '/active'}
+          to={ROUTE_ACTIVE}
+          selected={location.pathname === ROUTE_ACTIVE}
         >
           <ListItemIcon>
             <RunCircleIcon color="primary" />
@@ -177,8 +183,8 @@ function Navigation() {
         </ListItemButton>
         <ListItemButton
           component={Link}
-          to="/tracker"
-          selected={location.pathname === '/tracker'}
+          to={ROUTE_TRACKER}
+          selected={location.pathname === ROUTE_TRACKER}
         >
           <ListItemIcon>
             <TrackerIcon />
@@ -206,7 +212,7 @@ function Navigation() {
                   location.pathname === `/space/${space.id}/${space.name}`
                 }
               >
-                <ListItemIcon>
+                <ListItemIcon sx={{ minWidth: theme.spacing(5) }}>
                   <LocalOfferOutlinedIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
@@ -217,6 +223,23 @@ function Navigation() {
                 />
               </ListItemButton>
             ))}
+            <ListItemButton
+              key="task-without-a-space-default-space"
+              sx={{ py: 0.5, pl: 4 }}
+              component={Link}
+              to={ROUTE_TASKS_WITHOUT_A_SPACE}
+              selected={location.pathname === ROUTE_TASKS_WITHOUT_A_SPACE}
+            >
+              <ListItemIcon sx={{ minWidth: theme.spacing(5) }}>
+                <LocalOfferOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Tasks without a space"
+                primaryTypographyProps={{
+                  fontSize: theme.typography.body2.fontSize,
+                }}
+              />
+            </ListItemButton>
           </List>
         </Collapse>
       </List>
@@ -295,10 +318,11 @@ function App() {
               isDrawerOpen={!openDrawer}
             >
               <Routes>
-                <Route path="/" element={<Today />} />
-                <Route path="/active" element={<Active />} />
-                <Route path="/tracker" element={<Tracker />} />
+                <Route path={ROUTE_ROOT} element={<Today />} />
+                <Route path={ROUTE_ACTIVE} element={<Active />} />
+                <Route path={ROUTE_TRACKER} element={<Tracker />} />
                 <Route path="/space/:spaceId/:spaceName" element={<Space />} />
+                <Route path={ROUTE_TASKS_WITHOUT_A_SPACE} element={<Space />} />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </PageWrapper>

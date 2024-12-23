@@ -13,3 +13,8 @@ export const TimeColors: { [key: string]: string } = {
   evening: '#FFDFDC',
   night: '#CDD2E9',
 };
+
+export const ROUTE_ROOT = '/';
+export const ROUTE_ACTIVE = '/active';
+export const ROUTE_TRACKER = '/tracker';
+export const ROUTE_TASKS_WITHOUT_A_SPACE = '/space/defaults';

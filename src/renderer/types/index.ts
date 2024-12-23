@@ -172,4 +172,9 @@ export enum ChannelsEnum {
   REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID = 'request_specific_days_in_a_week_active_tasks_with_space_id',
   RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID = 'response_specific_days_in_a_week_active_tasks_with_space_id',
   ERROR_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID = 'error_specific_days_in_a_week_active_tasks_with_space_id',
+
+  REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITHOUT_SPACE = 'request_unscheduled_active_tasks_without_space',
+  REQUEST_ONE_OFF_ACTIVE_TASKS_WITHOUT_SPACE = 'request_one_off_active_tasks_without_space',
+  REQUEST_DAILY_ACTIVE_TASKS_WITHOUT_SPACE = 'request_daily_active_tasks_without_space',
+  REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITHOUT_SPACE = 'request_specific_days_in_a_week_active_tasks_without_space',
 }

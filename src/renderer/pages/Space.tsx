@@ -1,16 +1,24 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { PageHeader } from '../components';
 import { TasksBySchedule } from '../widgets';
-import { refreshSpace } from '../utils';
+import { refreshSpace, refreshSpaceForTasksWithoutASpace } from '../utils';
 import { TaskWithTags, RepetitiveTaskWithTags, ChannelsEnum } from '../types';
+import { ROUTE_TASKS_WITHOUT_A_SPACE } from '../constants';
 
 function Space() {
   const { spaceId, spaceName } = useParams();
+  const { pathname } = useLocation();
 
   useEffect(() => {
     if (spaceId) refreshSpace(Number(spaceId));
   }, [spaceId]);
+
+  useEffect(() => {
+    if (!spaceId && !spaceName && pathname === ROUTE_TASKS_WITHOUT_A_SPACE) {
+      refreshSpaceForTasksWithoutASpace();
+    }
+  }, [spaceId, spaceName, pathname]);
 
   const [unscheduledTasks, setUnscheduledTasks] = useState<TaskWithTags[]>([]);
   useEffect(() => {
