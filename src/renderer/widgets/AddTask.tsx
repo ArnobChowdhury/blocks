@@ -14,7 +14,10 @@ import {
   Divider,
   Checkbox,
   FormControlLabel,
+  Tooltip,
+  IconButton,
 } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -205,53 +208,92 @@ function AddTask({ widgetCloseFunc, isToday }: IAddTaskProps) {
         <DescriptionEditor editor={editor} />
 
         <Box sx={{ mt: 2 }}>
-          <SectionHeader>Schedule</SectionHeader>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: 3,
+            }}
+          >
+            <SectionHeader sx={{ mb: 0 }}>Schedule</SectionHeader>
+            <Tooltip
+              title={
+                <>
+                  <Typography variant="body2" color="inherit">
+                    Selecting &quot;Daily&quot; or &quot;Specific Days in a
+                    Week&quot; will create a task template.
+                  </Typography>
+                  <Typography variant="body2" color="inherit">
+                    Tasks will be generated from the template as per the
+                    schedule.
+                  </Typography>
+                </>
+              }
+              placement="right"
+              arrow
+            >
+              <IconButton size="small" aria-label="info">
+                <InfoOutlinedIcon sx={{ fontSize: '16px' }} />
+              </IconButton>
+            </Tooltip>
+          </div>
           <Grid container spacing={1}>
-            {Object.values(TaskScheduleTypeEnum).map((option) => (
-              <Grid item key={option}>
-                <Chip
-                  label={option}
-                  clickable
-                  color={
-                    selectedScheduleType === option ? 'primary' : 'default'
-                  }
-                  onClick={(e) => handleFrequencySelect(e, option)}
-                />
-                {option === TaskScheduleTypeEnum.Once && (
-                  <Popover
-                    id={datePopOverId}
-                    open={showDate}
-                    anchorEl={dateAnchorEl}
-                    onClose={() => setDateAnchorEl(null)}
-                    anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'left',
-                    }}
-                    sx={{
-                      '.MuiPaper-root': {
-                        boxShadow:
-                          '0px 3px 6px rgba(0,0,0,0.16), 0px 3px 6px rgba(0,0,0,0.23)',
-                      },
-                    }}
-                  >
-                    <StaticDatePicker
-                      // defaultValue={dayjs()}
-                      disablePast
-                      onChange={setSelectedDate}
-                      value={selectedDate}
+            {Object.values(TaskScheduleTypeEnum).map((option, index) => (
+              <>
+                <Grid item key={option}>
+                  <Chip
+                    label={option}
+                    clickable
+                    color={
+                      selectedScheduleType === option ? 'primary' : 'default'
+                    }
+                    onClick={(e) => handleFrequencySelect(e, option)}
+                  />
+                  {option === TaskScheduleTypeEnum.Once && (
+                    <Popover
+                      id={datePopOverId}
+                      open={showDate}
+                      anchorEl={dateAnchorEl}
                       onClose={() => setDateAnchorEl(null)}
-                      onAccept={(val) => {
-                        if (val) {
-                          setSelectedDate(val);
-                          setDateAnchorEl(null);
-                          setSelectedTypeFrequency(option);
-                        }
+                      anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'left',
                       }}
-                      orientation="landscape"
+                      sx={{
+                        '.MuiPaper-root': {
+                          boxShadow:
+                            '0px 3px 6px rgba(0,0,0,0.16), 0px 3px 6px rgba(0,0,0,0.23)',
+                        },
+                      }}
+                    >
+                      <StaticDatePicker
+                        // defaultValue={dayjs()}
+                        disablePast
+                        onChange={setSelectedDate}
+                        value={selectedDate}
+                        onClose={() => setDateAnchorEl(null)}
+                        onAccept={(val) => {
+                          if (val) {
+                            setSelectedDate(val);
+                            setDateAnchorEl(null);
+                            setSelectedTypeFrequency(option);
+                          }
+                        }}
+                        orientation="landscape"
+                      />
+                    </Popover>
+                  )}
+                </Grid>
+                {index === 1 && (
+                  <Grid>
+                    <Divider
+                      key="task-schedule-divider"
+                      orientation="vertical"
+                      sx={{ mr: 0.5, ml: 1.5 }}
                     />
-                  </Popover>
+                  </Grid>
                 )}
-              </Grid>
+              </>
             ))}
           </Grid>
         </Box>
