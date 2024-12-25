@@ -233,7 +233,9 @@ function AddTask({ widgetCloseFunc, isToday }: IAddTaskProps) {
               arrow
             >
               <IconButton size="small" aria-label="info">
-                <InfoOutlinedIcon sx={{ fontSize: '16px' }} />
+                <InfoOutlinedIcon
+                  sx={{ color: 'text.secondary', fontSize: '16px' }}
+                />
               </IconButton>
             </Tooltip>
           </div>

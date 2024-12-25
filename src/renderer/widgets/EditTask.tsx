@@ -19,6 +19,7 @@ import {
   styled,
   useTheme,
 } from '@mui/material';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -50,11 +51,16 @@ const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
 }));
 
 interface IEditTaskProps {
-  widgetCloseFunc: (value: React.SetStateAction<boolean>) => void;
+  widgetCloseFunc: () => void;
   task: TaskWithTagsAndSpace | RepetitiveTaskWithTagsAndSpace;
+  openRepetitiveTaskTemplate?: (repetitiveTaskTemplateId: number) => void;
 }
 
-function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
+function EditTask({
+  widgetCloseFunc,
+  task,
+  openRepetitiveTaskTemplate,
+}: IEditTaskProps) {
   const isRepetitiveTaskTemplate = !('repetitiveTaskTemplateId' in task);
   const isRepetitiveTaskTemplateAndSpecificDaysInAWeek =
     isRepetitiveTaskTemplate &&
@@ -215,7 +221,7 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
         );
       }
 
-      widgetCloseFunc(false);
+      widgetCloseFunc();
     } catch (err: any) {
       setNotifier(err.message, 'error');
     }
@@ -227,7 +233,7 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
         ChannelsEnum.REQUEST_STOP_REPETITIVE_TASK,
         task.id,
       );
-      widgetCloseFunc(false);
+      widgetCloseFunc();
     } catch (err: any) {
       setNotifier(err.message, 'error');
     }
@@ -248,6 +254,52 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Paper sx={{ padding: 2.5, minWidth: '600px' }} variant="outlined">
+        {!isRepetitiveTaskTemplate &&
+          (task.schedule === TaskScheduleTypeEnum.Daily ||
+            task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) && (
+            <Box mb={2}>
+              <InfoOutlinedIcon
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: 16,
+                  marginRight: 0.5,
+                  float: 'left',
+                  mt: 0.75,
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'info.main',
+                  fontSize: 12,
+                }}
+              >
+                Editing this form will not affect the underlying template of
+                this repetitive task. Would you like to edit the template
+                instead?
+              </Typography>
+              <Button
+                sx={{
+                  minWidth: 0,
+                  fontSize: 12,
+                  minHeight: 0,
+                  lineHeight: 1,
+                  ml: 1,
+                }}
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  if (
+                    task.repetitiveTaskTemplateId &&
+                    openRepetitiveTaskTemplate
+                  )
+                    openRepetitiveTaskTemplate(task.repetitiveTaskTemplateId);
+                }}
+              >
+                Yes
+              </Button>
+            </Box>
+          )}
         <TextField
           placeholder="Task name"
           fullWidth
@@ -380,7 +432,7 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
           )}
           <Button
             variant="outlined"
-            onClick={() => widgetCloseFunc(false)}
+            onClick={() => widgetCloseFunc()}
             sx={{ mr: 1 }}
           >
             Cancel
@@ -429,5 +481,9 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
     </LocalizationProvider>
   );
 }
+
+EditTask.defaultProps = {
+  openRepetitiveTaskTemplate: undefined,
+};
 
 export default EditTask;

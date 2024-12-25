@@ -135,6 +135,13 @@ function Navigation() {
     setRepetitiveTaskTemplateIdForEdit(undefined);
   };
 
+  const handleOpenRepetitiveTaskTemplate = (
+    repetitiveTaskTemplateId: number,
+  ) => {
+    handleEditTaskCancel();
+    setRepetitiveTaskTemplateIdForEdit(repetitiveTaskTemplateId);
+  };
+
   const { allSpaces, handleLoadingSpaces } = useSpace();
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -248,7 +255,11 @@ function Navigation() {
       </Dialog>
       <Dialog open={Boolean(taskForEdit)}>
         {taskForEdit && (
-          <EditTask task={taskForEdit} widgetCloseFunc={handleEditTaskCancel} />
+          <EditTask
+            task={taskForEdit}
+            openRepetitiveTaskTemplate={handleOpenRepetitiveTaskTemplate}
+            widgetCloseFunc={handleEditTaskCancel}
+          />
         )}
       </Dialog>
       <Dialog open={Boolean(repetitiveTaskTemplateForEdit)}>
