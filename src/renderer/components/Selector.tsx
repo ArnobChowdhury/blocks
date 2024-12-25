@@ -21,6 +21,7 @@ type SelectorProps =
       onChange: (value: Tag[] | Space[]) => void;
       onOpen: () => Promise<void>;
       onOptionCreation: (optionName: string) => void;
+      disabled: boolean;
     }
   | {
       label: string;
@@ -30,6 +31,7 @@ type SelectorProps =
       onChange: (value: Tag | Space) => void;
       onOpen: () => Promise<void>;
       onOptionCreation: (optionName: string) => void;
+      disabled: boolean;
     };
 
 const filter = createFilterOptions<Tag | Space>();
@@ -42,6 +44,7 @@ function Selector({
   onOptionCreation,
   onChange,
   multiple,
+  disabled,
 }: SelectorProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -58,6 +61,7 @@ function Selector({
 
   return (
     <Autocomplete
+      disabled={disabled}
       multiple={multiple}
       limitTags={2}
       disableCloseOnSelect
@@ -188,5 +192,9 @@ function Selector({
     />
   );
 }
+
+Selector.defaultProps = {
+  disabled: false,
+};
 
 export default Selector;

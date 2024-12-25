@@ -251,55 +251,54 @@ function EditTask({
     }
   };
 
+  const isRepetitiveTaskButNotTemplate =
+    !isRepetitiveTaskTemplate &&
+    (task.schedule === TaskScheduleTypeEnum.Daily ||
+      task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek);
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Paper sx={{ padding: 2.5, minWidth: '600px' }} variant="outlined">
-        {!isRepetitiveTaskTemplate &&
-          (task.schedule === TaskScheduleTypeEnum.Daily ||
-            task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek) && (
-            <Box mb={2}>
-              <InfoOutlinedIcon
-                sx={{
-                  color: 'text.secondary',
-                  fontSize: 16,
-                  marginRight: 0.5,
-                  float: 'left',
-                  mt: 0.75,
-                }}
-              />
-              <Typography
-                variant="caption"
-                sx={{
-                  color: 'info.main',
-                  fontSize: 12,
-                }}
-              >
-                Editing this form will not affect the underlying template of
-                this repetitive task. Would you like to edit the template
-                instead?
-              </Typography>
-              <Button
-                sx={{
-                  minWidth: 0,
-                  fontSize: 12,
-                  minHeight: 0,
-                  lineHeight: 1,
-                  ml: 1,
-                }}
-                variant="outlined"
-                size="small"
-                onClick={() => {
-                  if (
-                    task.repetitiveTaskTemplateId &&
-                    openRepetitiveTaskTemplate
-                  )
-                    openRepetitiveTaskTemplate(task.repetitiveTaskTemplateId);
-                }}
-              >
-                Yes
-              </Button>
-            </Box>
-          )}
+        {isRepetitiveTaskButNotTemplate && (
+          <Box mb={2}>
+            <InfoOutlinedIcon
+              sx={{
+                color: 'text.secondary',
+                fontSize: 16,
+                marginRight: 0.5,
+                float: 'left',
+                mt: 0.75,
+              }}
+            />
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'info.main',
+                fontSize: 12,
+              }}
+            >
+              Editing this form will not affect the underlying template of this
+              repetitive task. Would you like to edit the template instead?
+            </Typography>
+            <Button
+              sx={{
+                minWidth: 0,
+                fontSize: 12,
+                minHeight: 0,
+                lineHeight: 1,
+                ml: 1,
+              }}
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                if (task.repetitiveTaskTemplateId && openRepetitiveTaskTemplate)
+                  openRepetitiveTaskTemplate(task.repetitiveTaskTemplateId);
+              }}
+            >
+              Yes
+            </Button>
+          </Box>
+        )}
         <TextField
           placeholder="Task name"
           fullWidth
@@ -417,6 +416,7 @@ function EditTask({
             onOpen={handleLoadingSpaces}
             onOptionCreation={handleSpaceCreation}
             onChange={setSelectedSpace}
+            disabled={isRepetitiveTaskButNotTemplate}
           />
         </Box>
 
