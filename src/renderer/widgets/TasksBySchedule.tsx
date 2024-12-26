@@ -8,7 +8,7 @@ import {
   TaskWithTags,
   RepetitiveTaskWithTags,
 } from '../types';
-import { TodoListItem } from '../components';
+import { TodoListItem, TabHeader } from '../components';
 import { handlePageTaskRefresh } from '../utils';
 import {
   useToggleTaskCompletionStatus,
@@ -88,19 +88,39 @@ function TasksBySchedule({
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <TabList onChange={handleTabChange} aria-label="lab API tabs example">
             <Tab
-              label={TaskScheduleTypeEnum.Unscheduled}
+              label={
+                <TabHeader
+                  digit={unscheduledTasks.length}
+                  label={TaskScheduleTypeEnum.Unscheduled}
+                />
+              }
               value={TaskScheduleTypeEnum.Unscheduled}
             />
             <Tab
-              label={TaskScheduleTypeEnum.Once}
+              label={
+                <TabHeader
+                  digit={oneOffTasks.length}
+                  label={TaskScheduleTypeEnum.Once}
+                />
+              }
               value={TaskScheduleTypeEnum.Once}
             />
             <Tab
-              label={TaskScheduleTypeEnum.Daily}
+              label={
+                <TabHeader
+                  digit={dailyTasks.length}
+                  label={TaskScheduleTypeEnum.Daily}
+                />
+              }
               value={TaskScheduleTypeEnum.Daily}
             />
             <Tab
-              label={TaskScheduleTypeEnum.SpecificDaysInAWeek}
+              label={
+                <TabHeader
+                  digit={specificDaysInAWeekTasks.length}
+                  label={TaskScheduleTypeEnum.SpecificDaysInAWeek}
+                />
+              }
               value={TaskScheduleTypeEnum.SpecificDaysInAWeek}
             />
           </TabList>

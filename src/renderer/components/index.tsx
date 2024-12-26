@@ -6,6 +6,7 @@ import DescriptionEditor from './DescriptionEditor.tsx';
 import SectionHeader from './SectionHeader';
 import TimeOfDaySelector from './TimeOfDaySelector';
 import Selector from './Selector';
+import TabHeader from './TabHeader';
 
 export {
   TaskScoring,
@@ -16,4 +17,5 @@ export {
   SectionHeader,
   TimeOfDaySelector,
   Selector,
+  TabHeader,
 };
