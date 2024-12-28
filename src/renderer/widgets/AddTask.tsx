@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, forwardRef } from 'react';
 import { useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -45,7 +45,8 @@ interface IAddTaskProps {
   isToday?: boolean;
 }
 
-function AddTask({ widgetCloseFunc, isToday }: IAddTaskProps) {
+const AddTask = forwardRef<HTMLDivElement, IAddTaskProps>((props, ref) => {
+  const { widgetCloseFunc, isToday } = props;
   const [taskTitle, setTaskTitle] = useState('');
   const [selectedScheduleType, setSelectedTypeFrequency] =
     useState<TaskScheduleTypeEnum>(
@@ -191,7 +192,11 @@ function AddTask({ widgetCloseFunc, isToday }: IAddTaskProps) {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Paper sx={{ padding: 2.5, minWidth: '600px' }} variant="outlined">
+      <Paper
+        ref={ref}
+        sx={{ padding: 2.5, minWidth: '600px' }}
+        variant="outlined"
+      >
         <TextField
           placeholder="Task name"
           fullWidth
@@ -376,7 +381,7 @@ function AddTask({ widgetCloseFunc, isToday }: IAddTaskProps) {
       </Paper>
     </LocalizationProvider>
   );
-}
+});
 
 export default AddTask;
 AddTask.defaultProps = {
