@@ -99,8 +99,6 @@ export const formatErrorMessage = (msg: string) => {
   return 'Something went wrong!';
 };
 
-export const getMillisecondsUntilNextMidnight = () => {
-  const now = dayjs();
-  const nextMidnight = dayjs().endOf('day').add(1, 'second');
-  return nextMidnight.diff(now);
+export const isPreviousDay = (date: string | Date | dayjs.Dayjs) => {
+  return dayjs(date).isSame(dayjs().subtract(1, 'day'), 'day');
 };

@@ -6,10 +6,7 @@ import React, {
   useCallback,
 } from 'react';
 
-import {
-  handlePageTaskRefresh,
-  getMillisecondsUntilNextMidnight,
-} from '../utils';
+import { handlePageTaskRefresh } from '../utils';
 import {
   ChannelsEnum,
   TaskWithTagsAndSpace,
@@ -93,18 +90,6 @@ const AppContextFn = () => {
   }, []);
 
   const [shouldRefresh, setShouldRefresh] = useState(false);
-  const scheduleMidnightReload = useCallback(() => {
-    const timeUntilMidnight = getMillisecondsUntilNextMidnight();
-
-    setTimeout(() => {
-      setShouldRefresh(true);
-      scheduleMidnightReload();
-    }, timeUntilMidnight);
-  }, []);
-
-  useEffect(() => {
-    scheduleMidnightReload();
-  }, [scheduleMidnightReload]);
 
   const handlePageRefresh = () => {
     handlePageTaskRefresh();
@@ -125,6 +110,7 @@ const AppContextFn = () => {
     setRepetitiveTaskTemplateIdForEdit,
     setRepetitiveTaskTemplateForEdit,
     shouldRefresh,
+    setShouldRefresh,
     handlePageRefresh,
   };
 };

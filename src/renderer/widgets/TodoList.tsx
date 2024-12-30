@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import CheckIcon from '@mui/icons-material/Check';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 import {
   TaskScheduleTypeEnum,
@@ -29,7 +29,12 @@ import {
 import { TimeColors } from '../constants';
 import { useApp } from '../context/AppProvider';
 
-function TodoList() {
+interface TodoListProps {
+  dateToday: Dayjs;
+  setDateToday: React.Dispatch<React.SetStateAction<Dayjs>>;
+}
+
+function TodoList({ dateToday, setDateToday }: TodoListProps) {
   const [tasksMorning, setTasksMorning] = useState<TaskWithTags[]>([]);
   const [tasksAfternoon, setTasksAfternoon] = useState<TaskWithTags[]>([]);
   const [tasksEvening, setTasksEvening] = useState<TaskWithTags[]>([]);
@@ -50,6 +55,7 @@ function TodoList() {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_TODAY,
       (response) => {
+        setDateToday(dayjs());
         const tasks = response as TaskWithTags[];
         const morningTasks: TaskWithTags[] = [];
         const afternoonTasks: TaskWithTags[] = [];
@@ -79,7 +85,7 @@ function TodoList() {
     );
 
     return unsubscribe;
-  }, []);
+  }, [setDateToday]);
 
   useEffect(() => {
     const unsubscribe = window.electron.ipcRenderer.on(
@@ -175,7 +181,7 @@ function TodoList() {
     setScore(null);
   };
 
-  const todayFormatted = formatDate(dayjs());
+  const todayFormatted = formatDate(dateToday);
 
   const handleBulkFailure = async (date: string) => {
     const taskIds = sortedTasksOverdue[date].map((task) => task.id);
