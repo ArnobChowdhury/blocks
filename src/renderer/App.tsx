@@ -4,7 +4,7 @@ import '@fontsource/m-plus-rounded-1c/700.css';
 import '@fontsource/m-plus-rounded-1c/800.css';
 import './App.css';
 
-import { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 import {
   HashRouter as Router,
@@ -89,11 +89,12 @@ const customTheme = createTheme({
   },
 });
 
-const drawerWidth = 240;
-
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
+const Main = styled('main', {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<{
   open: boolean;
-}>(({ theme, open }) => ({
+  drawerWidth: number;
+}>(({ theme, open, drawerWidth }) => ({
   flexGrow: 1,
   padding: theme.spacing(1),
   marginLeft: `-${drawerWidth}px`,
@@ -298,6 +299,50 @@ function App() {
 
   const { showSnackbar, notification, clearNotifier } = useApp();
 
+  const [drawerWidth, setDrawerWidth] = useState(240);
+  const drawerRef = useRef<HTMLDivElement | null>(null);
+
+  const isResizing = useRef(false);
+  const startX = useRef(0);
+
+  const handleMouseDown = (event: React.MouseEvent) => {
+    isResizing.current = true;
+    startX.current = event.clientX;
+    event.stopPropagation();
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleMouseMove = (event: MouseEvent) => {
+    if (isResizing.current) {
+      const newWidth = event.clientX;
+
+      if (newWidth < 100) {
+        setOpenDrawer(false);
+      }
+
+      if (newWidth >= 150 && newWidth <= 340) {
+        setDrawerWidth(newWidth);
+      }
+    }
+  };
+
+  const handleMouseUp = () => {
+    isResizing.current = false;
+    document.body.style.userSelect = '';
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [drawerWidth]);
+
+  const [resizerHovered, setResizerHovered] = useState(false);
+
   return (
     <ThemeProvider theme={customTheme}>
       <Router>
@@ -315,6 +360,7 @@ function App() {
             variant="persistent"
             anchor="left"
             open={openDrawer}
+            ref={drawerRef}
           >
             <DrawerHeader>
               <IconButton onClick={handleDrawerClose}>
@@ -323,7 +369,27 @@ function App() {
             </DrawerHeader>
             <Navigation />
           </Drawer>
-          <Main open={openDrawer}>
+          {/* resizing handle  */}
+          {openDrawer && (
+            <Box
+              sx={{
+                backgroundColor: (theme) =>
+                  resizerHovered ? theme.palette.primary.main : 'transparent',
+                transition: 'background-color 0.2s ease-in-out',
+                cursor: 'col-resize',
+                width: 4,
+                zIndex: 100,
+                position: 'absolute',
+                top: 0,
+                left: drawerWidth,
+                height: '100%',
+              }}
+              onMouseDown={handleMouseDown}
+              onMouseEnter={() => setResizerHovered(true)}
+              onMouseLeave={() => setResizerHovered(false)}
+            />
+          )}
+          <Main open={openDrawer} drawerWidth={drawerWidth}>
             <PageWrapper
               onRightArrowClick={handleDrawerOpen}
               isDrawerOpen={!openDrawer}
