@@ -49,11 +49,14 @@ function Today() {
       {!showAddTask && (
         <Fab
           sx={{ position: 'fixed', bottom: 20, right: 20 }}
-          color="primary"
+          color="secondary"
           size="small"
           aria-label="add"
         >
-          <AddIcon onClick={() => setShowAddTask(true)} />
+          <AddIcon
+            sx={{ color: 'white' }}
+            onClick={() => setShowAddTask(true)}
+          />
         </Fab>
       )}
     </>

@@ -48,6 +48,7 @@ import ArrowDown from './icons/ArrowDown';
 import CalendarToday from './icons/CalendarToday';
 import TrackerIcon from './icons/Tracker';
 import Plus from './icons/Plus';
+import Logo from './icons/Logo';
 import { AddTask, EditTask } from './widgets';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
@@ -72,10 +73,10 @@ const customTheme = createTheme({
   },
   palette: {
     primary: {
-      main: '#01877E', // Change this to your desired color background: #01877E;
+      main: '#007A9F', // Change this to your desired color background: #01877E;
     },
     secondary: {
-      main: '#FFA17A', // Change this to your desired colorbackground: #F0EED9;
+      main: '#11C498', // Change this to your desired colorbackground: #F0EED9;
     },
   },
   components: {
@@ -153,6 +154,9 @@ function Navigation() {
 
   return (
     <>
+      <Box ml={2}>
+        <Logo />
+      </Box>
       <List dense>
         <ListItemButton onClick={() => setShowAddTask(true)} sx={{ mb: 1 }}>
           <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>

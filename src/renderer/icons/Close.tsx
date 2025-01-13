@@ -2,6 +2,7 @@ import { useTheme } from '@mui/material';
 
 function Close() {
   const theme = useTheme();
+
   return (
     <svg
       width="20"
