@@ -16,6 +16,7 @@ import {
   FormControlLabel,
   Tooltip,
   IconButton,
+  useTheme,
 } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { StaticDatePicker } from '@mui/x-date-pickers';
@@ -46,6 +47,7 @@ interface IAddTaskProps {
 }
 
 const AddTask = forwardRef<HTMLDivElement, IAddTaskProps>((props, ref) => {
+  const theme = useTheme();
   const { widgetCloseFunc, isToday } = props;
   const [taskTitle, setTaskTitle] = useState('');
   const [selectedScheduleType, setSelectedTypeFrequency] =
@@ -237,9 +239,12 @@ const AddTask = forwardRef<HTMLDivElement, IAddTaskProps>((props, ref) => {
               placement="right"
               arrow
             >
-              <IconButton size="small" aria-label="info">
+              <IconButton size="small" aria-label="info" sx={{ ml: 0.5 }}>
                 <InfoOutlinedIcon
-                  sx={{ color: 'text.secondary', fontSize: '16px' }}
+                  sx={{
+                    color: theme.palette.info.main,
+                    fontSize: '16px',
+                  }}
                 />
               </IconButton>
             </Tooltip>
