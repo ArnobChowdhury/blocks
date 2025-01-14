@@ -88,8 +88,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
-    "@fontsource/m-plus-rounded-1c": "^5.0.13",
-    "@fontsource/roboto": "^5.0.13",
+    "@fontsource/hanken-grotesk": "^5.1.1",
     "@mui/icons-material": "^5.15.20",
     "@mui/lab": "^5.0.0-alpha.170",
     "@mui/material": "^5.15.20",

@@ -1,7 +1,7 @@
-import '@fontsource/m-plus-rounded-1c/400.css';
-import '@fontsource/m-plus-rounded-1c/500.css';
-import '@fontsource/m-plus-rounded-1c/700.css';
-import '@fontsource/m-plus-rounded-1c/800.css';
+import '@fontsource/hanken-grotesk';
+import '@fontsource/hanken-grotesk/200.css';
+import '@fontsource/hanken-grotesk/300.css';
+import '@fontsource/hanken-grotesk/500.css';
 import './App.css';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -66,7 +66,7 @@ const MyStyledListItemText = styled(ListItemText)({
 
 const customTheme = createTheme({
   typography: {
-    fontFamily: 'M PLUS Rounded 1c, sans-serif',
+    fontFamily: 'Hanken Grotesk, sans-serif',
     allVariants: {
       color: '#333333',
     },
