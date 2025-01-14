@@ -61,7 +61,7 @@ import {
 } from './constants';
 
 const MyStyledListItemText = styled(ListItemText)({
-  color: 'red', // Change this to the color you want
+  color: 'red',
 });
 
 const customTheme = createTheme({
