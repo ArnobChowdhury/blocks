@@ -1,29 +1,24 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Fab } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import dayjs from 'dayjs';
-import { AddTask, TodoList } from '../widgets';
+import { TodoList } from '../widgets';
 import { PageHeader } from '../components';
 import { refreshTodayPageTasks, isPreviousDay } from '../utils';
 import { useApp } from '../context/AppProvider';
 
 function Today() {
-  const { setShouldRefresh } = useApp();
-  const [showAddTask, setShowAddTask] = useState(false);
-  const addTaskRef = useRef<HTMLDivElement>(null);
+  const { setShouldRefresh, setAddTaskToday, showAddTask, setShowAddTask } =
+    useApp();
 
   useEffect(() => {
     refreshTodayPageTasks();
   }, []);
 
-  const handleFocusAddTask = () => {
-    if (addTaskRef.current)
-      addTaskRef.current.scrollIntoView({ behavior: 'smooth' });
+  const handleAddTaskToday = () => {
+    setAddTaskToday(true);
+    setShowAddTask(true);
   };
-
-  useEffect(() => {
-    if (showAddTask) handleFocusAddTask();
-  }, [showAddTask]);
 
   const [dateToday, setDateToday] = useState(dayjs());
 
@@ -43,9 +38,6 @@ function Today() {
     <>
       <PageHeader>Today</PageHeader>
       <TodoList dateToday={dateToday} setDateToday={setDateToday} />
-      {showAddTask && (
-        <AddTask ref={addTaskRef} isToday widgetCloseFunc={setShowAddTask} />
-      )}
       {!showAddTask && (
         <Fab
           sx={{ position: 'fixed', bottom: 20, right: 20 }}
@@ -53,10 +45,7 @@ function Today() {
           size="small"
           aria-label="add"
         >
-          <AddIcon
-            sx={{ color: 'white' }}
-            onClick={() => setShowAddTask(true)}
-          />
+          <AddIcon sx={{ color: 'white' }} onClick={handleAddTaskToday} />
         </Fab>
       )}
     </>

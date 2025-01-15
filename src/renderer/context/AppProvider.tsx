@@ -20,6 +20,7 @@ const AppContextFn = () => {
     type: 'error' | 'info' | 'success' | 'warning';
   }>();
   const [showAddTask, setShowAddTask] = useState(false);
+  const [addTaskToday, setAddTaskToday] = useState(false);
   const [taskIdForEdit, setTaskIdForEdit] = useState<number>();
   const [taskForEdit, setTaskForEdit] = useState<TaskWithTagsAndSpace>();
 
@@ -97,6 +98,8 @@ const AppContextFn = () => {
   };
 
   return {
+    addTaskToday,
+    setAddTaskToday,
     showSnackbar,
     notification,
     setNotifier,

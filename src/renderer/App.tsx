@@ -116,6 +116,8 @@ function Navigation() {
   const theme = useTheme();
   const {
     showAddTask,
+    addTaskToday,
+    setAddTaskToday,
     setShowAddTask,
     taskForEdit,
     setTaskIdForEdit,
@@ -150,6 +152,11 @@ function Navigation() {
   const handleSpacesExpand = async () => {
     await handleLoadingSpaces();
     setIsExpanded(!isExpanded);
+  };
+
+  const handleAddTaskWidgetClose = () => {
+    setShowAddTask(false);
+    setAddTaskToday(false);
   };
 
   return (
@@ -256,7 +263,10 @@ function Navigation() {
         </Collapse>
       </List>
       <Dialog open={showAddTask}>
-        <AddTask widgetCloseFunc={setShowAddTask} />
+        <AddTask
+          isToday={addTaskToday}
+          widgetCloseFunc={handleAddTaskWidgetClose}
+        />
       </Dialog>
       <Dialog open={Boolean(taskForEdit)}>
         {taskForEdit && (
