@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import dayjs from 'dayjs';
+import { Box, Typography } from '@mui/material';
+import NothingToTrack from '../images/NothingToTrack';
 import { HabitTracker } from '../widgets';
 import { PageHeader } from '../components';
 import { useApp } from '../context/AppProvider';
@@ -51,14 +53,37 @@ function Tracker() {
       });
   }, [monthIndex, setNotifier]);
 
+  const noDailyTask = habitsDaily.length === 0;
+  const noSpecificDaysInAWeek = habitsSpecificDaysInAWeek.length === 0;
+  const showImage = noDailyTask && noSpecificDaysInAWeek;
+
   return (
     <>
       <PageHeader>Habit Tracker</PageHeader>
-      <HabitTracker habits={habitsDaily} header="Daily" />
-      <HabitTracker
-        habits={habitsSpecificDaysInAWeek}
-        header="Specific Days In a Week"
-      />
+      {!noDailyTask && <HabitTracker habits={habitsDaily} header="Daily" />}
+      {!noSpecificDaysInAWeek && (
+        <HabitTracker
+          habits={habitsSpecificDaysInAWeek}
+          header="Specific Days In a Week"
+        />
+      )}
+      {showImage && (
+        <Box
+          width="100%"
+          height="600px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          mt={2}
+        >
+          <Box>
+            <Typography variant="body1" align="center">
+              Add repetitive tasks to begin tracking!
+            </Typography>
+            <NothingToTrack />
+          </Box>
+        </Box>
+      )}
     </>
   );
 }

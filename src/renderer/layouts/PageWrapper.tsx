@@ -7,6 +7,7 @@ interface IPageWrapperProps {
   onRightArrowClick: () => void;
   isDrawerOpen: boolean;
 }
+
 function PageWrapper({
   children,
   onRightArrowClick,

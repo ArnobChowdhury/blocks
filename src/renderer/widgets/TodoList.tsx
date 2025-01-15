@@ -11,6 +11,7 @@ import {
 import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import dayjs, { Dayjs } from 'dayjs';
+import NoTaskToday from '../images/NoTaskToday';
 
 import {
   TaskScheduleTypeEnum,
@@ -51,6 +52,8 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
   const [score, setScore] = useState<number | null>(null);
   const { setNotifier, setTaskIdForEdit } = useApp();
 
+  const [noTasksForToday, setNoTasksForToday] = useState(false);
+
   useEffect(() => {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_TODAY,
@@ -62,6 +65,12 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
         const eveningTasks: TaskWithTags[] = [];
         const nightTasks: TaskWithTags[] = [];
         const tasksWithoutTime: TaskWithTags[] = [];
+
+        if (tasks.length === 0) {
+          setNoTasksForToday(true);
+        } else {
+          setNoTasksForToday(false);
+        }
 
         tasks.forEach((task) => {
           if (task.timeOfDay === TimeOfDay.Morning) {
@@ -87,10 +96,17 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
     return unsubscribe;
   }, [setDateToday]);
 
+  const [noOverDues, setNoOverDues] = useState(false);
+
   useEffect(() => {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_OVERDUE,
       (response) => {
+        if ((response as TaskWithTags[]).length === 0) {
+          setNoOverDues(true);
+        } else {
+          setNoOverDues(false);
+        }
         // todo need error handling
         setTasksOverdue(response as TaskWithTags[]);
       },
@@ -313,6 +329,23 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
           </Box>
         );
       })}
+      {noTasksForToday && noOverDues && (
+        <Box
+          width="100%"
+          height="600px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          mt={2}
+        >
+          <Box>
+            <Typography variant="body1" align="center">
+              Empty for now. Ready to be filled with something great!
+            </Typography>
+            <NoTaskToday />
+          </Box>
+        </Box>
+      )}
       <Popover
         open={Boolean(taskForScoring)}
         anchorEl={scoreAnchorEl}
