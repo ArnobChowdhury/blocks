@@ -40,6 +40,8 @@ import {
 import { styled } from '@mui/system';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import RunCircleIcon from '@mui/icons-material/RunCircle';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { PageWrapper } from './layouts';
 import { Today, Active, Tracker, Space } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
@@ -359,79 +361,87 @@ function App() {
 
   return (
     <ThemeProvider theme={customTheme}>
-      <Router>
-        <Box sx={{ display: 'flex' }}>
-          <CssBaseline />
-          <Drawer
-            sx={{
-              width: drawerWidth,
-              flexShrink: 0,
-              '& .MuiDrawer-paper': {
-                width: drawerWidth,
-                boxSizing: 'border-box',
-              },
-            }}
-            variant="persistent"
-            anchor="left"
-            open={openDrawer}
-            ref={drawerRef}
-          >
-            <DrawerHeader>
-              <IconButton onClick={handleDrawerClose}>
-                <ArrowLeft />
-              </IconButton>
-            </DrawerHeader>
-            <Navigation />
-          </Drawer>
-          {/* resizing handle  */}
-          {openDrawer && (
-            <Box
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <Router>
+          <Box sx={{ display: 'flex' }}>
+            <CssBaseline />
+            <Drawer
               sx={{
-                backgroundColor: (theme) =>
-                  resizerHovered ? theme.palette.primary.main : 'transparent',
-                transition: 'background-color 0.2s ease-in-out',
-                cursor: 'col-resize',
-                width: 4,
-                zIndex: 100,
-                position: 'absolute',
-                top: 0,
-                left: drawerWidth,
-                height: '100%',
+                width: drawerWidth,
+                flexShrink: 0,
+                '& .MuiDrawer-paper': {
+                  width: drawerWidth,
+                  boxSizing: 'border-box',
+                },
               }}
-              onMouseDown={handleMouseDown}
-              onMouseEnter={() => setResizerHovered(true)}
-              onMouseLeave={() => setResizerHovered(false)}
-            />
-          )}
-          <Main open={openDrawer} drawerWidth={drawerWidth}>
-            <PageWrapper
-              onRightArrowClick={handleDrawerOpen}
-              isDrawerOpen={!openDrawer}
+              variant="persistent"
+              anchor="left"
+              open={openDrawer}
+              ref={drawerRef}
             >
-              <Routes>
-                <Route path={ROUTE_ROOT} element={<Today />} />
-                <Route path={ROUTE_ACTIVE} element={<Active />} />
-                <Route path={ROUTE_TRACKER} element={<Tracker />} />
-                <Route path="/space/:spaceId/:spaceName" element={<Space />} />
-                <Route path={ROUTE_TASKS_WITHOUT_A_SPACE} element={<Space />} />
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </PageWrapper>
-          </Main>
+              <DrawerHeader>
+                <IconButton onClick={handleDrawerClose}>
+                  <ArrowLeft />
+                </IconButton>
+              </DrawerHeader>
+              <Navigation />
+            </Drawer>
+            {/* resizing handle  */}
+            {openDrawer && (
+              <Box
+                sx={{
+                  backgroundColor: (theme) =>
+                    resizerHovered ? theme.palette.primary.main : 'transparent',
+                  transition: 'background-color 0.2s ease-in-out',
+                  cursor: 'col-resize',
+                  width: 4,
+                  zIndex: 100,
+                  position: 'absolute',
+                  top: 0,
+                  left: drawerWidth,
+                  height: '100%',
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseEnter={() => setResizerHovered(true)}
+                onMouseLeave={() => setResizerHovered(false)}
+              />
+            )}
+            <Main open={openDrawer} drawerWidth={drawerWidth}>
+              <PageWrapper
+                onRightArrowClick={handleDrawerOpen}
+                isDrawerOpen={!openDrawer}
+              >
+                <Routes>
+                  <Route path={ROUTE_ROOT} element={<Today />} />
+                  <Route path={ROUTE_ACTIVE} element={<Active />} />
+                  <Route path={ROUTE_TRACKER} element={<Tracker />} />
+                  <Route
+                    path="/space/:spaceId/:spaceName"
+                    element={<Space />}
+                  />
+                  <Route
+                    path={ROUTE_TASKS_WITHOUT_A_SPACE}
+                    element={<Space />}
+                  />
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+              </PageWrapper>
+            </Main>
 
-          <Snackbar
-            open={showSnackbar}
-            autoHideDuration={6000}
-            onClose={clearNotifier}
-          >
-            <Alert severity={notification?.type} onClose={clearNotifier}>
-              {notification?.type === 'error'
-                ? formatErrorMessage(notification?.message)
-                : notification?.message}
-            </Alert>
-          </Snackbar>
-        </Box>
-      </Router>
+            <Snackbar
+              open={showSnackbar}
+              autoHideDuration={6000}
+              onClose={clearNotifier}
+            >
+              <Alert severity={notification?.type} onClose={clearNotifier}>
+                {notification?.type === 'error'
+                  ? formatErrorMessage(notification?.message)
+                  : notification?.message}
+              </Alert>
+            </Snackbar>
+          </Box>
+        </Router>
+      </LocalizationProvider>
     </ThemeProvider>
   );
 }

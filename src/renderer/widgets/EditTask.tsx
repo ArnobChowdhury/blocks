@@ -21,8 +21,6 @@ import {
 } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { StaticDatePicker } from '@mui/x-date-pickers';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import {
   CalendarChip,
@@ -257,7 +255,7 @@ function EditTask({
       task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek);
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <>
       <Paper sx={{ padding: 2.5, minWidth: '600px' }} variant="outlined">
         {isRepetitiveTaskButNotTemplate && (
           <Box mb={2}>
@@ -478,7 +476,7 @@ function EditTask({
           orientation="landscape"
         />
       </Popover>
-    </LocalizationProvider>
+    </>
   );
 }
 

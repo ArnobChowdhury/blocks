@@ -20,8 +20,6 @@ import {
 } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { StaticDatePicker } from '@mui/x-date-pickers';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import CustomChip from '../components/CustomChip';
 import {
@@ -193,198 +191,194 @@ const AddTask = forwardRef<HTMLDivElement, IAddTaskProps>((props, ref) => {
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Paper
-        ref={ref}
-        sx={{ padding: 2.5, minWidth: '600px' }}
-        variant="outlined"
-      >
-        <TextField
-          placeholder="Task name"
-          fullWidth
-          value={taskTitle}
-          onChange={(e) => setTaskTitle(e.target.value)}
-          variant="standard"
-          inputProps={{
-            maxLength: 1000,
-            style: {
-              fontWeight: 500,
-            },
-          }}
-        />
-        <DescriptionEditor editor={editor} />
+    <Paper
+      ref={ref}
+      sx={{ padding: 2.5, minWidth: '600px' }}
+      variant="outlined"
+    >
+      <TextField
+        placeholder="Task name"
+        fullWidth
+        value={taskTitle}
+        onChange={(e) => setTaskTitle(e.target.value)}
+        variant="standard"
+        inputProps={{
+          maxLength: 1000,
+          style: {
+            fontWeight: 500,
+          },
+        }}
+      />
+      <DescriptionEditor editor={editor} />
 
-        <Box sx={{ mt: 2 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginBottom: 3,
-            }}
-          >
-            <SectionHeader sx={{ mb: 0 }}>Schedule</SectionHeader>
-            <Tooltip
-              title={
-                <>
-                  <Typography variant="body2" color="inherit">
-                    Selecting &quot;Daily&quot; or &quot;Specific Days in a
-                    Week&quot; will create a task template.
-                  </Typography>
-                  <Typography variant="body2" color="inherit">
-                    Tasks will be generated from the template as per the
-                    schedule.
-                  </Typography>
-                </>
-              }
-              placement="right"
-              arrow
-            >
-              <IconButton size="small" aria-label="info" sx={{ ml: 0.5 }}>
-                <InfoOutlinedIcon
-                  sx={{
-                    color: theme.palette.info.main,
-                    fontSize: '16px',
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-          </div>
-          <Grid container spacing={1}>
-            {Object.values(TaskScheduleTypeEnum).map((option, index) => (
+      <Box sx={{ mt: 2 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: 3,
+          }}
+        >
+          <SectionHeader sx={{ mb: 0 }}>Schedule</SectionHeader>
+          <Tooltip
+            title={
               <>
-                <Grid item key={option}>
-                  <Chip
-                    label={option}
-                    clickable
-                    color={
-                      selectedScheduleType === option ? 'primary' : 'default'
-                    }
-                    onClick={(e) => handleFrequencySelect(e, option)}
-                  />
-                  {option === TaskScheduleTypeEnum.Once && (
-                    <Popover
-                      id={datePopOverId}
-                      open={showDate}
-                      anchorEl={dateAnchorEl}
-                      onClose={() => setDateAnchorEl(null)}
-                      anchorOrigin={{
-                        vertical: 'top',
-                        horizontal: 'left',
-                      }}
-                      sx={{
-                        '.MuiPaper-root': {
-                          boxShadow:
-                            '0px 3px 6px rgba(0,0,0,0.16), 0px 3px 6px rgba(0,0,0,0.23)',
-                        },
-                      }}
-                    >
-                      <StaticDatePicker
-                        // defaultValue={dayjs()}
-                        disablePast
-                        onChange={setSelectedDate}
-                        value={selectedDate}
-                        onClose={() => setDateAnchorEl(null)}
-                        onAccept={(val) => {
-                          if (val) {
-                            setSelectedDate(val);
-                            setDateAnchorEl(null);
-                            setSelectedTypeFrequency(option);
-                          }
-                        }}
-                        orientation="landscape"
-                      />
-                    </Popover>
-                  )}
-                </Grid>
-                {index === 1 && (
-                  <Grid>
-                    <Divider
-                      key="task-schedule-divider"
-                      orientation="vertical"
-                      sx={{ mr: 0.5, ml: 1.5 }}
-                    />
-                  </Grid>
-                )}
+                <Typography variant="body2" color="inherit">
+                  Selecting &quot;Daily&quot; or &quot;Specific Days in a
+                  Week&quot; will create a task template.
+                </Typography>
+                <Typography variant="body2" color="inherit">
+                  Tasks will be generated from the template as per the schedule.
+                </Typography>
               </>
+            }
+            placement="right"
+            arrow
+          >
+            <IconButton size="small" aria-label="info" sx={{ ml: 0.5 }}>
+              <InfoOutlinedIcon
+                sx={{
+                  color: theme.palette.info.main,
+                  fontSize: '16px',
+                }}
+              />
+            </IconButton>
+          </Tooltip>
+        </div>
+        <Grid container spacing={1}>
+          {Object.values(TaskScheduleTypeEnum).map((option, index) => (
+            <>
+              <Grid item key={option}>
+                <Chip
+                  label={option}
+                  clickable
+                  color={
+                    selectedScheduleType === option ? 'primary' : 'default'
+                  }
+                  onClick={(e) => handleFrequencySelect(e, option)}
+                />
+                {option === TaskScheduleTypeEnum.Once && (
+                  <Popover
+                    id={datePopOverId}
+                    open={showDate}
+                    anchorEl={dateAnchorEl}
+                    onClose={() => setDateAnchorEl(null)}
+                    anchorOrigin={{
+                      vertical: 'top',
+                      horizontal: 'left',
+                    }}
+                    sx={{
+                      '.MuiPaper-root': {
+                        boxShadow:
+                          '0px 3px 6px rgba(0,0,0,0.16), 0px 3px 6px rgba(0,0,0,0.23)',
+                      },
+                    }}
+                  >
+                    <StaticDatePicker
+                      // defaultValue={dayjs()}
+                      disablePast
+                      onChange={setSelectedDate}
+                      value={selectedDate}
+                      onClose={() => setDateAnchorEl(null)}
+                      onAccept={(val) => {
+                        if (val) {
+                          setSelectedDate(val);
+                          setDateAnchorEl(null);
+                          setSelectedTypeFrequency(option);
+                        }
+                      }}
+                      orientation="landscape"
+                    />
+                  </Popover>
+                )}
+              </Grid>
+              {index === 1 && (
+                <Grid>
+                  <Divider
+                    key="task-schedule-divider"
+                    orientation="vertical"
+                    sx={{ mr: 0.5, ml: 1.5 }}
+                  />
+                </Grid>
+              )}
+            </>
+          ))}
+        </Grid>
+      </Box>
+
+      {selectedScheduleType === TaskScheduleTypeEnum.SpecificDaysInAWeek && (
+        <Box sx={{ mt: 2 }}>
+          <SectionHeader>Select Days</SectionHeader>
+          <Grid container spacing={1}>
+            {Object.values(DaysInAWeek).map((day) => (
+              <Grid item key={day}>
+                <CustomChip
+                  label={day}
+                  clickable
+                  sx={{ textTransform: 'capitalize' }}
+                  color={selectedDays.includes(day) ? 'primary' : 'default'}
+                  onClick={() => handleDayToggle(day)}
+                />
+              </Grid>
             ))}
           </Grid>
         </Box>
+      )}
+      {selectedScheduleType === TaskScheduleTypeEnum.Once && selectedDate && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <CalendarChip date={selectedDate} />
+        </>
+      )}
 
-        {selectedScheduleType === TaskScheduleTypeEnum.SpecificDaysInAWeek && (
-          <Box sx={{ mt: 2 }}>
-            <SectionHeader>Select Days</SectionHeader>
-            <Grid container spacing={1}>
-              {Object.values(DaysInAWeek).map((day) => (
-                <Grid item key={day}>
-                  <CustomChip
-                    label={day}
-                    clickable
-                    sx={{ textTransform: 'capitalize' }}
-                    color={selectedDays.includes(day) ? 'primary' : 'default'}
-                    onClick={() => handleDayToggle(day)}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        )}
-        {selectedScheduleType === TaskScheduleTypeEnum.Once && selectedDate && (
-          <>
-            <Divider sx={{ my: 2 }} />
-            <CalendarChip date={selectedDate} />
-          </>
-        )}
+      <TimeOfDaySelector
+        selectedTime={selectedTimeOfDay}
+        onTimeClick={handleTimeToggle}
+      />
 
-        <TimeOfDaySelector
-          selectedTime={selectedTimeOfDay}
-          onTimeClick={handleTimeToggle}
+      {(selectedScheduleType === TaskScheduleTypeEnum.Daily ||
+        selectedScheduleType === TaskScheduleTypeEnum.SpecificDaysInAWeek) && (
+        <FormControlLabel
+          control={
+            <Checkbox
+              size="small"
+              name="scoreHabit"
+              checked={shouldBeScored}
+              onChange={(e) => setShouldBeScored(e.target.checked)}
+            />
+          }
+          label={<Typography variant="body2">Score your habit?</Typography>}
+          sx={{ alignSelf: 'flex-end', my: 2 }}
         />
-
-        {(selectedScheduleType === TaskScheduleTypeEnum.Daily ||
-          selectedScheduleType ===
-            TaskScheduleTypeEnum.SpecificDaysInAWeek) && (
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                name="scoreHabit"
-                checked={shouldBeScored}
-                onChange={(e) => setShouldBeScored(e.target.checked)}
-              />
-            }
-            label={<Typography variant="body2">Score your habit?</Typography>}
-            sx={{ alignSelf: 'flex-end', my: 2 }}
-          />
-        )}
-        <Box mt={2}>
-          <Selector
-            label="Space"
-            options={allSpaces}
-            multiple={false}
-            value={selectedSpace}
-            onOpen={handleLoadingSpaces}
-            onOptionCreation={handleSpaceCreation}
-            onChange={setSelectedSpace}
-          />
-        </Box>
-        <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={() => widgetCloseFunc(false)}
-            sx={{ mr: 1 }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleAddTask}
-            disabled={isAddButtonDisabled}
-          >
-            Add
-          </Button>
-        </Box>
-      </Paper>
-    </LocalizationProvider>
+      )}
+      <Box mt={2}>
+        <Selector
+          label="Space"
+          options={allSpaces}
+          multiple={false}
+          value={selectedSpace}
+          onOpen={handleLoadingSpaces}
+          onOptionCreation={handleSpaceCreation}
+          onChange={setSelectedSpace}
+        />
+      </Box>
+      <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
+        <Button
+          variant="outlined"
+          onClick={() => widgetCloseFunc(false)}
+          sx={{ mr: 1 }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleAddTask}
+          disabled={isAddButtonDisabled}
+        >
+          Add
+        </Button>
+      </Box>
+    </Paper>
   );
 });
 
