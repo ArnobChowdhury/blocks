@@ -339,7 +339,7 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
           mt={2}
         >
           <Box>
-            <Typography variant="body1" align="center">
+            <Typography sx={{ mb: 3 }} variant="body1" align="center">
               Empty for now. Ready to be filled with something great!
             </Typography>
             <NoTaskToday />
