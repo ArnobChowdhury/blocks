@@ -156,14 +156,17 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
                       );
                     }
                     return (
-                      <StyledTd sx={{ backgroundColor: '#B6D7A8' }} key={key} />
+                      <StyledTd
+                        sx={{ backgroundColor: scoreColors[4] }}
+                        key={key}
+                      />
                     );
                   }
                   if (
                     entry.completionStatus === TaskCompletionStatusEnum.FAILED
                   ) {
                     return (
-                      <StyledTd sx={{ backgroundColor: '#FFDADA' }} key={key} />
+                      <StyledTd sx={{ backgroundColor: '#d43f3f' }} key={key} />
                     );
                   }
                 } else {
@@ -172,14 +175,17 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
                     entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
                   ) {
                     return (
-                      <StyledTd sx={{ backgroundColor: '#B6D7A8' }} key={key} />
+                      <StyledTd
+                        sx={{ backgroundColor: scoreColors[4] }}
+                        key={key}
+                      />
                     );
                   }
                   if (
                     entry.completionStatus === TaskCompletionStatusEnum.FAILED
                   ) {
                     return (
-                      <StyledTd sx={{ backgroundColor: '#FFDADA' }} key={key} />
+                      <StyledTd sx={{ backgroundColor: '#d43f3f' }} key={key} />
                     );
                   }
                   return <StyledTd key={key} />;

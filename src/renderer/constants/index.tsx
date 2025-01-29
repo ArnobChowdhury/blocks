@@ -1,10 +1,10 @@
 // eslint-disable-next-line import/prefer-default-export
 export const scoreColors = [
-  '#134F5C33',
-  '#134F5C66',
-  '#134F5C99',
-  '#134F5CCC',
-  '#134F5C',
+  '#e8ffe9',
+  '#7be187',
+  '#24c241',
+  '#019927',
+  '#006620',
 ];
 
 export const TimeColors: { [key: string]: string } = {
