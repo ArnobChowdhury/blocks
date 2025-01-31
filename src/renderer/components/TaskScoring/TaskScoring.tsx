@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, IconButton } from '@mui/material';
 import { styled } from '@mui/system';
-import { scoreColors } from '../constants';
+import { scoreColors } from '../../constants';
 
 interface CircleProps {
   bgcolor: string;

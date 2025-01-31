@@ -10,7 +10,7 @@ import { createFilterOptions } from '@mui/material/Autocomplete';
 import AddIcon from '@mui/icons-material/Add';
 
 // eslint-disable-next-line import/no-relative-packages
-import { Tag, Space } from '../../generated/client';
+import { Tag, Space } from '../../../generated/client';
 
 type SelectorProps =
   | {
