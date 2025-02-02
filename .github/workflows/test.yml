@@ -23,8 +23,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build app
-        run: npm run build
+      - name: Build main process
+        run: npm run build:main
+
+      - name: Build renderer process
+        run: npm run build:renderer
 
       - name: Run lint
         run: npm run lint
