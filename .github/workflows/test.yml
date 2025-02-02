@@ -37,7 +37,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') # Only build on version tags
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Code
@@ -51,13 +51,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Clean previous build files
-        run: rm -rf release/build/* && rm -rf release/app/prisma/*
+      - name: Set USE_HARD_LINKS to false
+        run: |
+          if [[ $RUNNER_OS == 'Linux' || $RUNNER_OS == 'macOS' ]]; then
+            export USE_HARD_LINKS=false
+          elif [[ $RUNNER_OS == 'Windows' ]]; then
+            set USE_HARD_LINKS=false
+          fi
+        shell: bash
 
       - name: Package Electron App
-        run: |
-          export USE_HARD_LINKS=false
-          npm run package
+        run: npm run package
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -73,12 +77,12 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          path: builds/
+          path: release/build
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: builds/**/*
+          files: release/build/**/*
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}

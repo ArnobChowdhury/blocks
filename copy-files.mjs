@@ -53,3 +53,5 @@ fs.copySync(
     },
   },
 );
+
+console.log('Done copying files');
