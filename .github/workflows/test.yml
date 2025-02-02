@@ -54,9 +54,9 @@ jobs:
       - name: Set USE_HARD_LINKS to false
         run: |
           if [[ $RUNNER_OS == 'Linux' || $RUNNER_OS == 'macOS' ]]; then
-            export USE_HARD_LINKS=false
+            export USE_HARD_LINKS=true
           elif [[ $RUNNER_OS == 'Windows' ]]; then
-            set USE_HARD_LINKS=false
+            set USE_HARD_LINKS=true
           fi
         shell: bash
 
