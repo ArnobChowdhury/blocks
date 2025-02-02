@@ -52,7 +52,7 @@ jobs:
         run: npm install
 
       - name: Clean previous build files
-        run: rm -rf release/build/*
+        run: rm -rf release/build/* && rm -rf release/app/prisma/*
 
       - name: Package Electron App
         run: npm run package # Ensure this script is in package.json
