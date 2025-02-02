@@ -52,13 +52,7 @@ jobs:
         run: npm install
 
       - name: Set USE_HARD_LINKS to false
-        run: |
-          if [[ $RUNNER_OS == 'Linux' || $RUNNER_OS == 'macOS' ]]; then
-            export USE_HARD_LINKS=true
-          elif [[ $RUNNER_OS == 'Windows' ]]; then
-            set USE_HARD_LINKS=true
-          fi
-        shell: bash
+        run: echo "USE_HARD_LINKS=false" >> $GITHUB_ENV
 
       - name: Package Electron App
         run: npm run package
