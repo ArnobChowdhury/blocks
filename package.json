@@ -185,7 +185,8 @@
     "asar": true,
     "asarUnpack": [
       "**\\*.{node,dll}",
-      "prisma"
+      "prisma",
+      "**/node_modules/@prisma/engines/**"
     ],
     "files": [
       "dist",
