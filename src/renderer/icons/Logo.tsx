@@ -1,8 +1,4 @@
-import { useTheme } from '@mui/material';
-
 function Logo({ width, height }: { width?: number; height?: number }) {
-  const theme = useTheme();
-
   return (
     <svg
       width={width}
