@@ -181,7 +181,6 @@
   },
   "build": {
     "productName": "blockstracker",
-    "artifactName": "${productName}-${platform}.${ext}",
     "appId": "com.appfoundry.blockstracker",
     "asar": true,
     "asarUnpack": [
