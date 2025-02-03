@@ -74,7 +74,7 @@ jobs:
           path: release/build
 
       - name: List files in release/build
-        run: ls -lR release/build
+        run: ls -l release/build
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
