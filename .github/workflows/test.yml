@@ -76,7 +76,12 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/build/**/*
+          files: |
+            release/build/*mac.zip*
+            release/build/*.dmg*
+            release/build/*.exe*
+            release/build/*.AppImage
+            release/build/latest*.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
