@@ -74,17 +74,19 @@ jobs:
           path: release/build
 
       - name: List files in release/build
-        run: ls -l release/build
+        run: ls -lR release/build
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release/build/*mac.zip*
-            release/build/*.dmg*
-            release/build/*.exe*
-            release/build/*.AppImage
-            release/build/latest*.yml
+            release/build/build-macos-latest/*mac.zip*
+            release/build/build-macos-latest/*.dmg*
+            release/build/build-windows-latest/*.exe*
+            release/build/build-ubuntu-latest/*.AppImage
+            release/build/build-macos-latest/latest-mac.yml
+            release/build/build-windows-latest/latest.yml
+            release/build/build-ubuntu-latest/latest-linux.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
