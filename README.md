@@ -67,7 +67,7 @@ npm run package
 ## 📄 License
 
 BlocksTracker is licensed under the **GNU General Public License v3.0**.
-See the [LICENSE](./LICENSE) file for more details.
+See the [LICENSE](./License) file for more details.
 
 ---
 
