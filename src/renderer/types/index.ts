@@ -114,6 +114,7 @@ export enum ChannelsEnum {
   REQUEST_TOGGLE_TASK_COMPLETION_STATUS = 'request-toggle-task-completion-status',
 
   REQUEST_DAILY_TASKS_MONTHLY_REPORT = 'request_daily_tasks_monthly_report',
+  // todo: fix the mistake in next release: It should be  REQUEST_SPECIFIC_DAYS_IN_A_WEEK_TASKS_MONTHLY_REPORT: There is an additional daily here
   REQUEST_SPECIFIC_DAYS_IN_A_WEEK_DAILY_TASKS_MONTHLY_REPORT = 'request_specific_days_in_a_week_daily_tasks_monthly_report',
 
   REQUEST_TASKS_OVERDUE = 'request-tasks-overdue',
