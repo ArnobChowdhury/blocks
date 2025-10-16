@@ -16,32 +16,34 @@ datasource db {
 }
 
 model RepetitiveTaskTemplate {
-  id                       Int       @id @default(autoincrement())
-  isActive                 Boolean   @default(true)
+  id                       String                      @id @default(uuid())
+  isActive                 Boolean                     @default(true)
   title                    String
   description              String?
   schedule                 String
-  priority                 Int       @default(3)
-  shouldBeScored           Boolean?  @default(false)
-  monday                   Boolean?  @default(false)
-  tuesday                  Boolean?  @default(false)
-  wednesday                Boolean?  @default(false)
-  thursday                 Boolean?  @default(false)
-  friday                   Boolean?  @default(false)
-  saturday                 Boolean?  @default(false)
-  sunday                   Boolean?  @default(false)
+  priority                 Int                         @default(3)
+  shouldBeScored           Boolean                     @default(false)
+  monday                   Boolean                     @default(false)
+  tuesday                  Boolean                     @default(false)
+  wednesday                Boolean                     @default(false)
+  thursday                 Boolean                     @default(false)
+  friday                   Boolean                     @default(false)
+  saturday                 Boolean                     @default(false)
+  sunday                   Boolean                     @default(false)
   timeOfDay                String?
   lastDateOfTaskGeneration DateTime?
-  createdAt                DateTime  @default(now())
-  modifiedAt               DateTime  @updatedAt
-  tags                     Tag[]
-  Task                     Task[]
-  space                    Space?    @relation(fields: [spaceId], references: [id])
-  spaceId                  Int?
+  createdAt                DateTime                    @default(now())
+  modifiedAt               DateTime                    @updatedAt
+  tags                     RepetitiveTaskTemplateTag[]
+  tasks                    Task[]
+  space                    Space?                      @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  spaceId                  String?
+  user                     User?                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                   String?
 }
 
 model Task {
-  id                       Int                     @id @default(autoincrement())
+  id                       String                  @id @default(uuid())
   isActive                 Boolean                 @default(true)
   title                    String
   description              String?
@@ -52,31 +54,90 @@ model Task {
   shouldBeScored           Boolean?
   score                    Int?
   timeOfDay                String?
-  RepetitiveTaskTemplate   RepetitiveTaskTemplate? @relation(fields: [repetitiveTaskTemplateId], references: [id], onDelete: Cascade)
-  repetitiveTaskTemplateId Int?
+  RepetitiveTaskTemplate   RepetitiveTaskTemplate? @relation(fields: [repetitiveTaskTemplateId], references: [id], onDelete: SetNull)
+  repetitiveTaskTemplateId String?
   createdAt                DateTime                @default(now())
   modifiedAt               DateTime                @updatedAt
-  tags                     Tag[]
-  space                    Space?                  @relation(fields: [spaceId], references: [id])
-  spaceId                  Int?
+  tags                     TaskTag[]
+  space                    Space?                  @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  spaceId                  String?
+  user                     User?                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                   String?
 
   @@unique([repetitiveTaskTemplateId, dueDate])
 }
 
 model Tag {
-  id              Int                      @id @default(autoincrement())
+  id              String                      @id @default(uuid())
+  name            String
+  tasks           TaskTag[]
+  repetitiveTasks RepetitiveTaskTemplateTag[]
+  createdAt       DateTime                    @default(now())
+  modifiedAt      DateTime                    @updatedAt
+  user            User?                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?
+
+  @@unique([name, userId])
+}
+
+model Space {
+  id              String                   @id @default(uuid())
   name            String
   tasks           Task[]
   repetitiveTasks RepetitiveTaskTemplate[]
   createdAt       DateTime                 @default(now())
   modifiedAt      DateTime                 @updatedAt
+  user            User?                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?
+
+  @@unique([name, userId])
 }
 
-model Space {
-  id              Int                      @id @default(autoincrement())
-  name            String                   @unique
-  tasks           Task[]
-  repetitiveTasks RepetitiveTaskTemplate[]
-  createdAt       DateTime                 @default(now())
-  modifiedAt      DateTime                 @updatedAt
+model User {
+  id                      String                   @id @default(uuid())
+  email                   String                   @unique
+  createdAt               DateTime                 @default(now())
+  modifiedAt              DateTime                 @updatedAt
+  deletedAt               DateTime?
+  spaces                  Space[]
+  tags                    Tag[]
+  repetitiveTaskTemplates RepetitiveTaskTemplate[]
+  tasks                   Task[]
+  pendingOperations       PendingOperation[]
+}
+
+model PendingOperation {
+  id            Int      @id @default(autoincrement())
+  userId        String
+  operationType String
+  entityType    String
+  entityId      String
+  payload       String
+  status        String   @default("pending")
+  attempts      Int      @default(0)
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Settings {
+  key   String @id
+  value String
+}
+
+model TaskTag {
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId String
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId  String
+
+  @@id([taskId, tagId])
+}
+
+model RepetitiveTaskTemplateTag {
+  repetitiveTaskTemplate   RepetitiveTaskTemplate @relation(fields: [repetitiveTaskTemplateId], references: [id], onDelete: Cascade)
+  repetitiveTaskTemplateId String
+  tag                      Tag                    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId                    String
+
+  @@id([repetitiveTaskTemplateId, tagId])
 }
