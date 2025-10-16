@@ -123,7 +123,7 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
           const entriesByDate: { [key: number]: Task } = {};
 
           // todo  can its time complexity be improved?
-          habit?.Task.forEach((taskEntry) => {
+          habit?.tasks.forEach((taskEntry) => {
             const { dueDate } = taskEntry;
             if (dueDate) {
               const dateOfTask = dayjs(dueDate).startOf('day').valueOf();

@@ -312,9 +312,9 @@ const generateDueRepetitiveTasks = async () => {
                 schedule,
                 shouldBeScored,
                 timeOfDay,
-                tags: {
-                  connect: tags.map((tag) => ({ id: tag.id })),
-                },
+                // tags: {
+                //   connect: tags.map((tag) => ({ id: tag.id })),
+                // },
                 spaceId,
               },
               update: {},
@@ -365,9 +365,9 @@ ipcMain.handle(
             createdAt: new Date(),
             dueDate,
             timeOfDay,
-            tags: {
-              connect: tagIds,
-            },
+            // tags: {
+            //   connect: tagIds,
+            // },
             spaceId,
           },
         });
@@ -404,9 +404,9 @@ ipcMain.handle(
             saturday,
             sunday,
             timeOfDay,
-            tags: {
-              connect: tagIds,
-            },
+            // tags: {
+            //   connect: tagIds,
+            // },
             spaceId,
           },
         });
@@ -446,9 +446,9 @@ ipcMain.handle(
           shouldBeScored,
           timeOfDay,
           completionStatus,
-          tags: {
-            set: tagIds,
-          },
+          // tags: {
+          //   set: tagIds,
+          // },
           spaceId,
         },
       });
@@ -525,9 +525,9 @@ ipcMain.handle(
           saturday,
           sunday,
           timeOfDay,
-          tags: {
-            set: tagIds,
-          },
+          // tags: {
+          //   set: tagIds,
+          // },
           spaceId,
         },
       });
@@ -744,7 +744,7 @@ ipcMain.handle(ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT, async () => {
     return await prisma.repetitiveTaskTemplate.findMany({
       where: {
         schedule: TaskScheduleTypeEnum.Daily,
-        Task: {
+        tasks: {
           some: {
             dueDate: {
               gte: startDate,
@@ -754,7 +754,7 @@ ipcMain.handle(ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT, async () => {
         },
       },
       include: {
-        Task: {
+        tasks: {
           orderBy: {
             dueDate: 'asc',
           },
@@ -784,7 +784,7 @@ ipcMain.handle(
       return await prisma.repetitiveTaskTemplate.findMany({
         where: {
           schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
-          Task: {
+          tasks: {
             some: {
               dueDate: {
                 gte: startDate,
@@ -794,7 +794,7 @@ ipcMain.handle(
           },
         },
         include: {
-          Task: {
+          tasks: {
             orderBy: {
               dueDate: 'asc',
             },
@@ -817,7 +817,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_BULK_TASK_FAILURE,
-  async (_event, tasks: number[]) => {
+  async (_event, tasks: string[]) => {
     try {
       return await prisma.task.updateMany({
         where: {
@@ -838,7 +838,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_DETAILS,
-  async (_event, taskId: number) => {
+  async (_event, taskId: string) => {
     try {
       return await prisma.task.findUniqueOrThrow({
         where: {
@@ -858,7 +858,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_REPETITIVE_TASK_DETAILS,
-  async (_event, taskId: number) => {
+  async (_event, taskId: string) => {
     try {
       return await prisma.repetitiveTaskTemplate.findUniqueOrThrow({
         where: {
@@ -878,7 +878,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_STOP_REPETITIVE_TASK,
-  async (event, taskId: number) => {
+  async (event, taskId: string) => {
     try {
       await prisma.repetitiveTaskTemplate.update({
         where: {
@@ -949,7 +949,7 @@ ipcMain.handle(ChannelsEnum.REQUEST_ALL_SPACES, async () => {
 
 ipcMain.on(
   ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
-  async (event, spaceId: number) => {
+  async (event, spaceId: string) => {
     try {
       const tasks = await prisma.task.findMany({
         where: {
@@ -972,7 +972,7 @@ ipcMain.on(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
-  async (event, spaceId: number) => {
+  async (event, spaceId: string) => {
     try {
       const tasks = await prisma.task.findMany({
         where: {
@@ -995,7 +995,7 @@ ipcMain.on(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
-  async (event, spaceId: number) => {
+  async (event, spaceId: string) => {
     try {
       const tasks = await prisma.repetitiveTaskTemplate.findMany({
         where: {
@@ -1017,7 +1017,7 @@ ipcMain.on(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
-  async (event, spaceId: number) => {
+  async (event, spaceId: string) => {
     try {
       const tasks = await prisma.repetitiveTaskTemplate.findMany({
         where: {

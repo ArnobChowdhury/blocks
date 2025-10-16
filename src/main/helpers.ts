@@ -8,20 +8,18 @@ export const getTodayStart = () => {
 
 export const getTodayEnd = () => {
   const dateToday = new Date();
-  const todayEnd = new Date(dateToday.setHours(23, 59, 59, 999)).toISOString();
-
-  return todayEnd;
+  return new Date(dateToday.setHours(23, 59, 59, 999)).toISOString();
 };
 
 export const getDaysForSpecificDaysInAWeekTasks = (days: DaysInAWeek[]) => {
-  const week: { [key in DaysInAWeek]: boolean | null } = {
-    [DaysInAWeek.Monday]: null,
-    [DaysInAWeek.Tuesday]: null,
-    [DaysInAWeek.Wednesday]: null,
-    [DaysInAWeek.Thursday]: null,
-    [DaysInAWeek.Friday]: null,
-    [DaysInAWeek.Saturday]: null,
-    [DaysInAWeek.Sunday]: null,
+  const week: { [key in DaysInAWeek]: boolean | undefined } = {
+    [DaysInAWeek.Monday]: undefined,
+    [DaysInAWeek.Tuesday]: undefined,
+    [DaysInAWeek.Wednesday]: undefined,
+    [DaysInAWeek.Thursday]: undefined,
+    [DaysInAWeek.Friday]: undefined,
+    [DaysInAWeek.Saturday]: undefined,
+    [DaysInAWeek.Sunday]: undefined,
   };
 
   days.forEach((day) => {
@@ -56,7 +54,7 @@ export const getDaysForSpecificDaysInAWeekTasks = (days: DaysInAWeek[]) => {
 };
 
 export const getDaysForDailyTasks = () => {
-  const week: { [key in DaysInAWeek]: boolean | undefined } = {
+  const week: { [key in DaysInAWeek]: boolean } = {
     [DaysInAWeek.Monday]: true,
     [DaysInAWeek.Tuesday]: true,
     [DaysInAWeek.Wednesday]: true,

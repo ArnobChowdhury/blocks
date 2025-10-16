@@ -16,7 +16,7 @@ export type RepetitiveTaskWithTagsAndSpace = RepetitiveTaskTemplate & {
 };
 
 export interface ExtendedRepetitiveTaskTemplate extends RepetitiveTaskTemplate {
-  Task: Task[];
+  tasks: Task[];
 }
 export type { Tag, Task, Space };
 
@@ -51,7 +51,7 @@ export enum TaskCompletionStatusEnum {
 }
 
 export interface ITaskIPC {
-  id?: number;
+  id?: string;
   title: string;
   description: string;
   schedule: TaskScheduleTypeEnum;
@@ -61,7 +61,7 @@ export interface ITaskIPC {
   timeOfDay?: TimeOfDay;
   completionStatus?: TaskCompletionStatusEnum;
   tagIds: { id: number }[];
-  spaceId?: number;
+  spaceId?: string | null;
 }
 
 export interface IDailyTaskEntry {
