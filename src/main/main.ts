@@ -33,8 +33,15 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dotenv/config';
+import axios from 'axios';
 import MenuBuilder from './menu';
-import { dbPath, dbUrl, latestMigration, Migration } from './constants';
+import {
+  dbPath,
+  dbUrl,
+  latestMigration,
+  Migration,
+  API_BASE_URL,
+} from './constants';
 import { resolveHtmlPath } from './util';
 import {
   ITaskIPC,
@@ -55,6 +62,9 @@ import { prisma, runPrismaCommand } from './prisma';
 
 // eslint-disable-next-line import/no-relative-packages
 import { RepetitiveTaskTemplate } from '../generated/client';
+import getPort from 'get-port';
+import { OAuth2Client } from 'google-auth-library';
+import http from 'http';
 
 class AppUpdater {
   constructor() {
@@ -1126,6 +1136,98 @@ ipcMain.on(
     }
   },
 );
+
+ipcMain.handle(ChannelsEnum.REQUEST_GOOGLE_AUTH_START, async () => {
+  try {
+    const port = await getPort({ port: [3000, 3001, 3002] });
+    const redirectUri = `http://localhost:${port}`;
+
+    const oauth2Client = new OAuth2Client({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      redirectUri,
+    });
+
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile',
+      ],
+      prompt: 'consent',
+    });
+
+    const authWindow = new BrowserWindow({
+      width: 500,
+      height: 600,
+      show: true,
+      parent: mainWindow!,
+      modal: true,
+    });
+
+    const authorizationCode = await new Promise<string>((resolve, reject) => {
+      const server = http
+        .createServer(async (req, res) => {
+          try {
+            const url = new URL(req.url!, redirectUri);
+            const code = url.searchParams.get('code');
+            const error = url.searchParams.get('error');
+
+            res.end('Authentication successful! You can close this window.');
+            server.close();
+            authWindow.close();
+
+            if (error) {
+              reject(new Error(error));
+            } else if (code) {
+              resolve(code);
+            } else {
+              reject(new Error('Authorization code not found!'));
+            }
+          } catch (e) {
+            reject(e);
+          }
+        })
+        .listen(port);
+
+      authWindow.on('closed', () => {
+        server.close();
+        reject(new Error('Authorization window closed by user.'));
+      });
+
+      authWindow.loadURL(authUrl);
+    });
+
+    const { tokens } = await oauth2Client.getToken(authorizationCode);
+    const idToken = tokens.id_token;
+
+    if (!idToken) {
+      throw new Error('ID token not found in Google response.');
+    }
+
+    const response = await axios.post(
+      `${API_BASE_URL}/auth/google-signin`,
+      { token: idToken },
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+
+    const backendResponse = response.data;
+
+    return {
+      success: true,
+      data: backendResponse.result.data,
+    };
+  } catch (err: any) {
+    let errorMessage = err.message;
+    if (axios.isAxiosError(err) && err.response) {
+      const errorData = err.response.data;
+      errorMessage =
+        errorData?.result?.error_message ||
+        `Backend sign-in failed: ${err.response.status}`;
+    }
+    log.error('Google Auth Error:', errorMessage);
+    return { success: false, error: errorMessage };
+  }
+});
 
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even

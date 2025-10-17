@@ -4,6 +4,9 @@ import { app } from 'electron';
 export const isDev = process.env.NODE_ENV === 'development';
 export const dbPath = path.join(app.getPath('userData'), 'app.db');
 export const dbUrl = isDev ? process.env.DATABASE_URL! : `file:${dbPath}`;
+export const API_BASE_URL = isDev
+  ? 'http://localhost:8080'
+  : 'https://api.blocks-tracker.com';
 
 // Hacky, but putting this here because otherwise at query time the Prisma client
 // gives an error "Environment variable not found: DATABASE_URL" despite us passing

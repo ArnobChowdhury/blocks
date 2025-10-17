@@ -32,14 +32,29 @@
 
 ## 🚀 Getting Started
 
-To run BlocksTracker locally:
+### 1. Clone the Repository
 
 ```bash
 git clone git@github.com:ArnobChowdhury/blocks.git
 cd blocks
+```
+
+### 2. Set Up Environment Variables
+
+This project uses environment variables for configuration. You'll need to create a `.env` file by copying the example file.
+
+```bash
+# Create a copy of the example file
+cp .env.example .env
+```
+
+Now, open the newly created `.env` file and add the necessary values as indicated in the file. For example, you will need to add your `GOOGLE_CLIENT_ID` for Google Sign-In to work.
+
+### 3. Install Dependencies and Run
+
+```bash
 npm i
 npm start
-
 ```
 
 To build for a platform(win/linux/mac), from that specific platform run
