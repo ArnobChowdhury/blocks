@@ -62,7 +62,6 @@ import { prisma, runPrismaCommand } from './prisma';
 
 // eslint-disable-next-line import/no-relative-packages
 import { RepetitiveTaskTemplate } from '../generated/client';
-import getPort from 'get-port';
 import { OAuth2Client } from 'google-auth-library';
 import http from 'http';
 
@@ -1139,6 +1138,7 @@ ipcMain.on(
 
 ipcMain.handle(ChannelsEnum.REQUEST_GOOGLE_AUTH_START, async () => {
   try {
+    const { default: getPort } = await import('get-port');
     const port = await getPort({ port: [3000, 3001, 3002] });
     const redirectUri = `http://localhost:${port}`;
 
