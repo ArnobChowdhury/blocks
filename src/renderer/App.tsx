@@ -51,6 +51,7 @@ import CalendarToday from './icons/CalendarToday';
 import TrackerIcon from './icons/Tracker';
 import Plus from './icons/Plus';
 import Logo from './icons/Logo';
+import LoginIcon from './icons/Login';
 import { AddTask, EditTask } from './widgets';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
@@ -60,6 +61,7 @@ import {
   ROUTE_ACTIVE,
   ROUTE_TRACKER,
   ROUTE_TASKS_WITHOUT_A_SPACE,
+  ROUTE_AUTH,
 } from './constants';
 
 const MyStyledListItemText = styled(ListItemText)({
@@ -162,108 +164,124 @@ function Navigation() {
   };
 
   return (
-    <>
-      <Box ml={2}>
-        <Logo />
-      </Box>
-      <List dense>
-        <ListItemButton onClick={() => setShowAddTask(true)} sx={{ mb: 1 }}>
-          <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
-            <Plus />
-          </ListItemIcon>
-          <MyStyledListItemText
-            primary={
-              <Typography
-                variant="body1"
-                sx={{ fontWeight: 500, color: theme.palette.primary.main }}
-              >
-                Add task
-              </Typography>
-            }
-          />
-        </ListItemButton>
-        <ListItemButton
-          component={Link}
-          to={ROUTE_ROOT}
-          selected={location.pathname === ROUTE_ROOT}
-        >
-          <ListItemIcon>
-            <CalendarToday date={new Date().getDate()} />
-          </ListItemIcon>
-          <ListItemText primary="Today" />
-        </ListItemButton>
-        <ListItemButton
-          component={Link}
-          to={ROUTE_ACTIVE}
-          selected={location.pathname === ROUTE_ACTIVE}
-        >
-          <ListItemIcon>
-            <RunCircleIcon color="primary" />
-          </ListItemIcon>
-          <ListItemText primary="Active" />
-        </ListItemButton>
-        <ListItemButton
-          component={Link}
-          to={ROUTE_TRACKER}
-          selected={location.pathname === ROUTE_TRACKER}
-        >
-          <ListItemIcon>
-            <TrackerIcon />
-          </ListItemIcon>
-          <ListItemText primary="Tracker" />
-        </ListItemButton>
-        <ListItemButton sx={{ mt: 2 }} onClick={handleSpacesExpand}>
-          <ListItemIcon>
-            {isExpanded ? <ArrowDown /> : <ArrowRight />}
-          </ListItemIcon>
-          <ListItemText
-            primary="Spaces"
-            primaryTypographyProps={{ fontWeight: 500 }}
-          />
-        </ListItemButton>
-        <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-          <List dense component="div" disablePadding>
-            {allSpaces.map((space) => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box>
+        <Box ml={2}>
+          <Logo />
+        </Box>
+        <List dense>
+          <ListItemButton onClick={() => setShowAddTask(true)} sx={{ mb: 1 }}>
+            <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
+              <Plus />
+            </ListItemIcon>
+            <MyStyledListItemText
+              primary={
+                <Typography
+                  variant="body1"
+                  sx={{ fontWeight: 500, color: theme.palette.primary.main }}
+                >
+                  Add task
+                </Typography>
+              }
+            />
+          </ListItemButton>
+          <ListItemButton
+            component={Link}
+            to={ROUTE_ROOT}
+            selected={location.pathname === ROUTE_ROOT}
+          >
+            <ListItemIcon>
+              <CalendarToday date={new Date().getDate()} />
+            </ListItemIcon>
+            <ListItemText primary="Today" />
+          </ListItemButton>
+          <ListItemButton
+            component={Link}
+            to={ROUTE_ACTIVE}
+            selected={location.pathname === ROUTE_ACTIVE}
+          >
+            <ListItemIcon>
+              <RunCircleIcon color="primary" />
+            </ListItemIcon>
+            <ListItemText primary="Active" />
+          </ListItemButton>
+          <ListItemButton
+            component={Link}
+            to={ROUTE_TRACKER}
+            selected={location.pathname === ROUTE_TRACKER}
+          >
+            <ListItemIcon>
+              <TrackerIcon />
+            </ListItemIcon>
+            <ListItemText primary="Tracker" />
+          </ListItemButton>
+          <ListItemButton sx={{ mt: 2 }} onClick={handleSpacesExpand}>
+            <ListItemIcon>
+              {isExpanded ? <ArrowDown /> : <ArrowRight />}
+            </ListItemIcon>
+            <ListItemText
+              primary="Spaces"
+              primaryTypographyProps={{ fontWeight: 500 }}
+            />
+          </ListItemButton>
+          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+            <List dense component="div" disablePadding>
+              {allSpaces.map((space) => (
+                <ListItemButton
+                  key={`${space.name}-${space.id}`}
+                  sx={{ py: 0.5, pl: 4 }}
+                  component={Link}
+                  to={`/space/${space.id}/${space.name}`}
+                  selected={
+                    location.pathname === `/space/${space.id}/${space.name}`
+                  }
+                >
+                  <ListItemIcon sx={{ minWidth: theme.spacing(5) }}>
+                    <LocalOfferOutlinedIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={space.name}
+                    primaryTypographyProps={{
+                      fontSize: theme.typography.body2.fontSize,
+                    }}
+                  />
+                </ListItemButton>
+              ))}
               <ListItemButton
-                key={`${space.name}-${space.id}`}
+                key="task-without-a-space-default-space"
                 sx={{ py: 0.5, pl: 4 }}
                 component={Link}
-                to={`/space/${space.id}/${space.name}`}
-                selected={
-                  location.pathname === `/space/${space.id}/${space.name}`
-                }
+                to={ROUTE_TASKS_WITHOUT_A_SPACE}
+                selected={location.pathname === ROUTE_TASKS_WITHOUT_A_SPACE}
               >
                 <ListItemIcon sx={{ minWidth: theme.spacing(5) }}>
                   <LocalOfferOutlinedIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
-                  primary={space.name}
+                  primary="Tasks without a space"
                   primaryTypographyProps={{
                     fontSize: theme.typography.body2.fontSize,
                   }}
                 />
               </ListItemButton>
-            ))}
-            <ListItemButton
-              key="task-without-a-space-default-space"
-              sx={{ py: 0.5, pl: 4 }}
-              component={Link}
-              to={ROUTE_TASKS_WITHOUT_A_SPACE}
-              selected={location.pathname === ROUTE_TASKS_WITHOUT_A_SPACE}
-            >
-              <ListItemIcon sx={{ minWidth: theme.spacing(5) }}>
-                <LocalOfferOutlinedIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Tasks without a space"
-                primaryTypographyProps={{
-                  fontSize: theme.typography.body2.fontSize,
-                }}
-              />
-            </ListItemButton>
-          </List>
-        </Collapse>
-      </List>
+            </List>
+          </Collapse>
+        </List>
+      </Box>
+      <Box sx={{ marginTop: 'auto' }}>
+        <List dense>
+          <ListItemButton
+            component={Link}
+            to={ROUTE_AUTH}
+            selected={location.pathname === ROUTE_AUTH}
+          >
+            <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
+              <LoginIcon />
+            </ListItemIcon>
+            <ListItemText primary="Sign in" />
+          </ListItemButton>
+        </List>
+      </Box>
       <Dialog open={showAddTask}>
         <AddTask
           isToday={addTaskToday}
@@ -298,7 +316,7 @@ function Navigation() {
           <Button onClick={handlePageRefresh}>Ok, refresh</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Box>
   );
 }
 
