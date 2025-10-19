@@ -43,7 +43,7 @@ import RunCircleIcon from '@mui/icons-material/RunCircle';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { PageWrapper } from './layouts';
-import { Today, Active, Tracker, Space } from './pages';
+import { Today, Active, Tracker, Space, Auth } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
 import ArrowRight from './icons/ArrowRight';
 import ArrowDown from './icons/ArrowDown';
@@ -441,6 +441,7 @@ function App() {
                     path={ROUTE_TASKS_WITHOUT_A_SPACE}
                     element={<Space />}
                   />
+                  <Route path={ROUTE_AUTH} element={<Auth />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </PageWrapper>
