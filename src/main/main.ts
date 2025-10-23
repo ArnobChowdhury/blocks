@@ -35,6 +35,8 @@ import dayjs, { Dayjs } from 'dayjs';
 import 'dotenv/config';
 import axios from 'axios';
 import MenuBuilder from './menu';
+import keytar from 'keytar';
+import { jwtDecode } from 'jwt-decode';
 import {
   dbPath,
   dbUrl,
@@ -42,7 +44,7 @@ import {
   Migration,
   API_BASE_URL,
 } from './constants';
-import { resolveHtmlPath } from './util';
+import { resolveHtmlPath, getAssetPath } from './util';
 import {
   ITaskIPC,
   TaskScheduleTypeEnum,
@@ -62,8 +64,15 @@ import { prisma, runPrismaCommand } from './prisma';
 
 // eslint-disable-next-line import/no-relative-packages
 import { RepetitiveTaskTemplate } from '../generated/client';
-import { OAuth2Client } from 'google-auth-library';
-import http from 'http';
+import { startOAuthFlow } from './oAuth';
+
+const KEYCHAIN_SERVICE = 'com.blocks-tracker.app';
+const KEYCHAIN_ACCOUNT = 'currentUser';
+
+let session: {
+  accessToken: string | null;
+  user: { id: string; email: string } | null;
+} = { accessToken: null, user: null };
 
 class AppUpdater {
   constructor() {
@@ -161,14 +170,6 @@ const createWindow = async () => {
   if (isDebug) {
     await installExtensions();
   }
-
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'assets')
-    : path.join(__dirname, '../../assets');
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
 
   mainWindow = new BrowserWindow({
     show: false,
@@ -1136,96 +1137,63 @@ ipcMain.on(
   },
 );
 
+interface DecodedToken {
+  user_id: string;
+  email: string;
+}
+
+async function handleSuccessfulSignIn(
+  accessToken: string,
+  refreshToken: string,
+) {
+  if (!accessToken || !refreshToken) {
+    throw new Error('Tokens not found in backend response.');
+  }
+
+  const decodedToken: DecodedToken = jwtDecode(accessToken);
+  const userEmail = decodedToken.email;
+
+  if (!userEmail) {
+    throw new Error('Email not found in token.');
+  }
+
+  await keytar.setPassword(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT, refreshToken);
+
+  session.accessToken = accessToken;
+  const user = { email: userEmail, id: decodedToken.user_id };
+  session.user = user;
+  return user;
+}
+
 ipcMain.handle(ChannelsEnum.REQUEST_GOOGLE_AUTH_START, async () => {
   try {
-    const { default: getPort } = await import('get-port');
-    const port = await getPort({ port: [3000, 3001, 3002] });
-    const redirectUri = `http://localhost:${port}`;
-
-    const oauth2Client = new OAuth2Client({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      redirectUri,
-    });
-
-    const authUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: [
-        'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/userinfo.profile',
-      ],
-      prompt: 'consent',
-    });
-
-    const authWindow = new BrowserWindow({
-      width: 500,
-      height: 600,
-      show: true,
-      parent: mainWindow!,
-      modal: true,
-    });
-
-    const authorizationCode = await new Promise<string>((resolve, reject) => {
-      const server = http
-        .createServer(async (req, res) => {
-          try {
-            const url = new URL(req.url!, redirectUri);
-            const code = url.searchParams.get('code');
-            const error = url.searchParams.get('error');
-
-            res.end('Authentication successful! You can close this window.');
-            server.close();
-            authWindow.close();
-
-            if (error) {
-              reject(new Error(error));
-            } else if (code) {
-              resolve(code);
-            } else {
-              reject(new Error('Authorization code not found!'));
-            }
-          } catch (e) {
-            reject(e);
-          }
-        })
-        .listen(port);
-
-      authWindow.on('closed', () => {
-        server.close();
-        reject(new Error('Authorization window closed by user.'));
-      });
-
-      authWindow.loadURL(authUrl);
-    });
-
-    const { tokens } = await oauth2Client.getToken(authorizationCode);
-    const idToken = tokens.id_token;
-
-    if (!idToken) {
-      throw new Error('ID token not found in Google response.');
-    }
+    const { code, redirectUri, codeVerifier } = await startOAuthFlow();
 
     const response = await axios.post(
-      `${API_BASE_URL}/auth/google-signin`,
-      { token: idToken },
+      `${API_BASE_URL}/auth/google/desktop`,
+      { code, redirectUri, codeVerifier },
       { headers: { 'Content-Type': 'application/json' } },
     );
 
-    const backendResponse = response.data;
+    const { accessToken, refreshToken } = response.data.result.data;
+    const user = await handleSuccessfulSignIn(accessToken, refreshToken);
 
     return {
       success: true,
-      data: backendResponse.result.data,
+      data: { user },
     };
   } catch (err: any) {
-    let errorMessage = err.message;
-    if (axios.isAxiosError(err) && err.response) {
-      const errorData = err.response.data;
-      errorMessage =
-        errorData?.result?.error_message ||
-        `Backend sign-in failed: ${err.response.status}`;
-    }
+    const errorMessage =
+      axios.isAxiosError(err) && err.response
+        ? err.response.data?.result?.error_message ||
+          `Backend sign-in failed: ${err.response.status}`
+        : err.message;
     log.error('Google Auth Error:', errorMessage);
     return { success: false, error: errorMessage };
+  } finally {
+    if (mainWindow) {
+      mainWindow.focus();
+    }
   }
 });
 

@@ -13,6 +13,11 @@ import {
   RepetitiveTaskWithTagsAndSpace,
 } from '../types';
 
+interface User {
+  id: string;
+  email: string;
+}
+
 const AppContextFn = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [notification, setNotification] = useState<{
@@ -28,6 +33,8 @@ const AppContextFn = () => {
     useState<number>();
   const [repetitiveTaskTemplateForEdit, setRepetitiveTaskTemplateForEdit] =
     useState<RepetitiveTaskWithTagsAndSpace>();
+
+  const [user, setUser] = useState<User | null>(null);
   /**
    * Add event listeners... for page refresh events' errors and set notifiers
    */
@@ -115,6 +122,8 @@ const AppContextFn = () => {
     shouldRefresh,
     setShouldRefresh,
     handlePageRefresh,
+    user,
+    setUser,
   };
 };
 

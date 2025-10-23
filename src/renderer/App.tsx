@@ -131,6 +131,7 @@ function Navigation() {
     setRepetitiveTaskTemplateForEdit,
     shouldRefresh,
     handlePageRefresh,
+    user,
   } = useApp();
 
   const handleEditTaskCancel = () => {
@@ -269,18 +270,20 @@ function Navigation() {
         </List>
       </Box>
       <Box sx={{ marginTop: 'auto' }}>
-        <List dense>
-          <ListItemButton
-            component={Link}
-            to={ROUTE_AUTH}
-            selected={location.pathname === ROUTE_AUTH}
-          >
-            <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
-              <LoginIcon />
-            </ListItemIcon>
-            <ListItemText primary="Sign in" />
-          </ListItemButton>
-        </List>
+        {!user && (
+          <List dense>
+            <ListItemButton
+              component={Link}
+              to={ROUTE_AUTH}
+              selected={location.pathname === ROUTE_AUTH}
+            >
+              <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
+                <LoginIcon />
+              </ListItemIcon>
+              <ListItemText primary="Sign in" />
+            </ListItemButton>
+          </List>
+        )}
       </Box>
       <Dialog open={showAddTask}>
         <AddTask

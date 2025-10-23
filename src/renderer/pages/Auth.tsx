@@ -6,7 +6,7 @@ import { PageHeader } from '../components';
 import { useApp } from '../context/AppProvider';
 
 function Auth() {
-  const { setNotifier } = useApp();
+  const { setNotifier, setUser } = useApp();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
@@ -18,8 +18,7 @@ function Auth() {
 
       if (result.success) {
         setNotifier('Sign in successful!', 'success');
-        // TODO: Store tokens (result.data) and manage user state/redirect
-        console.log('Received tokens:', result.data);
+        setUser(result.data.user);
       } else {
         setNotifier(result.error || 'An unknown error occurred.', 'error');
       }
@@ -41,21 +40,27 @@ function Auth() {
         features like data sync. By default, all your data is stored locally on
         this device.
       </Typography>
-      <Button
-        variant="contained"
-        size="large"
-        onClick={handleGoogleLogin}
-        disabled={isLoading}
-        startIcon={
-          isLoading ? (
-            <CircularProgress size={20} color="inherit" />
-          ) : (
-            <GoogleIcon />
-          )
-        }
-      >
-        {isLoading ? 'Signing In...' : 'Continue with Google'}
-      </Button>
+      <Box display="flex" justifyContent="center" mt={5}>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+          startIcon={
+            isLoading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <GoogleIcon />
+            )
+          }
+          sx={{
+            px: 5,
+            minWidth: '480px',
+          }}
+        >
+          {isLoading ? 'Signing In...' : 'Continue with Google'}
+        </Button>
+      </Box>
     </Box>
   );
 }
