@@ -67,7 +67,8 @@ import { RepetitiveTaskTemplate } from '../generated/client';
 import { startOAuthFlow } from './oAuth';
 
 const KEYCHAIN_SERVICE = 'com.blocks-tracker.app';
-const KEYCHAIN_ACCOUNT = 'currentUser';
+const KEYCHAIN_ACCESS_TOKEN_ACCOUNT = 'currentUserAccessToken';
+const KEYCHAIN_REFRESH_TOKEN_ACCOUNT = 'currentUserRefreshToken';
 
 let session: {
   accessToken: string | null;
@@ -1157,7 +1158,16 @@ async function handleSuccessfulSignIn(
     throw new Error('Email not found in token.');
   }
 
-  await keytar.setPassword(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT, refreshToken);
+  await keytar.setPassword(
+    KEYCHAIN_SERVICE,
+    KEYCHAIN_ACCESS_TOKEN_ACCOUNT,
+    accessToken,
+  );
+  await keytar.setPassword(
+    KEYCHAIN_SERVICE,
+    KEYCHAIN_REFRESH_TOKEN_ACCOUNT,
+    refreshToken,
+  );
 
   session.accessToken = accessToken;
   const user = { email: userEmail, id: decodedToken.user_id };
@@ -1199,7 +1209,14 @@ ipcMain.handle(ChannelsEnum.REQUEST_GOOGLE_AUTH_START, async () => {
 
 ipcMain.handle(ChannelsEnum.REQUEST_SIGN_OUT, async () => {
   try {
-    await keytar.deletePassword(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT);
+    await keytar.deletePassword(
+      KEYCHAIN_SERVICE,
+      KEYCHAIN_ACCESS_TOKEN_ACCOUNT,
+    );
+    await keytar.deletePassword(
+      KEYCHAIN_SERVICE,
+      KEYCHAIN_REFRESH_TOKEN_ACCOUNT,
+    );
     session.accessToken = null;
     session.user = null;
     log.info('User signed out successfully.');
