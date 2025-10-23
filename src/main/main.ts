@@ -1197,6 +1197,22 @@ ipcMain.handle(ChannelsEnum.REQUEST_GOOGLE_AUTH_START, async () => {
   }
 });
 
+ipcMain.handle(ChannelsEnum.REQUEST_SIGN_OUT, async () => {
+  try {
+    await keytar.deletePassword(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT);
+    session.accessToken = null;
+    session.user = null;
+    log.info('User signed out successfully.');
+    return { success: true };
+  } catch (err: any) {
+    log.error('Sign out failed:', err.message);
+    return {
+      success: false,
+      error: `Failed to sign out: ${err.message}`,
+    };
+  }
+});
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed

@@ -180,4 +180,5 @@ export enum ChannelsEnum {
   REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITHOUT_SPACE = 'request_specific_days_in_a_week_active_tasks_without_space',
 
   REQUEST_GOOGLE_AUTH_START = 'request_google_auth_start',
+  REQUEST_SIGN_OUT = 'request_sign_out',
 }

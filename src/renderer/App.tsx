@@ -34,6 +34,7 @@ import {
   DialogContentText,
   Button,
   Snackbar,
+  ListItem,
   Alert,
   Collapse,
 } from '@mui/material';
@@ -52,6 +53,7 @@ import TrackerIcon from './icons/Tracker';
 import Plus from './icons/Plus';
 import Logo from './icons/Logo';
 import LoginIcon from './icons/Login';
+import LogoutIcon from './icons/Logout';
 import { AddTask, EditTask } from './widgets';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
@@ -63,6 +65,7 @@ import {
   ROUTE_TASKS_WITHOUT_A_SPACE,
   ROUTE_AUTH,
 } from './constants';
+import { ChannelsEnum } from './types';
 
 const MyStyledListItemText = styled(ListItemText)({
   color: 'red',
@@ -131,7 +134,9 @@ function Navigation() {
     setRepetitiveTaskTemplateForEdit,
     shouldRefresh,
     handlePageRefresh,
+    setNotifier,
     user,
+    setUser,
   } = useApp();
 
   const handleEditTaskCancel = () => {
@@ -162,6 +167,22 @@ function Navigation() {
   const handleAddTaskWidgetClose = () => {
     setShowAddTask(false);
     setAddTaskToday(false);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      const result = await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_SIGN_OUT,
+      );
+      if (result.success) {
+        setUser(null);
+        setNotifier('You have been signed out.', 'success');
+      } else {
+        setNotifier(result.error, 'error');
+      }
+    } catch (err: any) {
+      setNotifier(formatErrorMessage(err.message), 'error');
+    }
   };
 
   return (
@@ -270,7 +291,28 @@ function Navigation() {
         </List>
       </Box>
       <Box sx={{ marginTop: 'auto' }}>
-        {!user && (
+        {user ? (
+          <List dense>
+            <ListItem sx={{ pl: 2, pt: 0, pb: 0 }}>
+              <ListItemText
+                primary={user.email}
+                primaryTypographyProps={{
+                  variant: 'body2',
+                  color: 'text.secondary',
+                  noWrap: true,
+                  title: user.email,
+                  fontSize: '0.8rem',
+                }}
+              />
+            </ListItem>
+            <ListItemButton onClick={handleSignOut}>
+              <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
+                <LogoutIcon />
+              </ListItemIcon>
+              <ListItemText primary="Sign out" />
+            </ListItemButton>
+          </List>
+        ) : (
           <List dense>
             <ListItemButton
               component={Link}
