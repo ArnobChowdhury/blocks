@@ -18,7 +18,7 @@ interface User {
   email: string;
 }
 
-const AppContextFn = () => {
+const AppContextFn = (initialUser: User | null) => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [notification, setNotification] = useState<{
     message: string;
@@ -34,7 +34,7 @@ const AppContextFn = () => {
   const [repetitiveTaskTemplateForEdit, setRepetitiveTaskTemplateForEdit] =
     useState<RepetitiveTaskWithTagsAndSpace>();
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(initialUser);
   /**
    * Add event listeners... for page refresh events' errors and set notifiers
    */
@@ -129,15 +129,21 @@ const AppContextFn = () => {
 
 interface AppContextProviderProps {
   children: React.ReactNode;
+  user: User;
 }
 
 type AppContextProps = ReturnType<typeof AppContextFn>;
 
 export const AppContext = React.createContext<AppContextProps | null>(null);
 
-function AppProvider({ children }: PropsWithChildren<AppContextProviderProps>) {
+function AppProvider({
+  children,
+  user,
+}: PropsWithChildren<AppContextProviderProps>) {
   return (
-    <AppContext.Provider value={AppContextFn()}>{children}</AppContext.Provider>
+    <AppContext.Provider value={AppContextFn(user)}>
+      {children}
+    </AppContext.Provider>
   );
 }
 

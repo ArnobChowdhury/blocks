@@ -19,11 +19,20 @@
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { AppProvider } from './context/AppProvider';
+import { ChannelsEnum } from './types';
 
-const container = document.getElementById('root') as HTMLElement;
-const root = createRoot(container);
-root.render(
-  <AppProvider>
-    <App />
-  </AppProvider>,
-);
+async function bootstrap() {
+  const user = await window.electron.ipcRenderer.invoke(
+    ChannelsEnum.REQUEST_INITIAL_AUTH_STATUS,
+  );
+  const container = document.getElementById('root') as HTMLElement;
+  const root = createRoot(container);
+
+  root.render(
+    <AppProvider user={user}>
+      <App />
+    </AppProvider>,
+  );
+}
+
+bootstrap();

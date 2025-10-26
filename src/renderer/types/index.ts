@@ -181,4 +181,5 @@ export enum ChannelsEnum {
 
   REQUEST_GOOGLE_AUTH_START = 'request_google_auth_start',
   REQUEST_SIGN_OUT = 'request_sign_out',
+  REQUEST_INITIAL_AUTH_STATUS = 'request_initial_auth_status',
 }

@@ -1175,6 +1175,29 @@ async function handleSuccessfulSignIn(
   return user;
 }
 
+async function attemptAutoSignIn() {
+  try {
+    const accessToken = await keytar.getPassword(
+      KEYCHAIN_SERVICE,
+      KEYCHAIN_ACCESS_TOKEN_ACCOUNT,
+    );
+    const refreshToken = await keytar.getPassword(
+      KEYCHAIN_SERVICE,
+      KEYCHAIN_REFRESH_TOKEN_ACCOUNT,
+    );
+
+    if (accessToken && refreshToken) {
+      log.info('Tokens found in keychain, attempting auto sign-in.');
+      return await handleSuccessfulSignIn(accessToken, refreshToken);
+    }
+    log.info('No stored tokens found. Skipping auto sign-in.');
+    return null;
+  } catch (err: any) {
+    log.error('Failed to retrieve tokens on startup:', err.message);
+    return null;
+  }
+}
+
 ipcMain.handle(ChannelsEnum.REQUEST_GOOGLE_AUTH_START, async () => {
   try {
     const { code, redirectUri, codeVerifier } = await startOAuthFlow();
@@ -1230,6 +1253,10 @@ ipcMain.handle(ChannelsEnum.REQUEST_SIGN_OUT, async () => {
   }
 });
 
+ipcMain.handle(ChannelsEnum.REQUEST_INITIAL_AUTH_STATUS, async () => {
+  return await attemptAutoSignIn();
+});
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
@@ -1244,8 +1271,6 @@ app
     createWindow();
     app.on('activate', () => {
       log.info('app activated');
-      // On macOS it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
       if (mainWindow === null) createWindow();
     });
   })
