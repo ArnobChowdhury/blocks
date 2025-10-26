@@ -62,6 +62,7 @@ import {
 // const prisma = new PrismaClient();
 import { prisma, runPrismaCommand } from './prisma';
 
+import { SpaceService } from './services/SpaceService';
 // eslint-disable-next-line import/no-relative-packages
 import { RepetitiveTaskTemplate } from '../generated/client';
 import { startOAuthFlow } from './oAuth';
@@ -74,6 +75,8 @@ let session: {
   accessToken: string | null;
   user: { id: string; email: string } | null;
 } = { accessToken: null, user: null };
+
+const spaceService = new SpaceService();
 
 class AppUpdater {
   constructor() {
@@ -936,12 +939,9 @@ ipcMain.handle(ChannelsEnum.REQUEST_ALL_TAGS, async () => {
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_SPACE,
   async (_event, spaceName: string) => {
+    const userId = session.user ? session.user.id : null;
     try {
-      return await prisma.space.create({
-        data: {
-          name: spaceName,
-        },
-      });
+      return await spaceService.createSpace(spaceName, userId);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
@@ -950,8 +950,9 @@ ipcMain.handle(
 );
 
 ipcMain.handle(ChannelsEnum.REQUEST_ALL_SPACES, async () => {
+  const userId = session.user ? session.user.id : null;
   try {
-    return await prisma.space.findMany();
+    return await spaceService.getAllSpaces(userId);
   } catch (err: any) {
     log.error(err?.message);
     throw err;
