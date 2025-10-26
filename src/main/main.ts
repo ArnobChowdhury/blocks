@@ -63,6 +63,7 @@ import {
 import { prisma, runPrismaCommand } from './prisma';
 
 import { SpaceService } from './services/SpaceService';
+import { UserService } from './services/UserService';
 // eslint-disable-next-line import/no-relative-packages
 import { RepetitiveTaskTemplate } from '../generated/client';
 import { startOAuthFlow } from './oAuth';
@@ -77,6 +78,7 @@ let session: {
 } = { accessToken: null, user: null };
 
 const spaceService = new SpaceService();
+const userService = new UserService();
 
 class AppUpdater {
   constructor() {
@@ -1153,11 +1155,13 @@ async function handleSuccessfulSignIn(
   }
 
   const decodedToken: DecodedToken = jwtDecode(accessToken);
-  const userEmail = decodedToken.email;
+  const { email, user_id } = decodedToken;
 
-  if (!userEmail) {
+  if (!email) {
     throw new Error('Email not found in token.');
   }
+
+  await userService.saveUserLocally(user_id, email);
 
   await keytar.setPassword(
     KEYCHAIN_SERVICE,
@@ -1171,7 +1175,7 @@ async function handleSuccessfulSignIn(
   );
 
   session.accessToken = accessToken;
-  const user = { email: userEmail, id: decodedToken.user_id };
+  const user = { email, id: user_id };
   session.user = user;
   return user;
 }
