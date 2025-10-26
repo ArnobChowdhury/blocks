@@ -64,6 +64,7 @@ import { prisma, runPrismaCommand } from './prisma';
 
 import { SpaceService } from './services/SpaceService';
 import { UserService } from './services/UserService';
+import { TaskService } from './services/TaskService';
 // eslint-disable-next-line import/no-relative-packages
 import { RepetitiveTaskTemplate } from '../generated/client';
 import { startOAuthFlow } from './oAuth';
@@ -79,6 +80,7 @@ let session: {
 
 const spaceService = new SpaceService();
 const userService = new UserService();
+const taskService = new TaskService();
 
 class AppUpdater {
   constructor() {
@@ -362,31 +364,18 @@ ipcMain.handle(
       days,
       shouldBeScored,
       timeOfDay,
-      tagIds,
+      // tagIds,
       spaceId,
     } = task;
+
+    const userId = session.user ? session.user.id : null;
 
     try {
       if (
         schedule === TaskScheduleTypeEnum.Once ||
         schedule === TaskScheduleTypeEnum.Unscheduled
       ) {
-        // create a new task
-        await prisma.task.create({
-          data: {
-            title,
-            description,
-            schedule,
-            shouldBeScored,
-            createdAt: new Date(),
-            dueDate,
-            timeOfDay,
-            // tags: {
-            //   connect: tagIds,
-            // },
-            spaceId,
-          },
-        });
+        await taskService.createTask(task, userId);
       } else {
         let monday;
         let tuesday;
@@ -438,36 +427,10 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_TASK,
   async (event, task: ITaskIPC) => {
-    const {
-      id,
-      title,
-      description,
-      dueDate,
-      shouldBeScored,
-      timeOfDay,
-      completionStatus,
-      tagIds,
-      spaceId,
-    } = task;
+    const userId = session.user ? session.user.id : null;
 
     try {
-      await prisma.task.update({
-        where: {
-          id,
-        },
-        data: {
-          title,
-          description,
-          dueDate,
-          shouldBeScored,
-          timeOfDay,
-          completionStatus,
-          // tags: {
-          //   set: tagIds,
-          // },
-          spaceId,
-        },
-      });
+      await taskService.updateTask(task, userId);
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
     } catch (err) {
       log.error(err);
