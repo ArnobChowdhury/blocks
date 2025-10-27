@@ -65,6 +65,7 @@ import { prisma, runPrismaCommand } from './prisma';
 import { SpaceService } from './services/SpaceService';
 import { UserService } from './services/UserService';
 import { TaskService } from './services/TaskService';
+import { RepetitiveTaskTemplateService } from './services/RepetitiveTaskTemplateService';
 // eslint-disable-next-line import/no-relative-packages
 import { RepetitiveTaskTemplate } from '../generated/client';
 import { startOAuthFlow } from './oAuth';
@@ -81,6 +82,7 @@ let session: {
 const spaceService = new SpaceService();
 const userService = new UserService();
 const taskService = new TaskService();
+const repetitiveTaskTemplateService = new RepetitiveTaskTemplateService();
 
 class AppUpdater {
   constructor() {
@@ -356,18 +358,7 @@ const generateDueRepetitiveTasks = async () => {
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_TASK,
   async (event, task: ITaskIPC) => {
-    const {
-      title,
-      description,
-      schedule,
-      dueDate,
-      days,
-      shouldBeScored,
-      timeOfDay,
-      // tagIds,
-      spaceId,
-    } = task;
-
+    const { schedule } = task;
     const userId = session.user ? session.user.id : null;
 
     try {
@@ -377,44 +368,10 @@ ipcMain.handle(
       ) {
         await taskService.createTask(task, userId);
       } else {
-        let monday;
-        let tuesday;
-        let wednesday;
-        let thursday;
-        let friday;
-        let saturday;
-        let sunday;
-
-        if (schedule === TaskScheduleTypeEnum.Daily) {
-          ({ monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
-            getDaysForDailyTasks());
-        }
-
-        if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek && days) {
-          ({ monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
-            getDaysForSpecificDaysInAWeekTasks(days));
-        }
-
-        await prisma.repetitiveTaskTemplate.create({
-          data: {
-            title,
-            description,
-            schedule,
-            shouldBeScored,
-            monday,
-            tuesday,
-            wednesday,
-            thursday,
-            friday,
-            saturday,
-            sunday,
-            timeOfDay,
-            // tags: {
-            //   connect: tagIds,
-            // },
-            spaceId,
-          },
-        });
+        await repetitiveTaskTemplateService.createRepetitiveTaskTemplate(
+          task,
+          userId,
+        );
       }
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
     } catch (err) {
@@ -442,75 +399,13 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_REPETITIVE_TASK,
   async (event, task: ITaskIPC) => {
-    const {
-      id,
-      title,
-      description,
-      shouldBeScored,
-      timeOfDay,
-      days,
-      tagIds,
-      spaceId,
-    } = task;
-    let repetitiveTaskTemplate: RepetitiveTaskTemplate | null;
+    const userId = session.user ? session.user.id : null;
 
     try {
-      repetitiveTaskTemplate = await prisma.repetitiveTaskTemplate.findFirst({
-        where: {
-          id,
-        },
-      });
-
-      if (!repetitiveTaskTemplate)
-        throw new Error('Repetitive Task Template not found');
-    } catch (err) {
-      log.error(err);
-      throw err;
-    }
-
-    let monday;
-    let tuesday;
-    let wednesday;
-    let thursday;
-    let friday;
-    let saturday;
-    let sunday;
-
-    const { schedule } = repetitiveTaskTemplate;
-    if (schedule === TaskScheduleTypeEnum.Daily) {
-      ({ monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
-        getDaysForDailyTasks());
-    }
-
-    if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek && days) {
-      ({ monday, tuesday, wednesday, thursday, friday, saturday, sunday } =
-        getDaysForSpecificDaysInAWeekTasks(days));
-    }
-
-    try {
-      await prisma.repetitiveTaskTemplate.update({
-        where: {
-          id,
-        },
-        data: {
-          title,
-          description,
-          shouldBeScored,
-          monday,
-          tuesday,
-          wednesday,
-          thursday,
-          friday,
-          saturday,
-          sunday,
-          timeOfDay,
-          // tags: {
-          //   set: tagIds,
-          // },
-          spaceId,
-        },
-      });
-
+      await repetitiveTaskTemplateService.updateRepetitiveTaskTemplate(
+        task,
+        userId,
+      );
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
     } catch (err) {
       log.error(err);
