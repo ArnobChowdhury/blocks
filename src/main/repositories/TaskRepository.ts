@@ -17,7 +17,12 @@
  */
 // eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
-import { ITaskIPC } from '../../renderer/types';
+import {
+  ITaskIPC,
+  TaskCompletionStatusEnum,
+  TaskScheduleTypeEnum,
+} from '../../renderer/types';
+import { getTodayEnd, getTodayStart } from '../helpers';
 import { prisma } from '../prisma';
 
 export class TaskRepository {
@@ -74,6 +79,123 @@ export class TaskRepository {
         timeOfDay,
         completionStatus,
         spaceId,
+      },
+    });
+  };
+
+  getTasksForToday = async (userId: string | null): Promise<Task[]> => {
+    const todayStart = getTodayStart();
+    const todayEnd = getTodayEnd();
+
+    return prisma.task.findMany({
+      where: {
+        userId,
+        dueDate: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
+        completionStatus: {
+          not: TaskCompletionStatusEnum.FAILED,
+        },
+      },
+      include: {
+        // Assuming you might need tags in the renderer
+        tags: true,
+      },
+    });
+  };
+
+  getOverdueTasks = async (userId: string | null): Promise<Task[]> => {
+    const todayStart = getTodayStart();
+
+    return prisma.task.findMany({
+      where: {
+        userId,
+        dueDate: {
+          lt: todayStart,
+        },
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+      },
+    });
+  };
+
+  updateTaskCompletionStatus = async (
+    taskId: string,
+    status: TaskCompletionStatusEnum,
+    score: number | null | undefined,
+    userId: string | null,
+  ): Promise<Task> => {
+    return prisma.task.update({
+      where: {
+        id: taskId,
+        userId,
+      },
+      data: {
+        completionStatus: status,
+        score,
+      },
+    });
+  };
+
+  failTask = async (taskId: string, userId: string | null): Promise<Task> => {
+    return prisma.task.update({
+      where: {
+        id: taskId,
+        userId,
+      },
+      data: {
+        completionStatus: TaskCompletionStatusEnum.FAILED,
+      },
+    });
+  };
+
+  deactivateCompletedOnceTasks = async (
+    userId: string | null,
+  ): Promise<void> => {
+    const todayStart = getTodayStart();
+
+    await prisma.task.updateMany({
+      where: {
+        userId,
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.Once,
+        dueDate: {
+          lt: todayStart,
+        },
+        completionStatus: TaskCompletionStatusEnum.COMPLETE,
+      },
+      data: {
+        isActive: false,
+      },
+    });
+  };
+
+  getAllActiveOnceTasks = async (userId: string | null): Promise<Task[]> => {
+    return prisma.task.findMany({
+      where: {
+        userId,
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.Once,
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+      },
+      include: {
+        tags: true,
+      },
+    });
+  };
+
+  getAllActiveUnscheduledTasks = async (
+    userId: string | null,
+  ): Promise<Task[]> => {
+    return prisma.task.findMany({
+      where: {
+        userId,
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.Unscheduled,
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+      },
+      include: {
+        tags: true,
       },
     });
   };

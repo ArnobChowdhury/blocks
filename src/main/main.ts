@@ -419,24 +419,8 @@ ipcMain.handle(
  */
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
   await generateDueRepetitiveTasks();
-
-  const todayStart = getTodayStart();
-  const todayEnd = getTodayEnd();
-
-  const tasksForToday = await prisma.task.findMany({
-    where: {
-      dueDate: {
-        gte: todayStart,
-        lte: todayEnd,
-      },
-      completionStatus: {
-        not: TaskCompletionStatusEnum.FAILED,
-      },
-    },
-    include: {
-      tags: true,
-    },
-  });
+  const user = session.user ? session.user.id : null;
+  const tasksForToday = await taskService.getTasksForToday(user);
 
   event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, tasksForToday);
 });
@@ -445,25 +429,8 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
  * todo: add error handling
  */
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
-  const todayStart = getTodayStart();
-
-  const tasksOverdue = await prisma.task.findMany({
-    where: {
-      dueDate: {
-        lt: todayStart,
-      },
-      completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-    },
-    select: {
-      id: true,
-      dueDate: true,
-      completionStatus: true,
-      score: true,
-      title: true,
-      shouldBeScored: true,
-      schedule: true,
-    },
-  });
+  const user = session.user ? session.user.id : null;
+  const tasksOverdue = await taskService.getOverdueTasks(user);
 
   event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, tasksOverdue);
 });
@@ -472,18 +439,9 @@ ipcMain.handle(
   ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
   async (event, { id, checked, score }) => {
     // todo: need to make the one-off task in active
+    const user = session.user ? session.user.id : null;
     try {
-      await prisma.task.update({
-        where: {
-          id,
-        },
-        data: {
-          completionStatus: checked
-            ? TaskCompletionStatusEnum.COMPLETE
-            : TaskCompletionStatusEnum.INCOMPLETE,
-          score,
-        },
-      });
+      await taskService.toggleTaskCompletionStatus(id, checked, score, user);
     } catch (err) {
       log.error(err);
       throw err;
@@ -493,14 +451,8 @@ ipcMain.handle(
 
 ipcMain.handle(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
   try {
-    await prisma.task.update({
-      where: {
-        id,
-      },
-      data: {
-        completionStatus: TaskCompletionStatusEnum.FAILED,
-      },
-    });
+    const user = session.user ? session.user.id : null;
+    await taskService.failTask(id, user);
   } catch (err) {
     log.error(err);
     throw err;
@@ -508,16 +460,9 @@ ipcMain.handle(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS, async (event) => {
+  const user = session.user ? session.user.id : null;
   try {
-    await makeCompletedOneOffTasksInactive();
-    const tasks = await prisma.task.findMany({
-      where: {
-        isActive: true,
-        schedule: TaskScheduleTypeEnum.Once,
-        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-      },
-    });
-
+    const tasks = await taskService.getAllActiveOnceTasks(user);
     event.reply(ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS, tasks);
   } catch {
     event.reply(ChannelsEnum.ERROR_ALL_ONE_OFF_ACTIVE_TASKS);
@@ -525,16 +470,9 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS, async (event) => {
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS, async (event) => {
+  const user = session.user ? session.user.id : null;
   try {
-    await makeCompletedOneOffTasksInactive();
-    const tasks = await prisma.task.findMany({
-      where: {
-        isActive: true,
-        schedule: TaskScheduleTypeEnum.Unscheduled,
-        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-      },
-    });
-
+    const tasks = await taskService.getAllActiveUnscheduledTasks(user);
     event.reply(ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS, tasks);
   } catch {
     event.reply(ChannelsEnum.ERROR_ALL_UNSCHEDULED_ACTIVE_TASKS);

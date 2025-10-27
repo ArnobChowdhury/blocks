@@ -17,7 +17,7 @@
  */
 // eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
-import { ITaskIPC } from '../../renderer/types';
+import { ITaskIPC, TaskCompletionStatusEnum } from '../../renderer/types';
 import { TaskRepository } from '../repositories/TaskRepository';
 
 export class TaskService {
@@ -43,5 +43,47 @@ export class TaskService {
       throw new Error('Task ID is required for an update operation.');
     }
     return this.taskRepository.updateTask(id, taskData, userId);
+  };
+
+  getTasksForToday = async (userId: string | null): Promise<Task[]> => {
+    return this.taskRepository.getTasksForToday(userId);
+  };
+
+  getOverdueTasks = async (userId: string | null): Promise<Task[]> => {
+    return this.taskRepository.getOverdueTasks(userId);
+  };
+
+  toggleTaskCompletionStatus = async (
+    id: string,
+    checked: boolean,
+    score: number | null | undefined,
+    userId: string | null,
+  ): Promise<Task> => {
+    const status = checked
+      ? TaskCompletionStatusEnum.COMPLETE
+      : TaskCompletionStatusEnum.INCOMPLETE;
+
+    return this.taskRepository.updateTaskCompletionStatus(
+      id,
+      status,
+      score,
+      userId,
+    );
+  };
+
+  failTask = async (taskId: string, userId: string | null): Promise<Task> => {
+    return this.taskRepository.failTask(taskId, userId);
+  };
+
+  getAllActiveOnceTasks = async (userId: string | null): Promise<Task[]> => {
+    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    return this.taskRepository.getAllActiveOnceTasks(userId);
+  };
+
+  getAllActiveUnscheduledTasks = async (
+    userId: string | null,
+  ): Promise<Task[]> => {
+    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    return this.taskRepository.getAllActiveUnscheduledTasks(userId);
   };
 }
