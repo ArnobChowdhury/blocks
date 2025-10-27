@@ -40,7 +40,7 @@ function Tracker() {
   useEffect(() => {
     window.electron.ipcRenderer
       .invoke(
-        ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_DAILY_TASKS_MONTHLY_REPORT,
+        ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_TASKS_MONTHLY_REPORT,
         { monthIndex },
       )
       .then((specificDaysInAWeekHabits) => {

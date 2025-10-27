@@ -18,14 +18,18 @@
 // eslint-disable-next-line import/no-relative-packages
 import { RepetitiveTaskTemplate } from '../../generated/client';
 import { ITaskIPC } from '../../renderer/types';
+import { TaskRepository } from '../repositories/TaskRepository';
 import { RepetitiveTaskTemplateRepository } from '../repositories/RepetitiveTaskTemplateRepository';
 
 export class RepetitiveTaskTemplateService {
   private repetitiveTaskTemplateRepository: RepetitiveTaskTemplateRepository;
 
+  private taskRepository: TaskRepository;
+
   constructor() {
     this.repetitiveTaskTemplateRepository =
       new RepetitiveTaskTemplateRepository();
+    this.taskRepository = new TaskRepository();
   }
 
   createRepetitiveTaskTemplate = async (
@@ -51,6 +55,96 @@ export class RepetitiveTaskTemplateService {
     return this.repetitiveTaskTemplateRepository.updateRepetitiveTaskTemplate(
       id,
       taskData,
+      userId,
+    );
+  };
+
+  getAllActiveDailyTemplates = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    return this.repetitiveTaskTemplateRepository.getAllActiveDailyTemplates(
+      userId,
+    );
+  };
+
+  getAllActiveSpecificDaysInAWeekTemplates = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    return this.repetitiveTaskTemplateRepository.getAllActiveSpecificDaysInAWeekTemplates(
+      userId,
+    );
+  };
+
+  getDailyTasksMonthlyReport = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return this.repetitiveTaskTemplateRepository.getDailyTasksMonthlyReport(
+      userId,
+    );
+  };
+
+  getSpecificDaysInAWeekTasksMonthlyReport = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return this.repetitiveTaskTemplateRepository.getSpecificDaysInAWeekTasksMonthlyReport(
+      userId,
+    );
+  };
+
+  getRepetitiveTaskTemplateDetails = async (
+    templateId: string,
+    userId: string | null,
+  ) => {
+    return this.repetitiveTaskTemplateRepository.getRepetitiveTaskTemplateDetails(
+      templateId,
+      userId,
+    );
+  };
+
+  stopRepetitiveTaskTemplate = async (
+    templateId: string,
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate> => {
+    return this.repetitiveTaskTemplateRepository.stopRepetitiveTaskTemplate(
+      templateId,
+      userId,
+    );
+  };
+
+  getActiveDailyTemplatesWithSpaceId = async (
+    spaceId: string,
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return this.repetitiveTaskTemplateRepository.getActiveDailyTemplatesWithSpaceId(
+      spaceId,
+      userId,
+    );
+  };
+
+  getActiveSpecificDaysInAWeekTemplatesWithSpaceId = async (
+    spaceId: string,
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return this.repetitiveTaskTemplateRepository.getActiveSpecificDaysInAWeekTemplatesWithSpaceId(
+      spaceId,
+      userId,
+    );
+  };
+
+  getActiveDailyTemplatesWithoutSpace = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return this.repetitiveTaskTemplateRepository.getActiveDailyTemplatesWithoutSpace(
+      userId,
+    );
+  };
+
+  getActiveSpecificDaysInAWeekTemplatesWithoutSpace = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return this.repetitiveTaskTemplateRepository.getActiveSpecificDaysInAWeekTemplatesWithoutSpace(
       userId,
     );
   };

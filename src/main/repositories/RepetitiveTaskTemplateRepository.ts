@@ -17,10 +17,12 @@
  */
 // eslint-disable-next-line import/no-relative-packages
 import { RepetitiveTaskTemplate } from '../../generated/client';
-import { ITaskIPC } from '../../renderer/types';
+import dayjs from 'dayjs';
+import { ITaskIPC, TaskScheduleTypeEnum } from '../../renderer/types';
 import {
   getDaysForDailyTasks,
   getDaysForSpecificDaysInAWeekTasks,
+  getTodayEnd,
 } from '../helpers';
 import { prisma } from '../prisma';
 
@@ -93,6 +95,185 @@ export class RepetitiveTaskTemplateRepository {
         timeOfDay,
         spaceId,
         ...dayBooleans,
+      },
+    });
+  };
+
+  getAllActiveDailyTemplates = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        userId,
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.Daily,
+      },
+    });
+  };
+
+  getAllActiveSpecificDaysInAWeekTemplates = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        userId,
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+      },
+    });
+  };
+
+  getDailyTasksMonthlyReport = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    const startDate = dayjs().subtract(30, 'day').toDate();
+    const endDate = getTodayEnd();
+
+    return prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        userId,
+        schedule: TaskScheduleTypeEnum.Daily,
+        tasks: {
+          some: {
+            dueDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+        },
+      },
+      include: {
+        tasks: {
+          orderBy: {
+            dueDate: 'asc',
+          },
+          where: {
+            dueDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+        },
+      },
+    });
+  };
+
+  getSpecificDaysInAWeekTasksMonthlyReport = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    const startDate = dayjs().subtract(30, 'day').toDate();
+    const endDate = getTodayEnd();
+
+    return prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        userId,
+        schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+        tasks: {
+          some: {
+            dueDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+        },
+      },
+      include: {
+        tasks: {
+          orderBy: {
+            dueDate: 'asc',
+          },
+          where: {
+            dueDate: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+        },
+      },
+    });
+  };
+
+  getRepetitiveTaskTemplateDetails = async (
+    templateId: string,
+    userId: string | null,
+  ) => {
+    return prisma.repetitiveTaskTemplate.findUniqueOrThrow({
+      where: {
+        id: templateId,
+        userId,
+      },
+      include: {
+        tags: true,
+        space: true,
+      },
+    });
+  };
+
+  stopRepetitiveTaskTemplate = async (
+    templateId: string,
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate> => {
+    return prisma.repetitiveTaskTemplate.update({
+      where: {
+        id: templateId,
+        userId,
+      },
+      data: {
+        isActive: false,
+      },
+    });
+  };
+
+  getActiveDailyTemplatesWithSpaceId = async (
+    spaceId: string,
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        spaceId,
+        userId,
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.Daily,
+      },
+    });
+  };
+
+  getActiveSpecificDaysInAWeekTemplatesWithSpaceId = async (
+    spaceId: string,
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        spaceId,
+        userId,
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+      },
+    });
+  };
+
+  getActiveDailyTemplatesWithoutSpace = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        spaceId: null,
+        userId,
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.Daily,
+      },
+    });
+  };
+
+  getActiveSpecificDaysInAWeekTemplatesWithoutSpace = async (
+    userId: string | null,
+  ): Promise<RepetitiveTaskTemplate[]> => {
+    return prisma.repetitiveTaskTemplate.findMany({
+      where: {
+        spaceId: null,
+        userId,
+        isActive: true,
+        schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
       },
     });
   };

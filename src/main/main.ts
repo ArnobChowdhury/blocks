@@ -480,14 +480,10 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS, async (event) => {
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS, async (event) => {
+  const user = session.user ? session.user.id : null;
   try {
-    await makeCompletedOneOffTasksInactive();
-    const tasks = await prisma.repetitiveTaskTemplate.findMany({
-      where: {
-        isActive: true,
-        schedule: TaskScheduleTypeEnum.Daily,
-      },
-    });
+    const tasks =
+      await repetitiveTaskTemplateService.getAllActiveDailyTemplates(user);
 
     event.reply(ChannelsEnum.RESPONSE_ALL_DAILY_ACTIVE_TASKS, tasks);
   } catch {
@@ -498,15 +494,12 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS, async (event) => {
 ipcMain.on(
   ChannelsEnum.REQUEST_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
   async (event) => {
+    const user = session.user ? session.user.id : null;
     try {
-      await makeCompletedOneOffTasksInactive();
-      const tasks = await prisma.repetitiveTaskTemplate.findMany({
-        where: {
-          isActive: true,
-          schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
-        },
-      });
-
+      const tasks =
+        await repetitiveTaskTemplateService.getAllActiveSpecificDaysInAWeekTemplates(
+          user,
+        );
       event.reply(
         ChannelsEnum.RESPONSE_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
         tasks,
@@ -549,76 +542,25 @@ ipcMain.handle(
 );
 
 ipcMain.handle(ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT, async () => {
-  const startDate = dayjs().subtract(30, 'day').toDate(); // 30 days ago
-  const endDate = getTodayEnd();
+  const user = session.user ? session.user.id : null;
 
   try {
-    return await prisma.repetitiveTaskTemplate.findMany({
-      where: {
-        schedule: TaskScheduleTypeEnum.Daily,
-        tasks: {
-          some: {
-            dueDate: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-        },
-      },
-      include: {
-        tasks: {
-          orderBy: {
-            dueDate: 'asc',
-          },
-          where: {
-            dueDate: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-        },
-      },
-    });
+    return await repetitiveTaskTemplateService.getDailyTasksMonthlyReport(user);
   } catch (err: any) {
-    // we do something here
     log.error(err?.message);
     throw err;
   }
 });
 
 ipcMain.handle(
-  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_DAILY_TASKS_MONTHLY_REPORT,
+  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_TASKS_MONTHLY_REPORT,
   async () => {
-    const startDate = dayjs().subtract(30, 'day').toDate(); // 30 days ago
-    const endDate = getTodayEnd();
+    const user = session.user ? session.user.id : null;
 
     try {
-      return await prisma.repetitiveTaskTemplate.findMany({
-        where: {
-          schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
-          tasks: {
-            some: {
-              dueDate: {
-                gte: startDate,
-                lte: endDate,
-              },
-            },
-          },
-        },
-        include: {
-          tasks: {
-            orderBy: {
-              dueDate: 'asc',
-            },
-            where: {
-              dueDate: {
-                gte: startDate,
-                lte: endDate,
-              },
-            },
-          },
-        },
-      });
+      return await repetitiveTaskTemplateService.getSpecificDaysInAWeekTasksMonthlyReport(
+        user,
+      );
     } catch (err: any) {
       // we do something here
       log.error(err?.message);
@@ -670,17 +612,13 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_REPETITIVE_TASK_DETAILS,
-  async (_event, taskId: string) => {
+  async (_event, templateId: string) => {
+    const user = session.user ? session.user.id : null;
     try {
-      return await prisma.repetitiveTaskTemplate.findUniqueOrThrow({
-        where: {
-          id: taskId,
-        },
-        include: {
-          tags: true,
-          space: true,
-        },
-      });
+      return await repetitiveTaskTemplateService.getRepetitiveTaskTemplateDetails(
+        templateId,
+        user,
+      );
     } catch (err: any) {
       log.error(err?.message);
       throw err;
@@ -690,16 +628,14 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_STOP_REPETITIVE_TASK,
-  async (event, taskId: string) => {
+  async (event, templateId: string) => {
+    const user = session.user ? session.user.id : null;
+
     try {
-      await prisma.repetitiveTaskTemplate.update({
-        where: {
-          id: taskId,
-        },
-        data: {
-          isActive: false,
-        },
-      });
+      await repetitiveTaskTemplateService.stopRepetitiveTaskTemplate(
+        templateId,
+        user,
+      );
 
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
     } catch (err: any) {
@@ -806,17 +742,16 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
   async (event, spaceId: string) => {
+    const user = session.user ? session.user.id : null;
     try {
-      const tasks = await prisma.repetitiveTaskTemplate.findMany({
-        where: {
+      const templates =
+        await repetitiveTaskTemplateService.getActiveDailyTemplatesWithSpaceId(
           spaceId,
-          isActive: true,
-          schedule: TaskScheduleTypeEnum.Daily,
-        },
-      });
+          user,
+        );
       event.reply(
         ChannelsEnum.RESPONSE_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
-        tasks,
+        templates,
       );
     } catch (err: any) {
       log.error(err?.message);
@@ -828,17 +763,17 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
   async (event, spaceId: string) => {
+    const user = session.user ? session.user.id : null;
+
     try {
-      const tasks = await prisma.repetitiveTaskTemplate.findMany({
-        where: {
+      const templates =
+        await repetitiveTaskTemplateService.getActiveSpecificDaysInAWeekTemplatesWithSpaceId(
           spaceId,
-          isActive: true,
-          schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
-        },
-      });
+          user,
+        );
       event.reply(
         ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
-        tasks,
+        templates,
       );
     } catch (err: any) {
       log.error(err?.message);
@@ -896,17 +831,16 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITHOUT_SPACE,
   async (event) => {
+    const user = session.user ? session.user.id : null;
     try {
-      const tasks = await prisma.repetitiveTaskTemplate.findMany({
-        where: {
-          spaceId: null,
-          isActive: true,
-          schedule: TaskScheduleTypeEnum.Daily,
-        },
-      });
+      const templates =
+        await repetitiveTaskTemplateService.getActiveDailyTemplatesWithoutSpace(
+          user,
+        );
+
       event.reply(
         ChannelsEnum.RESPONSE_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
-        tasks,
+        templates,
       );
     } catch (err: any) {
       log.error(err?.message);
@@ -918,17 +852,15 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITHOUT_SPACE,
   async (event) => {
+    const user = session.user ? session.user.id : null;
     try {
-      const tasks = await prisma.repetitiveTaskTemplate.findMany({
-        where: {
-          spaceId: null,
-          isActive: true,
-          schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
-        },
-      });
+      const templates =
+        await repetitiveTaskTemplateService.getActiveSpecificDaysInAWeekTemplatesWithoutSpace(
+          user,
+        );
       event.reply(
         ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
-        tasks,
+        templates,
       );
     } catch (err: any) {
       log.error(err?.message);
