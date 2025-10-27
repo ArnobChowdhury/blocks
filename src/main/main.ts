@@ -234,105 +234,8 @@ const createWindow = async () => {
 /**
  * DBs
  */
-const generateDueRepetitiveTasks = async () => {
-  const todayStart = dayjs().startOf('day');
-  const todayStartAsString = todayStart.toISOString();
-
-  const dueRepetitiveTasks = await prisma.repetitiveTaskTemplate.findMany({
-    where: {
-      isActive: true,
-      OR: [
-        { lastDateOfTaskGeneration: { lt: todayStartAsString } },
-        { lastDateOfTaskGeneration: null },
-      ],
-    },
-    include: {
-      tags: true,
-    },
-  });
-
-  await Promise.all(
-    dueRepetitiveTasks.map(async (repetitiveTask) => {
-      const {
-        id: templateId,
-        title,
-        description,
-        schedule,
-        shouldBeScored,
-        createdAt,
-        timeOfDay,
-        tags,
-        spaceId,
-      } = repetitiveTask;
-
-      let lastDateOfTaskGeneration: Dayjs | Date | null;
-      // eslint-disable-next-line prettier/prettier
-      lastDateOfTaskGeneration = repetitiveTask.lastDateOfTaskGeneration;
-
-      if (!lastDateOfTaskGeneration) {
-        const taskCreationDate = dayjs(createdAt).startOf('day').toISOString();
-        if (taskCreationDate === todayStart.toISOString())
-          lastDateOfTaskGeneration = todayStart.subtract(1, 'day');
-        else lastDateOfTaskGeneration = createdAt;
-      }
-
-      const daysSinceLastTaskGeneration = dayjs()
-        .startOf('day')
-        .diff(dayjs(lastDateOfTaskGeneration).startOf('day'), 'day');
-
-      const dayArray = Array.from(
-        { length: daysSinceLastTaskGeneration },
-        (_, i) => i + 1,
-      );
-
-      await Promise.all(
-        dayArray.map(async (day) => {
-          let dueDate: Dayjs | string = dayjs(lastDateOfTaskGeneration).add(
-            day,
-            'day',
-          );
-          const dayOfWeekLowercase = dueDate.format('dddd').toLowerCase();
-
-          if (repetitiveTask[dayOfWeekLowercase as DaysInAWeek]) {
-            dueDate = dueDate.toISOString();
-
-            await prisma.task.upsert({
-              where: {
-                repetitiveTaskTemplateId_dueDate: {
-                  repetitiveTaskTemplateId: templateId,
-                  dueDate,
-                },
-              },
-              create: {
-                repetitiveTaskTemplateId: templateId,
-                dueDate,
-                title,
-                description,
-                schedule,
-                shouldBeScored,
-                timeOfDay,
-                // tags: {
-                //   connect: tags.map((tag) => ({ id: tag.id })),
-                // },
-                spaceId,
-              },
-              update: {},
-            });
-
-            await prisma.repetitiveTaskTemplate.update({
-              where: {
-                id: templateId,
-              },
-              data: {
-                lastDateOfTaskGeneration: dueDate,
-              },
-            });
-          }
-        }),
-      );
-    }),
-  );
-};
+// The generateDueRepetitiveTasks function has been moved to RepetitiveTaskTemplateRepository
+// and is now called via repetitiveTaskTemplateService.generateDueTasks.
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_TASK,
@@ -397,11 +300,16 @@ ipcMain.handle(
  * todo: add error handling
  */
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
-  await generateDueRepetitiveTasks();
   const userId = session.user ? session.user.id : null;
-  const tasksForToday = await taskService.getTasksForToday(userId);
-
-  event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, tasksForToday);
+  try {
+    await repetitiveTaskTemplateService.generateDueTasks(userId);
+    const tasksForToday = await taskService.getTasksForToday(userId);
+    event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, tasksForToday);
+  } catch (err: any) {
+    log.error(err?.message);
+    // As per previous discussion, for 'on' events, we log and don't throw/reply with error directly.
+    // Consider adding a specific error reply if the renderer needs to react to this.
+  }
 });
 
 /**

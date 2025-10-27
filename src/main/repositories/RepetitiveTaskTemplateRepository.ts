@@ -22,6 +22,7 @@ import { ITaskIPC, TaskScheduleTypeEnum } from '../../renderer/types';
 import {
   getDaysForDailyTasks,
   getDaysForSpecificDaysInAWeekTasks,
+  getTodayStart,
   getTodayEnd,
 } from '../helpers';
 import { prisma } from '../prisma';
@@ -276,5 +277,115 @@ export class RepetitiveTaskTemplateRepository {
         schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
       },
     });
+  };
+
+  /**
+   * Generates new Task entries from RepetitiveTaskTemplate for past due dates up to today.
+   * This method encapsulates the logic previously found in `generateDueRepetitiveTasks` in `main.ts`.
+   * @param userId The ID of the user for whom to generate tasks.
+   */
+  generateDueTasksFromTemplates = async (
+    userId: string | null,
+  ): Promise<void> => {
+    const todayStart = dayjs().startOf('day');
+    const todayStartAsString = todayStart.toISOString();
+
+    const dueRepetitiveTemplates = await prisma.repetitiveTaskTemplate.findMany(
+      {
+        where: {
+          userId,
+          isActive: true,
+          OR: [
+            { lastDateOfTaskGeneration: { lt: todayStartAsString } },
+            { lastDateOfTaskGeneration: null },
+          ],
+        },
+        include: {
+          tags: true, // Included as per original logic, though not used in task creation
+        },
+      },
+    );
+
+    await Promise.all(
+      dueRepetitiveTemplates.map(async (repetitiveTemplate) => {
+        const {
+          id: templateId,
+          title,
+          description,
+          schedule,
+          shouldBeScored,
+          createdAt,
+          timeOfDay,
+          spaceId,
+        } = repetitiveTemplate;
+
+        let lastDateOfTaskGeneration: dayjs.Dayjs | Date | null;
+        lastDateOfTaskGeneration = repetitiveTemplate.lastDateOfTaskGeneration;
+
+        if (!lastDateOfTaskGeneration) {
+          const taskCreationDate = dayjs(createdAt)
+            .startOf('day')
+            .toISOString();
+          if (taskCreationDate === todayStart.toISOString()) {
+            lastDateOfTaskGeneration = todayStart.subtract(1, 'day').toDate();
+          } else {
+            lastDateOfTaskGeneration = createdAt;
+          }
+        }
+
+        const daysSinceLastTaskGeneration = dayjs()
+          .startOf('day')
+          .diff(dayjs(lastDateOfTaskGeneration).startOf('day'), 'day');
+
+        const dayArray = Array.from(
+          { length: daysSinceLastTaskGeneration },
+          (_, i) => i + 1,
+        );
+
+        await Promise.all(
+          dayArray.map(async (day) => {
+            let dueDate: dayjs.Dayjs | string = dayjs(
+              lastDateOfTaskGeneration,
+            ).add(day, 'day');
+            const dayOfWeekLowercase = dueDate.format('dddd').toLowerCase();
+
+            // Check if the repetitive task is scheduled for this specific day of the week
+            if (
+              repetitiveTemplate[
+                dayOfWeekLowercase as keyof RepetitiveTaskTemplate
+              ]
+            ) {
+              dueDate = dueDate.toISOString();
+
+              await prisma.task.upsert({
+                where: {
+                  repetitiveTaskTemplateId_dueDate: {
+                    repetitiveTaskTemplateId: templateId,
+                    dueDate,
+                  },
+                },
+                create: {
+                  repetitiveTaskTemplateId: templateId,
+                  dueDate,
+                  title,
+                  description,
+                  schedule,
+                  shouldBeScored,
+                  timeOfDay,
+                  spaceId,
+                  userId: repetitiveTemplate.userId,
+                },
+                update: {},
+              });
+
+              await prisma.repetitiveTaskTemplate.update({
+                where: { id: templateId },
+                data: { lastDateOfTaskGeneration: dueDate },
+              });
+            }
+          }),
+        );
+      }),
+    );
   };
 }

@@ -148,4 +148,10 @@ export class RepetitiveTaskTemplateService {
       userId,
     );
   };
+
+  generateDueTasks = async (userId: string | null): Promise<void> => {
+    return this.repetitiveTaskTemplateRepository.generateDueTasksFromTemplates(
+      userId,
+    );
+  };
 }
