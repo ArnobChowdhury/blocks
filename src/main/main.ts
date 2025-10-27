@@ -398,8 +398,8 @@ ipcMain.handle(
  */
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
   await generateDueRepetitiveTasks();
-  const user = session.user ? session.user.id : null;
-  const tasksForToday = await taskService.getTasksForToday(user);
+  const userId = session.user ? session.user.id : null;
+  const tasksForToday = await taskService.getTasksForToday(userId);
 
   event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, tasksForToday);
 });
@@ -408,8 +408,8 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
  * todo: add error handling
  */
 ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
-  const user = session.user ? session.user.id : null;
-  const tasksOverdue = await taskService.getOverdueTasks(user);
+  const userId = session.user ? session.user.id : null;
+  const tasksOverdue = await taskService.getOverdueTasks(userId);
 
   event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, tasksOverdue);
 });
@@ -418,9 +418,9 @@ ipcMain.handle(
   ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
   async (event, { id, checked, score }) => {
     // todo: need to make the one-off task in active
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
     try {
-      await taskService.toggleTaskCompletionStatus(id, checked, score, user);
+      await taskService.toggleTaskCompletionStatus(id, checked, score, userId);
     } catch (err) {
       log.error(err);
       throw err;
@@ -430,8 +430,8 @@ ipcMain.handle(
 
 ipcMain.handle(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
   try {
-    const user = session.user ? session.user.id : null;
-    await taskService.failTask(id, user);
+    const userId = session.user ? session.user.id : null;
+    await taskService.failTask(id, userId);
   } catch (err) {
     log.error(err);
     throw err;
@@ -439,9 +439,9 @@ ipcMain.handle(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS, async (event) => {
-  const user = session.user ? session.user.id : null;
+  const userId = session.user ? session.user.id : null;
   try {
-    const tasks = await taskService.getAllActiveOnceTasks(user);
+    const tasks = await taskService.getAllActiveOnceTasks(userId);
     event.reply(ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS, tasks);
   } catch {
     event.reply(ChannelsEnum.ERROR_ALL_ONE_OFF_ACTIVE_TASKS);
@@ -449,9 +449,9 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS, async (event) => {
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS, async (event) => {
-  const user = session.user ? session.user.id : null;
+  const userId = session.user ? session.user.id : null;
   try {
-    const tasks = await taskService.getAllActiveUnscheduledTasks(user);
+    const tasks = await taskService.getAllActiveUnscheduledTasks(userId);
     event.reply(ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS, tasks);
   } catch {
     event.reply(ChannelsEnum.ERROR_ALL_UNSCHEDULED_ACTIVE_TASKS);
@@ -459,10 +459,10 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS, async (event) => {
 });
 
 ipcMain.on(ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS, async (event) => {
-  const user = session.user ? session.user.id : null;
+  const userId = session.user ? session.user.id : null;
   try {
     const tasks =
-      await repetitiveTaskTemplateService.getAllActiveDailyTemplates(user);
+      await repetitiveTaskTemplateService.getAllActiveDailyTemplates(userId);
 
     event.reply(ChannelsEnum.RESPONSE_ALL_DAILY_ACTIVE_TASKS, tasks);
   } catch {
@@ -473,11 +473,11 @@ ipcMain.on(ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS, async (event) => {
 ipcMain.on(
   ChannelsEnum.REQUEST_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
   async (event) => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
     try {
       const tasks =
         await repetitiveTaskTemplateService.getAllActiveSpecificDaysInAWeekTemplates(
-          user,
+          userId,
         );
       event.reply(
         ChannelsEnum.RESPONSE_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
@@ -492,10 +492,10 @@ ipcMain.on(
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_RESCHEDULE,
   async (_event, { id, dueDate }) => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
 
     try {
-      await taskService.rescheduleTask(id, dueDate, user);
+      await taskService.rescheduleTask(id, dueDate, userId);
     } catch (err: any) {
       log.error(err.message);
       throw err;
@@ -504,10 +504,12 @@ ipcMain.handle(
 );
 
 ipcMain.handle(ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT, async () => {
-  const user = session.user ? session.user.id : null;
+  const userId = session.user ? session.user.id : null;
 
   try {
-    return await repetitiveTaskTemplateService.getDailyTasksMonthlyReport(user);
+    return await repetitiveTaskTemplateService.getDailyTasksMonthlyReport(
+      userId,
+    );
   } catch (err: any) {
     log.error(err?.message);
     throw err;
@@ -517,11 +519,11 @@ ipcMain.handle(ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT, async () => {
 ipcMain.handle(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_TASKS_MONTHLY_REPORT,
   async () => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
 
     try {
       return await repetitiveTaskTemplateService.getSpecificDaysInAWeekTasksMonthlyReport(
-        user,
+        userId,
       );
     } catch (err: any) {
       // we do something here
@@ -534,10 +536,10 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_BULK_TASK_FAILURE,
   async (_event, tasks: string[]) => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
 
     try {
-      return await taskService.bulkFailTasks(tasks, user);
+      return await taskService.bulkFailTasks(tasks, userId);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
@@ -562,11 +564,11 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_REPETITIVE_TASK_DETAILS,
   async (_event, templateId: string) => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
     try {
       return await repetitiveTaskTemplateService.getRepetitiveTaskTemplateDetails(
         templateId,
-        user,
+        userId,
       );
     } catch (err: any) {
       log.error(err?.message);
@@ -578,12 +580,12 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_STOP_REPETITIVE_TASK,
   async (event, templateId: string) => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
 
     try {
       await repetitiveTaskTemplateService.stopRepetitiveTaskTemplate(
         templateId,
-        user,
+        userId,
       );
 
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
@@ -686,12 +688,12 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
   async (event, spaceId: string) => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
     try {
       const templates =
         await repetitiveTaskTemplateService.getActiveDailyTemplatesWithSpaceId(
           spaceId,
-          user,
+          userId,
         );
       event.reply(
         ChannelsEnum.RESPONSE_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
@@ -707,13 +709,13 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
   async (event, spaceId: string) => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
 
     try {
       const templates =
         await repetitiveTaskTemplateService.getActiveSpecificDaysInAWeekTemplatesWithSpaceId(
           spaceId,
-          user,
+          userId,
         );
       event.reply(
         ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
@@ -764,11 +766,11 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITHOUT_SPACE,
   async (event) => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
     try {
       const templates =
         await repetitiveTaskTemplateService.getActiveDailyTemplatesWithoutSpace(
-          user,
+          userId,
         );
 
       event.reply(
@@ -785,11 +787,11 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITHOUT_SPACE,
   async (event) => {
-    const user = session.user ? session.user.id : null;
+    const userId = session.user ? session.user.id : null;
     try {
       const templates =
         await repetitiveTaskTemplateService.getActiveSpecificDaysInAWeekTemplatesWithoutSpace(
-          user,
+          userId,
         );
       event.reply(
         ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
