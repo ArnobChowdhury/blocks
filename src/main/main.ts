@@ -226,10 +226,6 @@ const createWindow = async () => {
 };
 
 /**
- * Add event listeners...
- */
-
-/**
  * todo for ipc events
  * 1. Error handling
  * 2. DB calls should be moved to a separate service
@@ -238,23 +234,6 @@ const createWindow = async () => {
 /**
  * DBs
  */
-const makeCompletedOneOffTasksInactive = async () => {
-  const todayStart = getTodayStart();
-
-  await prisma.task.updateMany({
-    where: {
-      isActive: true,
-      schedule: TaskScheduleTypeEnum.Once,
-      dueDate: {
-        lt: todayStart,
-      },
-      completionStatus: TaskCompletionStatusEnum.COMPLETE,
-    },
-    data: {
-      isActive: false,
-    },
-  });
-};
 const generateDueRepetitiveTasks = async () => {
   const todayStart = dayjs().startOf('day');
   const todayStartAsString = todayStart.toISOString();
@@ -512,28 +491,11 @@ ipcMain.on(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_RESCHEDULE,
-  async (event, { id, dueDate }) => {
+  async (_event, { id, dueDate }) => {
+    const user = session.user ? session.user.id : null;
+
     try {
-      const task = await prisma.task.findFirstOrThrow({
-        where: {
-          id,
-        },
-      });
-
-      if (task.schedule === TaskScheduleTypeEnum.Daily) {
-        throw new Error('Daily tasks cannot be rescheduled');
-      }
-
-      const data: { [key: string]: any } = { dueDate };
-      if (task.schedule === TaskScheduleTypeEnum.Unscheduled)
-        data.schedule = TaskScheduleTypeEnum.Once;
-
-      await prisma.task.update({
-        where: {
-          id,
-        },
-        data,
-      });
+      await taskService.rescheduleTask(id, dueDate, user);
     } catch (err: any) {
       log.error(err.message);
       throw err;
@@ -572,17 +534,10 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_BULK_TASK_FAILURE,
   async (_event, tasks: string[]) => {
+    const user = session.user ? session.user.id : null;
+
     try {
-      return await prisma.task.updateMany({
-        where: {
-          id: {
-            in: tasks,
-          },
-        },
-        data: {
-          completionStatus: TaskCompletionStatusEnum.FAILED,
-        },
-      });
+      return await taskService.bulkFailTasks(tasks, user);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
@@ -593,16 +548,10 @@ ipcMain.handle(
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_DETAILS,
   async (_event, taskId: string) => {
+    const userId = session.user ? session.user.id : null;
+
     try {
-      return await prisma.task.findUniqueOrThrow({
-        where: {
-          id: taskId,
-        },
-        include: {
-          tags: true,
-          space: true,
-        },
-      });
+      return await taskService.getTaskDetails(taskId, userId);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
@@ -696,15 +645,12 @@ ipcMain.handle(ChannelsEnum.REQUEST_ALL_SPACES, async () => {
 ipcMain.on(
   ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
   async (event, spaceId: string) => {
+    const userId = session.user ? session.user.id : null;
     try {
-      const tasks = await prisma.task.findMany({
-        where: {
-          spaceId,
-          isActive: true,
-          completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-          schedule: TaskScheduleTypeEnum.Unscheduled,
-        },
-      });
+      const tasks = await taskService.getActiveUnscheduledTasksWithSpaceId(
+        spaceId,
+        userId,
+      );
       event.reply(
         ChannelsEnum.RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
         tasks,
@@ -719,15 +665,13 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
   async (event, spaceId: string) => {
+    const userId = session.user ? session.user.id : null;
+
     try {
-      const tasks = await prisma.task.findMany({
-        where: {
-          spaceId,
-          isActive: true,
-          completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-          schedule: TaskScheduleTypeEnum.Once,
-        },
-      });
+      const tasks = await taskService.getActiveOnceTasksWithSpaceId(
+        spaceId,
+        userId,
+      );
       event.reply(
         ChannelsEnum.RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
         tasks,
@@ -785,15 +729,10 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITHOUT_SPACE,
   async (event) => {
+    const userId = session.user ? session.user.id : null;
     try {
-      const tasks = await prisma.task.findMany({
-        where: {
-          spaceId: null,
-          isActive: true,
-          completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-          schedule: TaskScheduleTypeEnum.Unscheduled,
-        },
-      });
+      const tasks =
+        await taskService.getActiveUnscheduledTasksWithoutSpace(userId);
       event.reply(
         ChannelsEnum.RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
         tasks,
@@ -808,15 +747,9 @@ ipcMain.on(
 ipcMain.on(
   ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITHOUT_SPACE,
   async (event) => {
+    const userId = session.user ? session.user.id : null;
     try {
-      const tasks = await prisma.task.findMany({
-        where: {
-          spaceId: null,
-          isActive: true,
-          completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-          schedule: TaskScheduleTypeEnum.Once,
-        },
-      });
+      const tasks = await taskService.getActiveOnceTasksWithoutSpace(userId);
       event.reply(
         ChannelsEnum.RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
         tasks,

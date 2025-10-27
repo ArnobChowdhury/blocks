@@ -199,4 +199,129 @@ export class TaskRepository {
       },
     });
   };
+
+  getTaskById = async (
+    taskId: string,
+    userId: string | null,
+  ): Promise<Task | null> => {
+    return prisma.task.findUnique({
+      where: { id: taskId, userId },
+    });
+  };
+
+  rescheduleTask = async (
+    taskId: string,
+    dueDate: string,
+    newSchedule: TaskScheduleTypeEnum | undefined,
+    userId: string | null,
+  ): Promise<Task> => {
+    const data: { dueDate: string; schedule?: TaskScheduleTypeEnum } = {
+      dueDate,
+    };
+    if (newSchedule) {
+      data.schedule = newSchedule;
+    }
+
+    return prisma.task.update({
+      where: { id: taskId, userId },
+      data,
+    });
+  };
+
+  bulkFailTasks = async (
+    taskIds: string[],
+    userId: string | null,
+  ): Promise<{ count: number }> => {
+    return prisma.task.updateMany({
+      where: {
+        id: {
+          in: taskIds,
+        },
+        userId,
+      },
+      data: {
+        completionStatus: TaskCompletionStatusEnum.FAILED,
+      },
+    });
+  };
+
+  getTaskDetails = async (
+    taskId: string,
+    userId: string | null,
+  ): Promise<Task> => {
+    return prisma.task.findFirstOrThrow({
+      where: {
+        id: taskId,
+        userId,
+      },
+      include: {
+        tags: true,
+        space: true,
+      },
+    });
+  };
+
+  getActiveUnscheduledTasksWithSpaceId = async (
+    spaceId: string,
+    userId: string | null,
+  ): Promise<Task[]> => {
+    return prisma.task.findMany({
+      where: {
+        spaceId,
+        userId,
+        isActive: true,
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+        schedule: TaskScheduleTypeEnum.Unscheduled,
+      },
+    });
+  };
+
+  getActiveOnceTasksWithSpaceId = async (
+    spaceId: string,
+    userId: string | null,
+  ): Promise<Task[]> => {
+    return prisma.task.findMany({
+      where: {
+        spaceId,
+        userId,
+        isActive: true,
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+        schedule: TaskScheduleTypeEnum.Once,
+      },
+    });
+  };
+
+  getActiveUnscheduledTasksWithoutSpace = async (
+    userId: string | null,
+  ): Promise<Task[]> => {
+    return prisma.task.findMany({
+      where: {
+        spaceId: null,
+        userId,
+        isActive: true,
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+        schedule: TaskScheduleTypeEnum.Unscheduled,
+      },
+      include: {
+        tags: true,
+      },
+    });
+  };
+
+  getActiveOnceTasksWithoutSpace = async (
+    userId: string | null,
+  ): Promise<Task[]> => {
+    return prisma.task.findMany({
+      where: {
+        spaceId: null,
+        userId,
+        isActive: true,
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+        schedule: TaskScheduleTypeEnum.Once,
+      },
+      include: {
+        tags: true,
+      },
+    });
+  };
 }
