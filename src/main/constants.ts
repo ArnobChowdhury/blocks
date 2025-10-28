@@ -8,6 +8,11 @@ export const API_BASE_URL = isDev
   ? 'http://localhost:5000/api/v1'
   : 'https://api.blocks-tracker.com/api/v1';
 
+/* Keychain */
+export const KEYCHAIN_SERVICE = 'com.blocks-tracker.app';
+export const KEYCHAIN_ACCESS_TOKEN_ACCOUNT = 'currentUserAccessToken';
+export const KEYCHAIN_REFRESH_TOKEN_ACCOUNT = 'currentUserRefreshToken';
+
 // Hacky, but putting this here because otherwise at query time the Prisma client
 // gives an error "Environment variable not found: DATABASE_URL" despite us passing
 // the dbUrl into the prisma client constructor in datasources.db.url

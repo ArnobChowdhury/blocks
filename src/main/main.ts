@@ -31,7 +31,6 @@ import path from 'path';
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import dayjs, { Dayjs } from 'dayjs';
 import 'dotenv/config';
 import axios from 'axios';
 import MenuBuilder from './menu';
@@ -43,21 +42,16 @@ import {
   latestMigration,
   Migration,
   API_BASE_URL,
+  KEYCHAIN_SERVICE,
+  KEYCHAIN_ACCESS_TOKEN_ACCOUNT,
+  KEYCHAIN_REFRESH_TOKEN_ACCOUNT,
 } from './constants';
 import { resolveHtmlPath, getAssetPath } from './util';
 import {
   ITaskIPC,
   TaskScheduleTypeEnum,
-  TaskCompletionStatusEnum,
-  DaysInAWeek,
   ChannelsEnum,
 } from '../renderer/types';
-import {
-  getTodayStart,
-  getTodayEnd,
-  getDaysForSpecificDaysInAWeekTasks,
-  getDaysForDailyTasks,
-} from './helpers';
 
 // const prisma = new PrismaClient();
 import { prisma, runPrismaCommand } from './prisma';
@@ -66,13 +60,12 @@ import { SpaceService } from './services/SpaceService';
 import { UserService } from './services/UserService';
 import { TaskService } from './services/TaskService';
 import { RepetitiveTaskTemplateService } from './services/RepetitiveTaskTemplateService';
-// eslint-disable-next-line import/no-relative-packages
-import { RepetitiveTaskTemplate } from '../generated/client';
 import { startOAuthFlow } from './oAuth';
-
-const KEYCHAIN_SERVICE = 'com.blocks-tracker.app';
-const KEYCHAIN_ACCESS_TOKEN_ACCOUNT = 'currentUserAccessToken';
-const KEYCHAIN_REFRESH_TOKEN_ACCOUNT = 'currentUserRefreshToken';
+import apiClient, {
+  registerAuthFailureHandler,
+  registerTokenRefreshHandler,
+  setInMemoryToken,
+} from './apiClient';
 
 let session: {
   accessToken: string | null;
@@ -748,6 +741,7 @@ async function handleSuccessfulSignIn(
   session.accessToken = accessToken;
   const user = { email, id: user_id };
   session.user = user;
+  setInMemoryToken(accessToken);
   return user;
 }
 
@@ -818,14 +812,13 @@ ipcMain.handle(ChannelsEnum.REQUEST_SIGN_OUT, async () => {
     );
     session.accessToken = null;
     session.user = null;
+    setInMemoryToken(null);
     log.info('User signed out successfully.');
+
     return { success: true };
   } catch (err: any) {
     log.error('Sign out failed:', err.message);
-    return {
-      success: false,
-      error: `Failed to sign out: ${err.message}`,
-    };
+    return { success: false, error: `Failed to sign out: ${err.message}` };
   }
 });
 
@@ -844,6 +837,12 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
+    registerTokenRefreshHandler(handleSuccessfulSignIn);
+    registerAuthFailureHandler(() => {
+      /**
+       * to be figured out
+       */
+    });
     createWindow();
     app.on('activate', () => {
       log.info('app activated');
