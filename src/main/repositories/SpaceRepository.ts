@@ -33,8 +33,14 @@ export class SpaceRepository {
     });
   };
 
-  createSpace = async (name: string, userId: string | null): Promise<Space> => {
-    return prisma.space.create({
+  createSpace = async (
+    name: string,
+    userId: string | null,
+    tx?: PrismaTransactionalClient,
+  ): Promise<Space> => {
+    const db = tx || prisma;
+
+    return db.space.create({
       data: {
         name,
         userId,
