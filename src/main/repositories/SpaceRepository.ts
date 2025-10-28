@@ -16,8 +16,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 // eslint-disable-next-line import/no-relative-packages
-import { Space } from '../../generated/client';
+import { PrismaClient, Space } from '../../generated/client';
 import { prisma } from '../prisma';
+
+type PrismaTransactionalClient = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
 
 export class SpaceRepository {
   getAllSpaces = async (userId: string | null): Promise<Space[]> => {
@@ -35,5 +40,30 @@ export class SpaceRepository {
         userId,
       },
     });
+  };
+
+  upsertMany = async (
+    spaces: Space[],
+    tx: PrismaTransactionalClient,
+  ): Promise<void> => {
+    if (spaces.length === 0) {
+      return;
+    }
+
+    const upsertPromises = spaces.map((space) => {
+      const { id, ...spaceData } = space;
+      return tx.space.upsert({
+        where: { id },
+        create: {
+          id,
+          ...spaceData,
+        },
+        update: {
+          ...spaceData,
+        },
+      });
+    });
+
+    await Promise.all(upsertPromises);
   };
 }

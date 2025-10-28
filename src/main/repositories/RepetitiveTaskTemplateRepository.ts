@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 // eslint-disable-next-line import/no-relative-packages
-import { RepetitiveTaskTemplate } from '../../generated/client';
+import { PrismaClient, RepetitiveTaskTemplate } from '../../generated/client';
 import dayjs from 'dayjs';
 import { ITaskIPC, TaskScheduleTypeEnum } from '../../renderer/types';
 import {
@@ -26,6 +26,11 @@ import {
   getTodayEnd,
 } from '../helpers';
 import { prisma } from '../prisma';
+
+type PrismaTransactionalClient = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
 
 export class RepetitiveTaskTemplateRepository {
   createRepetitiveTaskTemplate = async (
@@ -387,5 +392,30 @@ export class RepetitiveTaskTemplateRepository {
         );
       }),
     );
+  };
+
+  upsertMany = async (
+    templates: RepetitiveTaskTemplate[],
+    tx: PrismaTransactionalClient,
+  ): Promise<void> => {
+    if (templates.length === 0) {
+      return;
+    }
+
+    const upsertPromises = templates.map((template) => {
+      const { id, ...templateData } = template;
+      return tx.repetitiveTaskTemplate.upsert({
+        where: { id },
+        create: {
+          id,
+          ...templateData,
+        },
+        update: {
+          ...templateData,
+        },
+      });
+    });
+
+    await Promise.all(upsertPromises);
   };
 }

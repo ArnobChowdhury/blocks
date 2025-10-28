@@ -23,19 +23,58 @@ import {
   TaskScheduleTypeEnum,
 } from '../../renderer/types';
 import { TaskRepository } from '../repositories/TaskRepository';
+import { PendingOperationRepository } from '../repositories/PendingOperationRepository';
+import { syncService } from './SyncService';
+import { prisma } from '../prisma';
+
+type PrismaTransactionalClient = Omit<
+  typeof prisma,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
 
 export class TaskService {
   private taskRepository: TaskRepository;
 
+  private pendingOpRepository: PendingOperationRepository;
+
   constructor() {
     this.taskRepository = new TaskRepository();
+    this.pendingOpRepository = new PendingOperationRepository();
   }
 
   createTask = async (
     taskData: ITaskIPC,
     userId: string | null,
   ): Promise<Task> => {
-    return this.taskRepository.createTask(taskData, userId);
+    const isPremium = !!userId;
+
+    const newTask = await prisma.$transaction(async (tx) => {
+      const createdTask = await this.taskRepository.createTask(
+        taskData,
+        userId,
+        tx,
+      );
+
+      if (isPremium) {
+        await this.pendingOpRepository.enqueueOperation(
+          {
+            userId: userId!,
+            operationType: 'create',
+            entityType: 'task',
+            entityId: createdTask.id,
+            payload: JSON.stringify({ ...createdTask, tags: [] }), // Assuming tags are handled separately
+          },
+          tx,
+        );
+      }
+      return createdTask;
+    });
+
+    if (isPremium) {
+      syncService.runSync();
+    }
+
+    return newTask;
   };
 
   updateTask = async (
@@ -46,7 +85,38 @@ export class TaskService {
     if (!id) {
       throw new Error('Task ID is required for an update operation.');
     }
-    return this.taskRepository.updateTask(id, taskData, userId);
+
+    const isPremium = !!userId;
+
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      const task = await this.taskRepository.updateTask(
+        id,
+        taskData,
+        userId,
+        tx,
+      );
+
+      if (isPremium) {
+        await this.pendingOpRepository.enqueueOperation(
+          {
+            userId: userId!,
+            operationType: 'update',
+            entityType: 'task',
+            entityId: task.id,
+            payload: JSON.stringify({ ...task, tags: [] }),
+          },
+          tx,
+        );
+      }
+
+      return task;
+    });
+
+    if (isPremium) {
+      syncService.runSync();
+    }
+
+    return updatedTask;
   };
 
   getTasksForToday = async (userId: string | null): Promise<Task[]> => {
@@ -66,17 +136,76 @@ export class TaskService {
     const status = checked
       ? TaskCompletionStatusEnum.COMPLETE
       : TaskCompletionStatusEnum.INCOMPLETE;
+    const isPremium = !!userId;
 
-    return this.taskRepository.updateTaskCompletionStatus(
-      id,
-      status,
-      score,
-      userId,
-    );
+    const updatedTask = await prisma.$transaction(async (tx) => {
+      const task = await this.taskRepository.updateTaskCompletionStatus(
+        id,
+        status,
+        score,
+        userId,
+        tx,
+      );
+
+      if (isPremium) {
+        await this.pendingOpRepository.enqueueOperation(
+          {
+            userId: userId!,
+            operationType: 'update',
+            entityType: 'task',
+            entityId: task.id,
+            payload: JSON.stringify({ ...task, tags: [] }),
+          },
+          tx,
+        );
+      }
+
+      return task;
+    });
+
+    if (isPremium) {
+      syncService.runSync();
+    }
+
+    return updatedTask;
+  };
+
+  private _failTaskInternal = async (
+    taskId: string,
+    userId: string | null,
+    tx: PrismaTransactionalClient,
+  ): Promise<Task> => {
+    const task = await this.taskRepository.failTask(taskId, userId, tx);
+
+    const isPremium = !!userId;
+    if (isPremium) {
+      await this.pendingOpRepository.enqueueOperation(
+        {
+          userId: userId!,
+          operationType: 'update',
+          entityType: 'task',
+          entityId: task.id,
+          payload: JSON.stringify({ ...task, tags: [] }),
+        },
+        tx,
+      );
+    }
+
+    return task;
   };
 
   failTask = async (taskId: string, userId: string | null): Promise<Task> => {
-    return this.taskRepository.failTask(taskId, userId);
+    const isPremium = !!userId;
+
+    const failedTask = await prisma.$transaction(async (tx) => {
+      return this._failTaskInternal(taskId, userId, tx);
+    });
+
+    if (isPremium) {
+      syncService.runSync();
+    }
+
+    return failedTask;
   };
 
   getAllActiveOnceTasks = async (userId: string | null): Promise<Task[]> => {
@@ -111,12 +240,37 @@ export class TaskService {
       newSchedule = TaskScheduleTypeEnum.Once;
     }
 
-    return this.taskRepository.rescheduleTask(
-      taskId,
-      dueDate,
-      newSchedule,
-      userId,
-    );
+    const isPremium = !!userId;
+
+    const rescheduledTask = await prisma.$transaction(async (tx) => {
+      const task = await this.taskRepository.rescheduleTask(
+        taskId,
+        dueDate,
+        newSchedule,
+        userId,
+        tx,
+      );
+
+      if (isPremium) {
+        await this.pendingOpRepository.enqueueOperation(
+          {
+            userId: userId!,
+            operationType: 'update',
+            entityType: 'task',
+            entityId: task.id,
+            payload: JSON.stringify({ ...task, tags: [] }),
+          },
+          tx,
+        );
+      }
+      return task;
+    });
+
+    if (isPremium) {
+      syncService.runSync();
+    }
+
+    return rescheduledTask;
   };
 
   bulkFailTasks = async (
@@ -126,6 +280,22 @@ export class TaskService {
     if (!taskIds || taskIds.length === 0) {
       return { count: 0 };
     }
+
+    const isPremium = !!userId;
+
+    if (isPremium) {
+      const failedTasks = await prisma.$transaction(async (tx) => {
+        const promises = taskIds.map((id) =>
+          this._failTaskInternal(id, userId, tx),
+        );
+        return Promise.all(promises);
+      });
+
+      syncService.runSync();
+
+      return { count: failedTasks.length };
+    }
+
     return this.taskRepository.bulkFailTasks(taskIds, userId);
   };
 

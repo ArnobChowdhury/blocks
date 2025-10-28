@@ -16,10 +16,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 // eslint-disable-next-line import/no-relative-packages
-import { PendingOperation } from '../../generated/client';
+import { PendingOperation, PrismaClient } from '../../generated/client';
 import { prisma } from '../prisma';
 
 export { PendingOperation };
+
+type PrismaTransactionalClient = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
 
 export interface PendingOperationData {
   userId: string;
@@ -37,8 +42,11 @@ export class PendingOperationRepository {
    */
   enqueueOperation = async (
     opData: PendingOperationData,
+    tx?: PrismaTransactionalClient,
   ): Promise<PendingOperation> => {
-    return prisma.pendingOperation.create({
+    const db = tx || prisma;
+
+    return db.pendingOperation.create({
       data: {
         userId: opData.userId,
         operationType: opData.operationType,
@@ -55,9 +63,6 @@ export class PendingOperationRepository {
    * @returns The pending operation object or null if the queue is empty or blocked.
    */
   getOldestPendingOperation = async (): Promise<PendingOperation | null> => {
-    // Using a raw query to replicate the logic from the React Native app.
-    // This ensures that we don't pick up an operation for an entity that
-    // has another operation in a 'processing' or 'failed' state.
     const result = await prisma.$queryRaw<PendingOperation[]>`
       SELECT *
       FROM "PendingOperation" po1

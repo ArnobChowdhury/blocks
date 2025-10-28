@@ -174,13 +174,16 @@ class SyncService {
 
       try {
         log.info('[SyncService] Beginning database transaction for sync pull.');
-        // Prisma's $transaction is used to ensure all upserts happen atomically.
         await prisma.$transaction(async (tx) => {
-          // We need to implement upsertMany in the repositories for Prisma.
-          // For now, this is a placeholder for the logic.
-          // e.g., if (syncData.spaces?.length > 0) await this.spaceRepo.upsertMany(tx, syncData.spaces);
-          // ... and so on for other entities.
-          // The actual implementation of upsertMany will require iterating and calling tx.model.upsert.
+          if (syncData.spaces?.length > 0) {
+            await this.spaceRepo.upsertMany(syncData.spaces, tx);
+          }
+          if (syncData.repetitiveTaskTemplates?.length > 0) {
+            await this.rttRepo.upsertMany(syncData.repetitiveTaskTemplates, tx);
+          }
+          if (syncData.tasks?.length > 0) {
+            await this.taskRepo.upsertMany(syncData.tasks, tx);
+          }
           await this.settingsRepo.setLastChangeId(syncData.latestChangeId);
         });
 

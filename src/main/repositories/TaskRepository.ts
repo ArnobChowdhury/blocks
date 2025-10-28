@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 // eslint-disable-next-line import/no-relative-packages
-import { Task } from '../../generated/client';
+import { Prisma, PrismaClient, Task } from '../../generated/client';
 import {
   ITaskIPC,
   TaskCompletionStatusEnum,
@@ -25,10 +25,16 @@ import {
 import { getTodayEnd, getTodayStart } from '../helpers';
 import { prisma } from '../prisma';
 
+type PrismaTransactionalClient = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
+
 export class TaskRepository {
   createTask = async (
     taskData: ITaskIPC,
     userId: string | null,
+    tx?: PrismaTransactionalClient,
   ): Promise<Task> => {
     const {
       title,
@@ -40,7 +46,9 @@ export class TaskRepository {
       spaceId,
     } = taskData;
 
-    return prisma.task.create({
+    const db = tx || prisma;
+
+    return db.task.create({
       data: {
         title,
         description,
@@ -58,6 +66,7 @@ export class TaskRepository {
     taskId: string,
     taskData: ITaskIPC,
     userId: string | null,
+    tx?: PrismaTransactionalClient,
   ): Promise<Task> => {
     const {
       title,
@@ -69,7 +78,9 @@ export class TaskRepository {
       spaceId,
     } = taskData;
 
-    return prisma.task.update({
+    const db = tx || prisma;
+
+    return db.task.update({
       where: { id: taskId, userId },
       data: {
         title,
@@ -124,8 +135,11 @@ export class TaskRepository {
     status: TaskCompletionStatusEnum,
     score: number | null | undefined,
     userId: string | null,
+    tx?: PrismaTransactionalClient,
   ): Promise<Task> => {
-    return prisma.task.update({
+    const db = tx || prisma;
+
+    return db.task.update({
       where: {
         id: taskId,
         userId,
@@ -137,8 +151,14 @@ export class TaskRepository {
     });
   };
 
-  failTask = async (taskId: string, userId: string | null): Promise<Task> => {
-    return prisma.task.update({
+  failTask = async (
+    taskId: string,
+    userId: string | null,
+    tx?: PrismaTransactionalClient,
+  ): Promise<Task> => {
+    const db = tx || prisma;
+
+    return db.task.update({
       where: {
         id: taskId,
         userId,
@@ -151,10 +171,13 @@ export class TaskRepository {
 
   deactivateCompletedOnceTasks = async (
     userId: string | null,
+    tx?: PrismaTransactionalClient,
   ): Promise<void> => {
     const todayStart = getTodayStart();
 
-    await prisma.task.updateMany({
+    const db = tx || prisma;
+
+    await db.task.updateMany({
       where: {
         userId,
         isActive: true,
@@ -214,6 +237,7 @@ export class TaskRepository {
     dueDate: string,
     newSchedule: TaskScheduleTypeEnum | undefined,
     userId: string | null,
+    tx?: PrismaTransactionalClient,
   ): Promise<Task> => {
     const data: { dueDate: string; schedule?: TaskScheduleTypeEnum } = {
       dueDate,
@@ -222,7 +246,9 @@ export class TaskRepository {
       data.schedule = newSchedule;
     }
 
-    return prisma.task.update({
+    const db = tx || prisma;
+
+    return db.task.update({
       where: { id: taskId, userId },
       data,
     });
@@ -231,8 +257,11 @@ export class TaskRepository {
   bulkFailTasks = async (
     taskIds: string[],
     userId: string | null,
+    tx?: PrismaTransactionalClient,
   ): Promise<{ count: number }> => {
-    return prisma.task.updateMany({
+    const db = tx || prisma;
+
+    return db.task.updateMany({
       where: {
         id: {
           in: taskIds,
@@ -323,5 +352,30 @@ export class TaskRepository {
         tags: true,
       },
     });
+  };
+
+  upsertMany = async (
+    tasks: Task[],
+    tx: PrismaTransactionalClient,
+  ): Promise<void> => {
+    if (tasks.length === 0) {
+      return;
+    }
+
+    const upsertPromises = tasks.map((task) => {
+      const { id, ...taskData } = task;
+      return tx.task.upsert({
+        where: { id },
+        create: {
+          id,
+          ...taskData,
+        },
+        update: {
+          ...taskData,
+        },
+      });
+    });
+
+    await Promise.all(upsertPromises);
   };
 }
