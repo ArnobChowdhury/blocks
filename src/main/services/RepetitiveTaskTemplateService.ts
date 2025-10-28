@@ -19,27 +19,59 @@
 import { RepetitiveTaskTemplate } from '../../generated/client';
 import { ITaskIPC } from '../../renderer/types';
 import { TaskRepository } from '../repositories/TaskRepository';
+import { PendingOperationRepository } from '../repositories/PendingOperationRepository';
 import { RepetitiveTaskTemplateRepository } from '../repositories/RepetitiveTaskTemplateRepository';
+import { prisma } from '../prisma';
+import { syncService } from './SyncService';
 
 export class RepetitiveTaskTemplateService {
   private repetitiveTaskTemplateRepository: RepetitiveTaskTemplateRepository;
 
   private taskRepository: TaskRepository;
 
+  private pendingOpRepository: PendingOperationRepository;
+
   constructor() {
     this.repetitiveTaskTemplateRepository =
       new RepetitiveTaskTemplateRepository();
     this.taskRepository = new TaskRepository();
+    this.pendingOpRepository = new PendingOperationRepository();
   }
 
   createRepetitiveTaskTemplate = async (
     taskData: ITaskIPC,
     userId: string | null,
   ): Promise<RepetitiveTaskTemplate> => {
-    return this.repetitiveTaskTemplateRepository.createRepetitiveTaskTemplate(
-      taskData,
-      userId,
-    );
+    const isPremium = !!userId;
+
+    const newTemplate = await prisma.$transaction(async (tx) => {
+      const createdTemplate =
+        await this.repetitiveTaskTemplateRepository.createRepetitiveTaskTemplate(
+          taskData,
+          userId,
+          tx,
+        );
+
+      if (isPremium) {
+        await this.pendingOpRepository.enqueueOperation(
+          {
+            userId: userId!,
+            operationType: 'create',
+            entityType: 'repetitive_task_template',
+            entityId: createdTemplate.id,
+            payload: JSON.stringify({ ...createdTemplate, tags: [] }),
+          },
+          tx,
+        );
+      }
+      return createdTemplate;
+    });
+
+    if (isPremium) {
+      syncService.runSync();
+    }
+
+    return newTemplate;
   };
 
   updateRepetitiveTaskTemplate = async (
@@ -52,11 +84,38 @@ export class RepetitiveTaskTemplateService {
         'Repetitive Task Template ID is required for an update operation.',
       );
     }
-    return this.repetitiveTaskTemplateRepository.updateRepetitiveTaskTemplate(
-      id,
-      taskData,
-      userId,
-    );
+
+    const isPremium = !!userId;
+
+    const updatedTemplate = await prisma.$transaction(async (tx) => {
+      const template =
+        await this.repetitiveTaskTemplateRepository.updateRepetitiveTaskTemplate(
+          id,
+          taskData,
+          userId,
+          tx,
+        );
+
+      if (isPremium) {
+        await this.pendingOpRepository.enqueueOperation(
+          {
+            userId: userId!,
+            operationType: 'update',
+            entityType: 'repetitive_task_template',
+            entityId: template.id,
+            payload: JSON.stringify({ ...template, tags: [] }),
+          },
+          tx,
+        );
+      }
+      return template;
+    });
+
+    if (isPremium) {
+      syncService.runSync();
+    }
+
+    return updatedTemplate;
   };
 
   getAllActiveDailyTemplates = async (
@@ -107,10 +166,36 @@ export class RepetitiveTaskTemplateService {
     templateId: string,
     userId: string | null,
   ): Promise<RepetitiveTaskTemplate> => {
-    return this.repetitiveTaskTemplateRepository.stopRepetitiveTaskTemplate(
-      templateId,
-      userId,
-    );
+    const isPremium = !!userId;
+
+    const stoppedTemplate = await prisma.$transaction(async (tx) => {
+      const template =
+        await this.repetitiveTaskTemplateRepository.stopRepetitiveTaskTemplate(
+          templateId,
+          userId,
+          tx,
+        );
+
+      if (isPremium) {
+        await this.pendingOpRepository.enqueueOperation(
+          {
+            userId: userId!,
+            operationType: 'update',
+            entityType: 'repetitive_task_template',
+            entityId: template.id,
+            payload: JSON.stringify({ ...template, tags: [] }),
+          },
+          tx,
+        );
+      }
+      return template;
+    });
+
+    if (isPremium) {
+      syncService.runSync();
+    }
+
+    return stoppedTemplate;
   };
 
   getActiveDailyTemplatesWithSpaceId = async (

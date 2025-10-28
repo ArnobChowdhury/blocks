@@ -36,6 +36,7 @@ export class RepetitiveTaskTemplateRepository {
   createRepetitiveTaskTemplate = async (
     taskData: ITaskIPC,
     userId: string | null,
+    tx?: PrismaTransactionalClient,
   ): Promise<RepetitiveTaskTemplate> => {
     const {
       title,
@@ -55,7 +56,9 @@ export class RepetitiveTaskTemplateRepository {
       dayBooleans = getDaysForSpecificDaysInAWeekTasks(days);
     }
 
-    return prisma.repetitiveTaskTemplate.create({
+    const db = tx || prisma;
+
+    return db.repetitiveTaskTemplate.create({
       data: {
         title,
         description,
@@ -73,6 +76,7 @@ export class RepetitiveTaskTemplateRepository {
     templateId: string,
     taskData: ITaskIPC,
     userId: string | null,
+    tx?: PrismaTransactionalClient,
   ): Promise<RepetitiveTaskTemplate> => {
     const {
       title,
@@ -92,7 +96,9 @@ export class RepetitiveTaskTemplateRepository {
       dayBooleans = getDaysForSpecificDaysInAWeekTasks(days);
     }
 
-    return prisma.repetitiveTaskTemplate.update({
+    const db = tx || prisma;
+
+    return db.repetitiveTaskTemplate.update({
       where: { id: templateId, userId },
       data: {
         title,
@@ -218,8 +224,11 @@ export class RepetitiveTaskTemplateRepository {
   stopRepetitiveTaskTemplate = async (
     templateId: string,
     userId: string | null,
+    tx?: PrismaTransactionalClient,
   ): Promise<RepetitiveTaskTemplate> => {
-    return prisma.repetitiveTaskTemplate.update({
+    const db = tx || prisma;
+
+    return db.repetitiveTaskTemplate.update({
       where: {
         id: templateId,
         userId,
