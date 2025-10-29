@@ -153,7 +153,7 @@ function Navigation() {
   };
 
   const handleOpenRepetitiveTaskTemplate = (
-    repetitiveTaskTemplateId: number,
+    repetitiveTaskTemplateId: string,
   ) => {
     handleEditTaskCancel();
     setRepetitiveTaskTemplateIdForEdit(repetitiveTaskTemplateId);

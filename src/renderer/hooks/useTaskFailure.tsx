@@ -5,7 +5,7 @@ function useTaskFailure(cb?: () => void) {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
   const [error, setError] = useState('');
 
-  const onTaskFailure = async (taskId: number) => {
+  const onTaskFailure = async (taskId: string) => {
     setError('');
     setRequestOnGoing(true);
     try {

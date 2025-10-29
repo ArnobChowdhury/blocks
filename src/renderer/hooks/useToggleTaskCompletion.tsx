@@ -6,7 +6,7 @@ function useToggleTaskCompletionStatus(cb?: () => void) {
   const [error, setError] = useState('');
 
   const onToggleTaskCompletionStatus = async (
-    id: number,
+    id: string,
     checked: boolean,
     taskScore?: number | null,
   ) => {

@@ -51,7 +51,7 @@ const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
 interface IEditTaskProps {
   widgetCloseFunc: () => void;
   task: TaskWithTagsAndSpace | RepetitiveTaskWithTagsAndSpace;
-  openRepetitiveTaskTemplate?: (repetitiveTaskTemplateId: number) => void;
+  openRepetitiveTaskTemplate?: (repetitiveTaskTemplateId: string) => void;
 }
 
 function EditTask({

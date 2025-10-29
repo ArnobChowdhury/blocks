@@ -6,7 +6,7 @@ function useTaskReschedule(cb?: () => void) {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
   const [error, setError] = useState('');
 
-  const onTaskReschedule = async (taskId: number, rescheduledTime: Dayjs) => {
+  const onTaskReschedule = async (taskId: string, rescheduledTime: Dayjs) => {
     const dueDate = rescheduledTime.toISOString();
     setError('');
     setRequestOnGoing(true);

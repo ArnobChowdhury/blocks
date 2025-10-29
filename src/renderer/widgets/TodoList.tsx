@@ -204,7 +204,7 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
     await onBulkFailure(taskIds);
   };
 
-  const handleTaskEdit = (taskId: number) => {
+  const handleTaskEdit = (taskId: string) => {
     if (taskId) {
       setTaskIdForEdit(taskId);
     }

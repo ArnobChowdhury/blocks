@@ -27,11 +27,11 @@ const AppContextFn = (initialUser: User | null) => {
   }>();
   const [showAddTask, setShowAddTask] = useState(false);
   const [addTaskToday, setAddTaskToday] = useState(false);
-  const [taskIdForEdit, setTaskIdForEdit] = useState<number>();
+  const [taskIdForEdit, setTaskIdForEdit] = useState<string>();
   const [taskForEdit, setTaskForEdit] = useState<TaskWithTagsAndSpace>();
 
   const [repetitiveTaskTemplateIdForEdit, setRepetitiveTaskTemplateIdForEdit] =
-    useState<number>();
+    useState<string>();
   const [repetitiveTaskTemplateForEdit, setRepetitiveTaskTemplateForEdit] =
     useState<RepetitiveTaskWithTagsAndSpace>();
 

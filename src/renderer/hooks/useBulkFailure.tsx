@@ -5,7 +5,7 @@ function useBulkFailure(cb?: () => void) {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
   const [error, setError] = useState('');
 
-  const onBulkFailure = async (tasks: number[]) => {
+  const onBulkFailure = async (tasks: string[]) => {
     setError('');
     setRequestOnGoing(true);
     try {

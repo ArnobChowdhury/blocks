@@ -105,11 +105,11 @@ function AllTasks() {
     }
   }, [setNotifier, taskRescheduleError]);
 
-  const handleTaskEdit = (taskId: number) => {
+  const handleTaskEdit = (taskId: string) => {
     setTaskIdForEdit(taskId);
   };
 
-  const handleRepetitiveTaskEdit = (taskId: number) => {
+  const handleRepetitiveTaskEdit = (taskId: string) => {
     setRepetitiveTaskTemplateIdForEdit(taskId);
   };
 
