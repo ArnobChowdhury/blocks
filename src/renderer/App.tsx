@@ -177,6 +177,7 @@ function Navigation() {
       if (result.success) {
         setUser(null);
         setNotifier('You have been signed out.', 'success');
+        handlePageRefresh();
       } else {
         setNotifier(result.error, 'error');
       }

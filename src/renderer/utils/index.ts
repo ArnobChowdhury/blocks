@@ -4,6 +4,7 @@ import {
   ROUTE_ROOT,
   ROUTE_ACTIVE,
   ROUTE_TASKS_WITHOUT_A_SPACE,
+  ROUTE_TRACKER,
 } from '../constants';
 
 export const refreshTodayPageTasks = () => {
@@ -76,6 +77,10 @@ export const handlePageTaskRefresh = () => {
 
   if (location === ROUTE_ROOT) {
     refreshTodayPageTasks();
+  }
+
+  if (location === ROUTE_TRACKER) {
+    window.location.reload();
   }
 
   if (location === ROUTE_TASKS_WITHOUT_A_SPACE) {

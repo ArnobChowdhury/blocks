@@ -1,13 +1,16 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button, Typography, CircularProgress, Box } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 import { ChannelsEnum } from '../types';
 import { PageHeader } from '../components';
 import { useApp } from '../context/AppProvider';
+import { ROUTE_ROOT } from '../constants';
 
 function Auth() {
   const { setNotifier, setUser } = useApp();
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -19,6 +22,7 @@ function Auth() {
       if (result.success) {
         setNotifier('Sign in successful!', 'success');
         setUser(result.data.user);
+        navigate(ROUTE_ROOT);
       } else {
         setNotifier(result.error || 'An unknown error occurred.', 'error');
       }
