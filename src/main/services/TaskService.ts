@@ -42,6 +42,33 @@ export class TaskService {
     this.pendingOpRepository = new PendingOperationRepository();
   }
 
+  _createTaskInternal = async (
+    taskData: ITaskIPC,
+    userId: string | null,
+    tx: PrismaTransactionalClient,
+  ): Promise<Task> => {
+    const createdTask = await this.taskRepository.createTask(
+      taskData,
+      userId,
+      tx,
+    );
+
+    const isPremium = !!userId;
+    if (isPremium) {
+      await this.pendingOpRepository.enqueueOperation(
+        {
+          userId: userId!,
+          operationType: 'create',
+          entityType: 'task',
+          entityId: createdTask.id,
+          payload: JSON.stringify({ ...createdTask, tags: [] }), // Assuming tags are handled separately
+        },
+        tx,
+      );
+    }
+    return createdTask;
+  };
+
   createTask = async (
     taskData: ITaskIPC,
     userId: string | null,
@@ -49,25 +76,7 @@ export class TaskService {
     const isPremium = !!userId;
 
     const newTask = await prisma.$transaction(async (tx) => {
-      const createdTask = await this.taskRepository.createTask(
-        taskData,
-        userId,
-        tx,
-      );
-
-      if (isPremium) {
-        await this.pendingOpRepository.enqueueOperation(
-          {
-            userId: userId!,
-            operationType: 'create',
-            entityType: 'task',
-            entityId: createdTask.id,
-            payload: JSON.stringify({ ...createdTask, tags: [] }), // Assuming tags are handled separately
-          },
-          tx,
-        );
-      }
-      return createdTask;
+      return this._createTaskInternal(taskData, userId, tx);
     });
 
     if (isPremium) {

@@ -53,15 +53,16 @@ export enum TaskCompletionStatusEnum {
 export interface ITaskIPC {
   id?: string;
   title: string;
-  description: string;
+  description: string | null;
   schedule: TaskScheduleTypeEnum;
   days?: DaysInAWeek[]; // only if the schedule is SpecificDaysInAWeek
-  dueDate?: string; // only if the schedule is Once
+  dueDate?: string | Date; // only if the schedule is Once
   shouldBeScored?: boolean; // only if the schedule is Daily or SpecificDaysInAWeek
-  timeOfDay?: TimeOfDay;
+  timeOfDay?: TimeOfDay | null;
   completionStatus?: TaskCompletionStatusEnum;
-  tagIds: { id: number }[];
+  tagIds?: { id: number }[];
   spaceId?: string | null;
+  repetitiveTaskTemplateId?: string | null;
 }
 
 export interface IDailyTaskEntry {

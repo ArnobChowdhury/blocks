@@ -16,13 +16,20 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 // eslint-disable-next-line import/no-relative-packages
-import { RepetitiveTaskTemplate } from '../../generated/client';
-import { ITaskIPC } from '../../renderer/types';
+import { RepetitiveTaskTemplate, Task } from '../../generated/client';
+import {
+  ITaskIPC,
+  TaskScheduleTypeEnum,
+  TimeOfDay,
+} from '../../renderer/types';
 import { TaskRepository } from '../repositories/TaskRepository';
 import { PendingOperationRepository } from '../repositories/PendingOperationRepository';
 import { RepetitiveTaskTemplateRepository } from '../repositories/RepetitiveTaskTemplateRepository';
 import { prisma } from '../prisma';
 import { syncService } from './SyncService';
+import { TaskService } from './TaskService';
+import dayjs from 'dayjs';
+import log from 'electron-log';
 
 export class RepetitiveTaskTemplateService {
   private repetitiveTaskTemplateRepository: RepetitiveTaskTemplateRepository;
@@ -31,11 +38,14 @@ export class RepetitiveTaskTemplateService {
 
   private pendingOpRepository: PendingOperationRepository;
 
+  private taskService: TaskService;
+
   constructor() {
     this.repetitiveTaskTemplateRepository =
       new RepetitiveTaskTemplateRepository();
     this.taskRepository = new TaskRepository();
     this.pendingOpRepository = new PendingOperationRepository();
+    this.taskService = new TaskService();
   }
 
   createRepetitiveTaskTemplate = async (
@@ -235,8 +245,103 @@ export class RepetitiveTaskTemplateService {
   };
 
   generateDueTasks = async (userId: string | null): Promise<void> => {
-    return this.repetitiveTaskTemplateRepository.generateDueTasksFromTemplates(
-      userId,
+    const dueTemplates =
+      await this.repetitiveTaskTemplateRepository.getDueRepetitiveTemplates(
+        userId,
+      );
+
+    if (dueTemplates.length === 0) {
+      return;
+    }
+
+    const isPremium = !!userId;
+
+    const processingPromises = dueTemplates.map((template) =>
+      prisma.$transaction(async (tx) => {
+        const todayStart = dayjs().startOf('day');
+        let lastGenDate = template.lastDateOfTaskGeneration;
+
+        if (!lastGenDate) {
+          const templateCreationDate = dayjs(template.createdAt).startOf('day');
+          if (templateCreationDate.isSame(todayStart)) {
+            lastGenDate = todayStart.subtract(1, 'day').toDate();
+          } else {
+            lastGenDate = template.createdAt;
+          }
+        }
+
+        const daysToGenerate = todayStart.diff(
+          dayjs(lastGenDate).startOf('day'),
+          'day',
+        );
+
+        let latestDueDateForTemplate: Date | undefined;
+
+        const taskCreationPromises: Promise<Task | void>[] = [];
+
+        for (let i = 0; i < daysToGenerate; i += 1) {
+          const targetDueDate = dayjs(lastGenDate)
+            .startOf('day')
+            .add(i + 1, 'day');
+          const dayOfWeekLowercase = targetDueDate
+            .format('dddd')
+            .toLowerCase() as keyof RepetitiveTaskTemplate;
+
+          let shouldGenerateTask = false;
+          if (template.schedule === TaskScheduleTypeEnum.Daily) {
+            shouldGenerateTask = true;
+          } else if (
+            template.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek
+          ) {
+            shouldGenerateTask = !!template[dayOfWeekLowercase];
+          }
+
+          if (shouldGenerateTask) {
+            const newTaskData: ITaskIPC = {
+              title: template.title,
+              description: template.description,
+              schedule: template.schedule as TaskScheduleTypeEnum,
+              dueDate: targetDueDate.toDate(),
+              timeOfDay: template.timeOfDay as TimeOfDay | null,
+              repetitiveTaskTemplateId: template.id,
+              shouldBeScored: template.shouldBeScored,
+              spaceId: template.spaceId,
+            };
+
+            taskCreationPromises.push(
+              this.taskService._createTaskInternal(newTaskData, userId, tx),
+            );
+
+            latestDueDateForTemplate = targetDueDate.toDate();
+          }
+        }
+
+        await Promise.all(taskCreationPromises);
+
+        if (latestDueDateForTemplate) {
+          await this.repetitiveTaskTemplateRepository.updateLastDateOfTaskGeneration(
+            template.id,
+            latestDueDateForTemplate,
+            tx,
+          );
+        }
+      }),
     );
+
+    const results = await Promise.allSettled(processingPromises);
+
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        const failedTemplateId = dueTemplates[index].id;
+        log.error(
+          `[RepetitiveTaskTemplateService] Transaction failed for template ${failedTemplateId}.`,
+          result.reason,
+        );
+      }
+    });
+
+    if (isPremium) {
+      syncService.runSync();
+    }
   };
 }

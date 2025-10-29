@@ -44,6 +44,7 @@ export class TaskRepository {
       shouldBeScored,
       timeOfDay,
       spaceId,
+      repetitiveTaskTemplateId,
     } = taskData;
 
     const db = tx || prisma;
@@ -58,6 +59,7 @@ export class TaskRepository {
         timeOfDay,
         spaceId,
         userId,
+        repetitiveTaskTemplateId,
       },
     });
   };
