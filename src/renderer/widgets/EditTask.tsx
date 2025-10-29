@@ -93,14 +93,9 @@ function EditTask({
     );
 
   const [selectedSpace, setSelectedSpace] = useState<Space>(task.space);
-  const { setNotifier } = useApp();
+  const { setNotifier, allSpaces, handleLoadingSpaces } = useApp();
 
-  const {
-    allSpaces,
-    error: spaceRequestError,
-    handleLoadingSpaces,
-    createSpace,
-  } = useSpace();
+  const { error: spaceRequestError, createSpace } = useSpace();
 
   useEffect(() => {
     if (spaceRequestError) {

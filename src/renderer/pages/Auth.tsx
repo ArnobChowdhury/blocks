@@ -5,10 +5,9 @@ import GoogleIcon from '@mui/icons-material/Google';
 import { ChannelsEnum } from '../types';
 import { PageHeader } from '../components';
 import { useApp } from '../context/AppProvider';
-import { ROUTE_ROOT } from '../constants';
 
 function Auth() {
-  const { setNotifier, setUser } = useApp();
+  const { setNotifier, setUser, handleLoadingSpaces } = useApp();
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -22,7 +21,8 @@ function Auth() {
       if (result.success) {
         setNotifier('Sign in successful!', 'success');
         setUser(result.data.user);
-        navigate(ROUTE_ROOT);
+        await handleLoadingSpaces();
+        navigate('/');
       } else {
         setNotifier(result.error || 'An unknown error occurred.', 'error');
       }

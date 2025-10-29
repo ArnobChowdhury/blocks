@@ -61,16 +61,11 @@ const AddTask = forwardRef<HTMLDivElement, IAddTaskProps>((props, ref) => {
   );
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(false);
-  const { setNotifier } = useApp();
+  const { setNotifier, allSpaces, handleLoadingSpaces } = useApp();
 
   const [selectedSpace, setSelectedSpace] = useState<Space>();
 
-  const {
-    handleLoadingSpaces,
-    createSpace,
-    allSpaces,
-    error: spaceRequestError,
-  } = useSpace();
+  const { createSpace, error: spaceRequestError } = useSpace();
 
   useEffect(() => {
     if (spaceRequestError) {

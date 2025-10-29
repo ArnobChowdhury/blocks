@@ -13,6 +13,7 @@ import {
   Link,
   Navigate,
   useLocation,
+  useNavigate,
 } from 'react-router-dom';
 import {
   CssBaseline,
@@ -57,7 +58,6 @@ import LogoutIcon from './icons/Logout';
 import { AddTask, EditTask } from './widgets';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
-import { useSpace } from './hooks';
 import {
   ROUTE_ROOT,
   ROUTE_ACTIVE,
@@ -134,11 +134,14 @@ function Navigation() {
     setRepetitiveTaskTemplateForEdit,
     shouldRefresh,
     handlePageRefresh,
+    allSpaces,
+    handleLoadingSpaces,
     setNotifier,
     user,
     setUser,
   } = useApp();
 
+  const navigate = useNavigate();
   const handleEditTaskCancel = () => {
     setTaskForEdit(undefined);
     setTaskIdForEdit(undefined);
@@ -156,7 +159,6 @@ function Navigation() {
     setRepetitiveTaskTemplateIdForEdit(repetitiveTaskTemplateId);
   };
 
-  const { allSpaces, handleLoadingSpaces } = useSpace();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSpacesExpand = async () => {
@@ -177,7 +179,8 @@ function Navigation() {
       if (result.success) {
         setUser(null);
         setNotifier('You have been signed out.', 'success');
-        handlePageRefresh();
+        await handleLoadingSpaces();
+        navigate(ROUTE_ROOT);
       } else {
         setNotifier(result.error, 'error');
       }

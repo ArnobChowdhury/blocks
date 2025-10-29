@@ -11,6 +11,7 @@ import {
   ChannelsEnum,
   TaskWithTagsAndSpace,
   RepetitiveTaskWithTagsAndSpace,
+  Space,
 } from '../types';
 
 interface User {
@@ -46,6 +47,21 @@ const AppContextFn = (initialUser: User | null) => {
     },
     [],
   );
+
+  const [allSpaces, setAllSpaces] = useState<Space[]>([]);
+  const [loadingSpaces, setLoadingSpaces] = useState(false);
+
+  const handleLoadingSpaces = useCallback(async () => {
+    setLoadingSpaces(true);
+    try {
+      const spaces = await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_ALL_SPACES,
+      );
+      setAllSpaces(spaces);
+    } catch (err: any) {
+      setNotifier(err.message, 'error');
+    }
+  }, [setNotifier]);
 
   useEffect(() => {
     if (taskIdForEdit && !taskForEdit) {
@@ -124,6 +140,9 @@ const AppContextFn = (initialUser: User | null) => {
     handlePageRefresh,
     user,
     setUser,
+    allSpaces,
+    handleLoadingSpaces,
+    loadingSpaces,
   };
 };
 
