@@ -82,6 +82,32 @@ function TasksBySchedule({
     setTabValue(newValue);
   };
 
+  useEffect(() => {
+    const order = [
+      {
+        tabValue: TaskScheduleTypeEnum.Unscheduled,
+        count: unscheduledTasks.length,
+      },
+      {
+        tabValue: TaskScheduleTypeEnum.Once,
+        count: oneOffTasks.length,
+      },
+      {
+        tabValue: TaskScheduleTypeEnum.Daily,
+        count: dailyTasks.length,
+      },
+      {
+        tabValue: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+        count: specificDaysInAWeekTasks.length,
+      },
+    ];
+
+    const firstTabWithContent = order.find((tab) => tab.count > 0);
+    if (firstTabWithContent) {
+      setTabValue(firstTabWithContent.tabValue);
+    }
+  }, [unscheduledTasks, oneOffTasks, dailyTasks, specificDaysInAWeekTasks]);
+
   return (
     <div>
       <TabContext value={tabValue}>
