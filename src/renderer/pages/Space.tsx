@@ -22,6 +22,7 @@ function Space() {
 
   const [unscheduledTasks, setUnscheduledTasks] = useState<TaskWithTags[]>([]);
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribeUnscheduledActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
       (response) => {
@@ -35,6 +36,7 @@ function Space() {
   const [oneOffTasks, setOneOffTasks] = useState<TaskWithTags[]>([]);
 
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribeOneOffActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
       (response) => {
@@ -48,6 +50,7 @@ function Space() {
   const [dailyTasks, setDailyTasks] = useState<RepetitiveTaskWithTags[]>([]);
 
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribeDailyActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
       (response) => {
@@ -63,6 +66,7 @@ function Space() {
   >([]);
 
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribeSpecificDaysInAWeek = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
       (response) => {

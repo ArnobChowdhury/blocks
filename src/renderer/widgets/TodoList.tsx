@@ -55,6 +55,7 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
   const [noTasksForToday, setNoTasksForToday] = useState(false);
 
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_TODAY,
       (response) => {
@@ -99,6 +100,7 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
   const [noOverDues, setNoOverDues] = useState(false);
 
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_TASKS_OVERDUE,
       (response) => {

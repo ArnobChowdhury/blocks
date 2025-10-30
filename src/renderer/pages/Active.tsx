@@ -12,6 +12,7 @@ function Active() {
   const [unscheduledTasks, setUnscheduledTasks] = useState<TaskWithTags[]>([]);
 
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribeUnscheduledActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS,
       (response) => {
@@ -24,6 +25,7 @@ function Active() {
 
   const [oneOffTasks, setOneOffTasks] = useState<TaskWithTags[]>([]);
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribeOneOffActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS,
       (response) => {
@@ -36,6 +38,7 @@ function Active() {
 
   const [dailyTasks, setDailyTasks] = useState<RepetitiveTaskWithTags[]>([]);
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribeDailyActiveTasks = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_DAILY_ACTIVE_TASKS,
       (response) => {
@@ -50,6 +53,7 @@ function Active() {
     RepetitiveTaskWithTags[]
   >([]);
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribeSpecificDaysInAWeek = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
       (response) => {
