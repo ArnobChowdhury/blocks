@@ -28,7 +28,7 @@ export const refreshAllTasks = () => {
   );
 };
 
-export const refreshSpace = (spaceId: number) => {
+export const refreshSpace = (spaceId: string) => {
   window.electron.ipcRenderer.sendMessage(
     ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
     spaceId,
@@ -89,7 +89,7 @@ export const handlePageTaskRefresh = () => {
   }
 
   if (location.includes('/space')) {
-    const spaceId = Number(location.split('/')[2]);
+    const spaceId = location.split('/')[2];
     refreshSpace(spaceId);
   }
 };

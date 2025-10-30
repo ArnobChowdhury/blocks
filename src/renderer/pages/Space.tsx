@@ -11,7 +11,7 @@ function Space() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    if (spaceId) refreshSpace(Number(spaceId));
+    if (spaceId) refreshSpace(spaceId);
   }, [spaceId]);
 
   useEffect(() => {
@@ -75,7 +75,7 @@ function Space() {
 
   return (
     <>
-      <PageHeader>Space: {spaceName}</PageHeader>
+      <PageHeader>{spaceName || 'Tasks'} </PageHeader>
       <TasksBySchedule
         unscheduledTasks={unscheduledTasks}
         oneOffTasks={oneOffTasks}
