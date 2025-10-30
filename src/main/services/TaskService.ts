@@ -333,18 +333,4 @@ export class TaskService {
     await this.taskRepository.deactivateCompletedOnceTasks(userId);
     return this.taskRepository.getActiveOnceTasksWithSpaceId(spaceId, userId);
   };
-
-  getActiveUnscheduledTasksWithoutSpace = async (
-    userId: string | null,
-  ): Promise<Task[]> => {
-    await this.taskRepository.deactivateCompletedOnceTasks(userId);
-    return this.taskRepository.getActiveUnscheduledTasksWithoutSpace(userId);
-  };
-
-  getActiveOnceTasksWithoutSpace = async (
-    userId: string | null,
-  ): Promise<Task[]> => {
-    await this.taskRepository.deactivateCompletedOnceTasks(userId);
-    return this.taskRepository.getActiveOnceTasksWithoutSpace(userId);
-  };
 }

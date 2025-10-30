@@ -228,22 +228,6 @@ export class RepetitiveTaskTemplateService {
     );
   };
 
-  getActiveDailyTemplatesWithoutSpace = async (
-    userId: string | null,
-  ): Promise<RepetitiveTaskTemplate[]> => {
-    return this.repetitiveTaskTemplateRepository.getActiveDailyTemplatesWithoutSpace(
-      userId,
-    );
-  };
-
-  getActiveSpecificDaysInAWeekTemplatesWithoutSpace = async (
-    userId: string | null,
-  ): Promise<RepetitiveTaskTemplate[]> => {
-    return this.repetitiveTaskTemplateRepository.getActiveSpecificDaysInAWeekTemplatesWithoutSpace(
-      userId,
-    );
-  };
-
   generateDueTasks = async (userId: string | null): Promise<void> => {
     const dueTemplates =
       await this.repetitiveTaskTemplateRepository.getDueRepetitiveTemplates(

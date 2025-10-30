@@ -546,7 +546,7 @@ ipcMain.handle(ChannelsEnum.REQUEST_ALL_SPACES, async () => {
 });
 
 ipcMain.on(
-  ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
+  ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_FOR_SPACE,
   async (event, spaceId: string) => {
     const userId = session.user ? session.user.id : null;
     try {
@@ -555,7 +555,7 @@ ipcMain.on(
         userId,
       );
       event.reply(
-        ChannelsEnum.RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
+        ChannelsEnum.RESPONSE_UNSCHEDULED_ACTIVE_TASKS_FOR_SPACE,
         tasks,
       );
     } catch (err: any) {
@@ -566,7 +566,7 @@ ipcMain.on(
 );
 
 ipcMain.on(
-  ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
+  ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_FOR_SPACE,
   async (event, spaceId: string) => {
     const userId = session.user ? session.user.id : null;
 
@@ -575,10 +575,7 @@ ipcMain.on(
         spaceId,
         userId,
       );
-      event.reply(
-        ChannelsEnum.RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
-        tasks,
-      );
+      event.reply(ChannelsEnum.RESPONSE_ONE_OFF_ACTIVE_TASKS_FOR_SPACE, tasks);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
@@ -587,7 +584,7 @@ ipcMain.on(
 );
 
 ipcMain.on(
-  ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
+  ChannelsEnum.REQUEST_DAILY_ACTIVE_TEMPLATES_FOR_SPACE,
   async (event, spaceId: string) => {
     const userId = session.user ? session.user.id : null;
     try {
@@ -597,7 +594,7 @@ ipcMain.on(
           userId,
         );
       event.reply(
-        ChannelsEnum.RESPONSE_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
+        ChannelsEnum.RESPONSE_DAILY_ACTIVE_TEMPLATES_FOR_SPACE,
         templates,
       );
     } catch (err: any) {
@@ -608,7 +605,7 @@ ipcMain.on(
 );
 
 ipcMain.on(
-  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
+  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TEMPLATES_FOR_SPACE,
   async (event, spaceId: string) => {
     const userId = session.user ? session.user.id : null;
 
@@ -619,83 +616,7 @@ ipcMain.on(
           userId,
         );
       event.reply(
-        ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
-        templates,
-      );
-    } catch (err: any) {
-      log.error(err?.message);
-      throw err;
-    }
-  },
-);
-
-ipcMain.on(
-  ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITHOUT_SPACE,
-  async (event) => {
-    const userId = session.user ? session.user.id : null;
-    try {
-      const tasks =
-        await taskService.getActiveUnscheduledTasksWithoutSpace(userId);
-      event.reply(
-        ChannelsEnum.RESPONSE_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
-        tasks,
-      );
-    } catch (err: any) {
-      log.error(err?.message);
-      throw err;
-    }
-  },
-);
-
-ipcMain.on(
-  ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITHOUT_SPACE,
-  async (event) => {
-    const userId = session.user ? session.user.id : null;
-    try {
-      const tasks = await taskService.getActiveOnceTasksWithoutSpace(userId);
-      event.reply(
-        ChannelsEnum.RESPONSE_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
-        tasks,
-      );
-    } catch (err: any) {
-      log.error(err?.message);
-      throw err;
-    }
-  },
-);
-
-ipcMain.on(
-  ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITHOUT_SPACE,
-  async (event) => {
-    const userId = session.user ? session.user.id : null;
-    try {
-      const templates =
-        await repetitiveTaskTemplateService.getActiveDailyTemplatesWithoutSpace(
-          userId,
-        );
-
-      event.reply(
-        ChannelsEnum.RESPONSE_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
-        templates,
-      );
-    } catch (err: any) {
-      log.error(err?.message);
-      throw err;
-    }
-  },
-);
-
-ipcMain.on(
-  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITHOUT_SPACE,
-  async (event) => {
-    const userId = session.user ? session.user.id : null;
-    try {
-      const templates =
-        await repetitiveTaskTemplateService.getActiveSpecificDaysInAWeekTemplatesWithoutSpace(
-          userId,
-        );
-      event.reply(
-        ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
+        ChannelsEnum.RESPONSE_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TEMPLATES_FOR_SPACE,
         templates,
       );
     } catch (err: any) {

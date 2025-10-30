@@ -28,43 +28,25 @@ export const refreshAllTasks = () => {
   );
 };
 
-export const refreshSpace = (spaceId: string) => {
+export const refreshSpace = (spaceId: string | null) => {
   window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITH_SPACE_ID,
+    ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_FOR_SPACE,
     spaceId,
   );
 
   window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITH_SPACE_ID,
+    ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_FOR_SPACE,
     spaceId,
   );
 
   window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITH_SPACE_ID,
+    ChannelsEnum.REQUEST_DAILY_ACTIVE_TEMPLATES_FOR_SPACE,
     spaceId,
   );
 
   window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITH_SPACE_ID,
+    ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TEMPLATES_FOR_SPACE,
     spaceId,
-  );
-};
-
-export const refreshSpaceForTasksWithoutASpace = () => {
-  window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_WITHOUT_SPACE,
-  );
-
-  window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_WITHOUT_SPACE,
-  );
-
-  window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_DAILY_ACTIVE_TASKS_WITHOUT_SPACE,
-  );
-
-  window.electron.ipcRenderer.sendMessage(
-    ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS_WITHOUT_SPACE,
   );
 };
 
@@ -83,13 +65,13 @@ export const handlePageTaskRefresh = () => {
     window.location.reload();
   }
 
-  if (location === ROUTE_TASKS_WITHOUT_A_SPACE) {
-    refreshSpaceForTasksWithoutASpace();
-    return;
-  }
-
   if (location.includes('/space')) {
-    const spaceId = location.split('/')[2];
+    if (location === ROUTE_TASKS_WITHOUT_A_SPACE) {
+      refreshSpace(null);
+      return;
+    }
+
+    let spaceId = location.split('/')[2];
     refreshSpace(spaceId);
   }
 };

@@ -267,32 +267,6 @@ export class RepetitiveTaskTemplateRepository {
     });
   };
 
-  getActiveDailyTemplatesWithoutSpace = async (
-    userId: string | null,
-  ): Promise<RepetitiveTaskTemplate[]> => {
-    return prisma.repetitiveTaskTemplate.findMany({
-      where: {
-        spaceId: null,
-        userId,
-        isActive: true,
-        schedule: TaskScheduleTypeEnum.Daily,
-      },
-    });
-  };
-
-  getActiveSpecificDaysInAWeekTemplatesWithoutSpace = async (
-    userId: string | null,
-  ): Promise<RepetitiveTaskTemplate[]> => {
-    return prisma.repetitiveTaskTemplate.findMany({
-      where: {
-        spaceId: null,
-        userId,
-        isActive: true,
-        schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
-      },
-    });
-  };
-
   getDueRepetitiveTemplates = async (
     userId: string | null,
   ): Promise<RepetitiveTaskTemplate[]> => {

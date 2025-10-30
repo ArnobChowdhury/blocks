@@ -322,40 +322,6 @@ export class TaskRepository {
     });
   };
 
-  getActiveUnscheduledTasksWithoutSpace = async (
-    userId: string | null,
-  ): Promise<Task[]> => {
-    return prisma.task.findMany({
-      where: {
-        spaceId: null,
-        userId,
-        isActive: true,
-        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-        schedule: TaskScheduleTypeEnum.Unscheduled,
-      },
-      include: {
-        tags: true,
-      },
-    });
-  };
-
-  getActiveOnceTasksWithoutSpace = async (
-    userId: string | null,
-  ): Promise<Task[]> => {
-    return prisma.task.findMany({
-      where: {
-        spaceId: null,
-        userId,
-        isActive: true,
-        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
-        schedule: TaskScheduleTypeEnum.Once,
-      },
-      include: {
-        tags: true,
-      },
-    });
-  };
-
   upsertMany = async (
     tasks: Task[],
     tx: PrismaTransactionalClient,
