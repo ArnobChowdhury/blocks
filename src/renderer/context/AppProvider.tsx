@@ -99,6 +99,7 @@ const AppContextFn = (initialUser: User | null) => {
   ]);
 
   useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK,
       () => {
