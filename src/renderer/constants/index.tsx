@@ -19,3 +19,4 @@ export const ROUTE_ACTIVE = '/active';
 export const ROUTE_TRACKER = '/tracker';
 export const ROUTE_TASKS_WITHOUT_A_SPACE = '/space/defaults';
 export const ROUTE_AUTH = '/auth';
+export const ROUTE_SETTINGS = '/settings';

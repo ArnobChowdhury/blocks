@@ -24,8 +24,6 @@ import {
   ListItemIcon,
   ListItemText,
   Box,
-  ThemeProvider,
-  createTheme,
   Typography,
   useTheme,
   Dialog,
@@ -41,11 +39,11 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/system';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
-import RunCircleIcon from '@mui/icons-material/RunCircle';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { PageWrapper } from './layouts';
-import { Today, Active, Tracker, Space, Auth } from './pages';
+import { Today, Active, Tracker, Space, Auth, Settings } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
 import ArrowRight from './icons/ArrowRight';
 import ArrowDown from './icons/ArrowDown';
@@ -54,8 +52,10 @@ import TrackerIcon from './icons/Tracker';
 import Plus from './icons/Plus';
 import Logo from './icons/Logo';
 import LoginIcon from './icons/Login';
+import SettingsIcon from './icons/Settings';
 import LogoutIcon from './icons/Logout';
 import { AddTask, EditTask } from './widgets';
+import { CustomThemeProvider } from './context/ThemeProvider';
 import { useApp } from './context/AppProvider';
 import { formatErrorMessage } from './utils';
 import {
@@ -64,37 +64,12 @@ import {
   ROUTE_TRACKER,
   ROUTE_TASKS_WITHOUT_A_SPACE,
   ROUTE_AUTH,
+  ROUTE_SETTINGS,
 } from './constants';
 import { ChannelsEnum } from './types';
 
 const MyStyledListItemText = styled(ListItemText)({
   color: 'red',
-});
-
-const customTheme = createTheme({
-  typography: {
-    fontFamily: 'Hanken Grotesk, sans-serif',
-    allVariants: {
-      color: '#333333',
-    },
-  },
-  palette: {
-    primary: {
-      main: '#007A9F', // Change this to your desired color background: #01877E;
-    },
-    secondary: {
-      main: '#11C498', // Change this to your desired colorbackground: #F0EED9;
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none', // Prevent uppercase transformation
-        },
-      },
-    },
-  },
 });
 
 const Main = styled('main', {
@@ -227,7 +202,7 @@ function Navigation() {
             selected={location.pathname === ROUTE_ACTIVE}
           >
             <ListItemIcon>
-              <RunCircleIcon color="primary" />
+              <DirectionsRunIcon fontSize="small" color="primary" />
             </ListItemIcon>
             <ListItemText primary="Active" />
           </ListItemButton>
@@ -295,6 +270,18 @@ function Navigation() {
         </List>
       </Box>
       <Box sx={{ marginTop: 'auto' }}>
+        <List dense>
+          <ListItemButton
+            component={Link}
+            to={ROUTE_SETTINGS}
+            selected={location.pathname === ROUTE_SETTINGS}
+          >
+            <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
+              <SettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Settings" />
+          </ListItemButton>
+        </List>
         {user ? (
           <List dense>
             <ListItem sx={{ pl: 2, pt: 0, pb: 0 }}>
@@ -427,8 +414,8 @@ function App() {
   const [resizerHovered, setResizerHovered] = useState(false);
 
   return (
-    <ThemeProvider theme={customTheme}>
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <CustomThemeProvider>
         <Router>
           <Box sx={{ display: 'flex' }}>
             <CssBaseline />
@@ -491,6 +478,7 @@ function App() {
                     element={<Space />}
                   />
                   <Route path={ROUTE_AUTH} element={<Auth />} />
+                  <Route path={ROUTE_SETTINGS} element={<Settings />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </PageWrapper>
@@ -509,8 +497,8 @@ function App() {
             </Snackbar>
           </Box>
         </Router>
-      </LocalizationProvider>
-    </ThemeProvider>
+      </CustomThemeProvider>
+    </LocalizationProvider>
   );
 }
 

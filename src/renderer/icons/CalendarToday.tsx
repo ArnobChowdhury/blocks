@@ -1,4 +1,5 @@
 import { useTheme } from '@mui/material';
+import { useTheme as useAppTheme } from '../context/ThemeProvider';
 
 interface ICalendarTodayProps {
   date: number;
@@ -6,6 +7,8 @@ interface ICalendarTodayProps {
 
 function CalendarToday({ date }: ICalendarTodayProps) {
   const theme = useTheme();
+  const { themeMode } = useAppTheme();
+  const isDarkMode = themeMode === 'dark';
 
   return (
     <svg
@@ -40,7 +43,7 @@ function CalendarToday({ date }: ICalendarTodayProps) {
         fontFamily="Inter"
         fontSize="9"
         fontWeight="bold"
-        fill={theme.palette.primary.main}
+        fill={isDarkMode ? '#ffffff' : theme.palette.primary.main}
       >
         {date}
       </text>
