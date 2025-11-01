@@ -32,7 +32,8 @@ export default class MenuBuilder {
         : this.buildDefaultTemplate();
 
     const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
+    // disabling the menu bar. If we come up with a use case for it e.g. for printing, we can re-enable
+    Menu.setApplicationMenu(null);
 
     return menu;
   }
