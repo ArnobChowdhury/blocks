@@ -488,6 +488,7 @@ function App() {
               open={showSnackbar}
               autoHideDuration={6000}
               onClose={clearNotifier}
+              anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
               <Alert severity={notification?.type} onClose={clearNotifier}>
                 {notification?.type === 'error'
