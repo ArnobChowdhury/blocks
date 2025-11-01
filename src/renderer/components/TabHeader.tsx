@@ -23,7 +23,11 @@ function TabHeader({ digit, label }: TabHeaderProps) {
           alignItems="center"
           px="4px"
         >
-          <Typography variant="caption" fontWeight="bold">
+          <Typography
+            sx={{ color: 'text.onLightBackground' }}
+            variant="caption"
+            fontWeight="bold"
+          >
             {digit}
           </Typography>
         </Box>

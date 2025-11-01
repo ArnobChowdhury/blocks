@@ -8,6 +8,15 @@ import React, {
 } from 'react';
 import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material';
 
+declare module '@mui/material/styles/createPalette' {
+  interface TypeText {
+    onLightBackground: string;
+  }
+  interface TypeTextOptions {
+    onLightBackground?: string;
+  }
+}
+
 type ThemeMode = 'light' | 'dark';
 
 interface ThemeContextType {
@@ -27,10 +36,13 @@ const lightTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#007A9F',
+      main: '#008ab4ff',
     },
     secondary: {
       main: '#11C498',
+    },
+    text: {
+      onLightBackground: '#333333',
     },
   },
   components: {
@@ -52,7 +64,7 @@ const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     primary: {
-      main: '#007A9F',
+      main: '#008ab4ff',
     },
     secondary: {
       main: '#11C498',
@@ -62,8 +74,9 @@ const darkTheme = createTheme({
       paper: '#1e1e1e',
     },
     text: {
-      primary: '#ffffff',
-      secondary: '#b3b3b3',
+      primary: '#ffffffdd',
+      secondary: '#008ab4ff',
+      onLightBackground: '#333333',
     },
   },
 });

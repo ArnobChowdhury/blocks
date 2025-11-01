@@ -197,7 +197,7 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
                 style={{
                   minWidth: '150px',
                   fontSize: '13px',
-                  backgroundColor: 'white',
+                  backgroundColor: theme.palette.background.default,
                   border: '1px solid transparent',
                   textAlign: 'left',
                   whiteSpace: 'nowrap',

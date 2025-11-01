@@ -301,6 +301,7 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
               px: 2,
               pt: timeOfDay ? 2 : 0,
               mt: timeOfDay ? 2 : 0,
+              color: bg === 'none' ? 'text.primary' : 'text.onLightBackground',
             }}
             key={bg}
           >
