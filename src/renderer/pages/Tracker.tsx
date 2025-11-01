@@ -14,16 +14,23 @@ function Tracker() {
   const [habitsSpecificDaysInAWeek, setHabitsSpecificDaysInAWeek] = useState<
     ExtendedRepetitiveTaskTemplate[]
   >([]);
+  const [fetchingDailyTaskMonthlyReport, setFetchingDailyTaskMonthlyReport] =
+    useState(true);
+  const [
+    fetchingSpecificDaysInAWeekTaskMonthlyReport,
+    setFetchingSpecificDaysInAWeekTaskMonthlyReport,
+  ] = useState(true);
 
   const { setNotifier } = useApp();
-
-  useEffect(() => {}, []);
 
   const monthIndex = useMemo(() => {
     return dayjs().month();
   }, []);
 
   useEffect(() => {
+    setFetchingDailyTaskMonthlyReport(true);
+
+    // eslint-disable-next-line promise/catch-or-return
     window.electron.ipcRenderer
       .invoke(ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT, {
         monthIndex,
@@ -32,12 +39,16 @@ function Tracker() {
         return setHabitsDaily(dailyHabits as ExtendedRepetitiveTaskTemplate[]);
       })
       .catch((err: any) => {
-        // we do something here
         setNotifier(err.message, 'error');
+      })
+      .finally(() => {
+        setFetchingDailyTaskMonthlyReport(false);
       });
   }, [monthIndex, setNotifier]);
 
   useEffect(() => {
+    setFetchingSpecificDaysInAWeekTaskMonthlyReport(true);
+    // eslint-disable-next-line promise/catch-or-return
     window.electron.ipcRenderer
       .invoke(
         ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_TASKS_MONTHLY_REPORT,
@@ -50,12 +61,19 @@ function Tracker() {
       })
       .catch((err) => {
         setNotifier(err.message, 'error');
+      })
+      .finally(() => {
+        setFetchingSpecificDaysInAWeekTaskMonthlyReport(false);
       });
   }, [monthIndex, setNotifier]);
 
   const noDailyTask = habitsDaily.length === 0;
   const noSpecificDaysInAWeek = habitsSpecificDaysInAWeek.length === 0;
-  const showImage = noDailyTask && noSpecificDaysInAWeek;
+  const showImage =
+    !fetchingDailyTaskMonthlyReport &&
+    !fetchingSpecificDaysInAWeekTaskMonthlyReport &&
+    noDailyTask &&
+    noSpecificDaysInAWeek;
 
   return (
     <>
