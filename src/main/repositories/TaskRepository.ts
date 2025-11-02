@@ -128,6 +128,7 @@ export class TaskRepository {
           lt: todayStart,
         },
         completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+        isActive: true,
       },
     });
   };
