@@ -7,12 +7,14 @@ import {
   ROUTE_TRACKER,
 } from '../constants';
 
-export const refreshTodayPageTasksForDate = (date: Date) => {
+export const refreshTodayPageForDate = (date: Date) => {
   window.electron.ipcRenderer.sendMessage(
     ChannelsEnum.REQUEST_TASKS_FOR_DATE,
     date,
   );
-  window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_OVERDUE);
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_COUNT_OF_TASKS_OVERDUE,
+  );
 };
 
 // todo: change the name to refreshActiveTasks
@@ -61,7 +63,7 @@ export const handlePageTaskRefresh = (todayPageDisplayDate: Date) => {
   }
 
   if (location === ROUTE_ROOT) {
-    refreshTodayPageTasksForDate(todayPageDisplayDate);
+    refreshTodayPageForDate(todayPageDisplayDate);
   }
 
   if (location === ROUTE_TRACKER) {

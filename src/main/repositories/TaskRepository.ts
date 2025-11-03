@@ -140,6 +140,21 @@ export class TaskRepository {
     });
   };
 
+  getCountOfTasksOverdue = async (userId: string | null): Promise<number> => {
+    const todayStart = getTodayStart();
+
+    return prisma.task.count({
+      where: {
+        userId,
+        dueDate: {
+          lt: todayStart,
+        },
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+        isActive: true,
+      },
+    });
+  };
+
   updateTaskCompletionStatus = async (
     taskId: string,
     status: TaskCompletionStatusEnum,

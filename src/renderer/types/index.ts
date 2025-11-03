@@ -177,4 +177,7 @@ export enum ChannelsEnum {
   REQUEST_GOOGLE_AUTH_START = 'request_google_auth_start',
   REQUEST_SIGN_OUT = 'request_sign_out',
   REQUEST_INITIAL_AUTH_STATUS = 'request_initial_auth_status',
+
+  REQUEST_COUNT_OF_TASKS_OVERDUE = 'request_count_of_tasks_overdue',
+  RESPONSE_COUNT_OF_TASKS_OVERDUE = 'response_count_of_tasks_overdue',
 }

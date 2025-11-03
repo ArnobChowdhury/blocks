@@ -20,7 +20,7 @@ import {
   TaskWithTags,
 } from '../types';
 import { TodoListItem, TaskScoring, SectionHeader } from '../components';
-import { formatDate, refreshTodayPageTasksForDate } from '../utils';
+import { formatDate, refreshTodayPageForDate } from '../utils';
 import {
   useBulkFailure,
   useToggleTaskCompletionStatus,
@@ -114,7 +114,7 @@ function TodoList() {
   const {
     onToggleTaskCompletionStatus,
     error: toggleTaskCompletionStatusError,
-  } = useToggleTaskCompletionStatus(refreshTodayPageTasksForDate);
+  } = useToggleTaskCompletionStatus(refreshTodayPageForDate);
 
   // todo: in future, we can call the set notifier from the hooks itself to get rid of lots of duplication
   useEffect(() => {
@@ -124,7 +124,7 @@ function TodoList() {
   }, [toggleTaskCompletionStatusError, setNotifier]);
 
   const { onTaskFailure, error: taskFailureError } = useTaskFailure(
-    refreshTodayPageTasksForDate,
+    refreshTodayPageForDate,
   );
 
   // todo: in future, we can call the set notifier from the hooks itself to get rid of lots of duplication
@@ -138,7 +138,7 @@ function TodoList() {
     onBulkFailure,
     error: bulkFailureError,
     requestOnGoing,
-  } = useBulkFailure(refreshTodayPageTasksForDate);
+  } = useBulkFailure(refreshTodayPageForDate);
 
   useEffect(() => {
     if (bulkFailureError) {
@@ -147,7 +147,7 @@ function TodoList() {
   }, [bulkFailureError, setNotifier]);
 
   const { onTaskReschedule, error: taskRescheduleError } = useTaskReschedule(
-    refreshTodayPageTasksForDate,
+    refreshTodayPageForDate,
   );
 
   useEffect(() => {

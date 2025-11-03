@@ -139,6 +139,10 @@ export class TaskService {
     return this.taskRepository.getOverdueTasks(userId);
   };
 
+  getCountOfTasksOverdue = async (userId: string | null): Promise<number> => {
+    return this.taskRepository.getCountOfTasksOverdue(userId);
+  };
+
   toggleTaskCompletionStatus = async (
     id: string,
     checked: boolean,
