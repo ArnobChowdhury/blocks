@@ -292,12 +292,12 @@ ipcMain.handle(
 /**
  * todo: add error handling
  */
-ipcMain.on(ChannelsEnum.REQUEST_TASKS_TODAY, async (event) => {
+ipcMain.on(ChannelsEnum.REQUEST_TASKS_FOR_DATE, async (event, date) => {
   const userId = session.user ? session.user.id : null;
   try {
     await repetitiveTaskTemplateService.generateDueTasks(userId);
-    const tasksForToday = await taskService.getTasksForToday(userId);
-    event.reply(ChannelsEnum.RESPONSE_TASKS_TODAY, tasksForToday);
+    const tasksForToday = await taskService.getTasksForDate(userId, date);
+    event.reply(ChannelsEnum.RESPONSE_TASKS_FOR_DATE, tasksForToday);
   } catch (err: any) {
     log.error(err?.message);
     // As per previous discussion, for 'on' events, we log and don't throw/reply with error directly.

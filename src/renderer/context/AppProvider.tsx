@@ -5,6 +5,7 @@ import React, {
   useContext,
   useCallback,
 } from 'react';
+import dayjs from 'dayjs';
 
 import { handlePageTaskRefresh } from '../utils';
 import {
@@ -20,6 +21,9 @@ interface User {
 }
 
 const AppContextFn = (initialUser: User | null) => {
+  const [todayPageDisplayDate, setTodayPageDisplayDate] = useState(() =>
+    dayjs().startOf('day'),
+  );
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [notification, setNotification] = useState<{
     message: string;
@@ -103,23 +107,20 @@ const AppContextFn = (initialUser: User | null) => {
     const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK,
       () => {
-        handlePageTaskRefresh();
+        handlePageTaskRefresh(todayPageDisplayDate.toDate());
       },
     );
     return unsubscribe;
-  }, []);
+  }, [todayPageDisplayDate]);
 
   const clearNotifier = useCallback(() => {
     setShowSnackbar(false);
     setNotification(undefined);
   }, []);
 
-  const [shouldRefresh, setShouldRefresh] = useState(false);
-
-  const handlePageRefresh = () => {
-    handlePageTaskRefresh();
-    setShouldRefresh(false);
-  };
+  const handlePageRefresh = useCallback(() => {
+    handlePageTaskRefresh(todayPageDisplayDate.toDate());
+  }, [todayPageDisplayDate]);
 
   return {
     addTaskToday,
@@ -136,14 +137,14 @@ const AppContextFn = (initialUser: User | null) => {
     repetitiveTaskTemplateForEdit,
     setRepetitiveTaskTemplateIdForEdit,
     setRepetitiveTaskTemplateForEdit,
-    shouldRefresh,
-    setShouldRefresh,
     handlePageRefresh,
     user,
     setUser,
     allSpaces,
     handleLoadingSpaces,
     loadingSpaces,
+    todayPageDisplayDate,
+    setTodayPageDisplayDate,
   };
 };
 

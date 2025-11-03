@@ -1,51 +1,93 @@
-import { useState, useEffect } from 'react';
-import { Fab } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Fab, Alert, Button } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import dayjs from 'dayjs';
 import { TodoList } from '../widgets';
 import { PageHeader } from '../components';
-import { refreshTodayPageTasks, isPreviousDay } from '../utils';
+import { refreshTodayPageTasksForDate } from '../utils';
 import { useApp } from '../context/AppProvider';
+import { useTheme as useAppTheme } from '../context/ThemeProvider';
 
 function Today() {
-  const { setShouldRefresh, setAddTaskToday, showAddTask, setShowAddTask } =
-    useApp();
+  const { themeMode } = useAppTheme();
+  const isDarkMode = themeMode === 'dark';
+
+  const {
+    setAddTaskToday,
+    showAddTask,
+    setShowAddTask,
+    todayPageDisplayDate,
+    setTodayPageDisplayDate,
+  } = useApp();
+
+  const [newDayBannerVisible, setNewDayBannerVisible] = useState(false);
 
   useEffect(() => {
-    refreshTodayPageTasks();
-  }, []);
+    refreshTodayPageTasksForDate(todayPageDisplayDate.toDate());
+  }, [todayPageDisplayDate]);
 
   const handleAddTaskToday = () => {
     setAddTaskToday(true);
     setShowAddTask(true);
   };
 
-  const [dateToday, setDateToday] = useState(dayjs());
-
   useEffect(() => {
-    const checkIfDayHasPassed = () => {
-      if (isPreviousDay(dateToday)) {
-        setShouldRefresh(true);
+    if (newDayBannerVisible) {
+      return () => {};
+    }
+
+    const intervalId = setInterval(() => {
+      const now = dayjs().startOf('day');
+
+      if (now.isAfter(todayPageDisplayDate)) {
+        setNewDayBannerVisible(true);
       }
-    };
+    }, 30000);
 
-    const interval = setInterval(checkIfDayHasPassed, 60 * 1000);
+    return () => clearInterval(intervalId);
+  }, [newDayBannerVisible, todayPageDisplayDate]);
 
-    return () => clearInterval(interval);
-  }, [dateToday, setShouldRefresh]);
+  const handleNewDayPageRefresh = () => {
+    setTodayPageDisplayDate(dayjs().startOf('day'));
+    setNewDayBannerVisible(false);
+  };
 
   return (
     <>
       <PageHeader>Today</PageHeader>
-      <TodoList dateToday={dateToday} setDateToday={setDateToday} />
+      {newDayBannerVisible && (
+        <Alert
+          severity="info"
+          action={
+            <Button
+              color="inherit"
+              variant="text"
+              onClick={handleNewDayPageRefresh}
+              startIcon={<RefreshIcon />}
+            >
+              Refresh
+            </Button>
+          }
+          sx={{
+            mb: 2,
+            bgcolor: isDarkMode ? 'background.paper' : undefined,
+          }}
+        >
+          A new day has begun! You can continue with yesterday&apos;s tasks or
+          refresh to see what&apos;s new for today.
+        </Alert>
+      )}
+      <TodoList />
       {!showAddTask && (
         <Fab
           sx={{ position: 'fixed', bottom: 20, right: 20 }}
           color="secondary"
           size="small"
           aria-label="add"
+          onClick={handleAddTaskToday}
         >
-          <AddIcon sx={{ color: 'white' }} onClick={handleAddTaskToday} />
+          <AddIcon sx={{ color: 'white' }} />
         </Fab>
       )}
     </>

@@ -22,8 +22,9 @@ import {
   TaskCompletionStatusEnum,
   TaskScheduleTypeEnum,
 } from '../../renderer/types';
-import { getTodayEnd, getTodayStart } from '../helpers';
+import { getTodayStart } from '../helpers';
 import { prisma } from '../prisma';
+import dayjs from 'dayjs';
 
 type PrismaTransactionalClient = Omit<
   PrismaClient,
@@ -96,24 +97,30 @@ export class TaskRepository {
     });
   };
 
-  getTasksForToday = async (userId: string | null): Promise<Task[]> => {
-    const todayStart = getTodayStart();
-    const todayEnd = getTodayEnd();
+  getTasksForDate = async (
+    userId: string | null,
+    date: Date,
+  ): Promise<Task[]> => {
+    const startOfDay = dayjs(date).startOf('day').toDate();
+    const startOfNextDay = dayjs(date).add(1, 'day').startOf('day').toDate();
 
     return prisma.task.findMany({
       where: {
         userId,
         dueDate: {
-          gte: todayStart,
-          lte: todayEnd,
+          gte: startOfDay,
+          lt: startOfNextDay,
         },
         completionStatus: {
           not: TaskCompletionStatusEnum.FAILED,
         },
+        isActive: true,
       },
       include: {
-        // Assuming you might need tags in the renderer
         tags: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   };

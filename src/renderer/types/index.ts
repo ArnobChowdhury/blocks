@@ -109,8 +109,8 @@ export enum ChannelsEnum {
   REQUEST_UPDATE_TASK = 'request_task_update',
   REQUEST_UPDATE_REPETITIVE_TASK = 'request_update_repetitive_task',
 
-  REQUEST_TASKS_TODAY = 'request-tasks-today',
-  RESPONSE_TASKS_TODAY = 'response-tasks-today',
+  REQUEST_TASKS_FOR_DATE = 'request_tasks_for_date',
+  RESPONSE_TASKS_FOR_DATE = 'response_tasks_for_date',
 
   REQUEST_TOGGLE_TASK_COMPLETION_STATUS = 'request-toggle-task-completion-status',
 

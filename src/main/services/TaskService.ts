@@ -128,8 +128,11 @@ export class TaskService {
     return updatedTask;
   };
 
-  getTasksForToday = async (userId: string | null): Promise<Task[]> => {
-    return this.taskRepository.getTasksForToday(userId);
+  getTasksForDate = async (
+    userId: string | null,
+    date: Date,
+  ): Promise<Task[]> => {
+    return this.taskRepository.getTasksForDate(userId, date);
   };
 
   getOverdueTasks = async (userId: string | null): Promise<Task[]> => {

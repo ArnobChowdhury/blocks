@@ -7,8 +7,11 @@ import {
   ROUTE_TRACKER,
 } from '../constants';
 
-export const refreshTodayPageTasks = () => {
-  window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_TODAY);
+export const refreshTodayPageTasksForDate = (date: Date) => {
+  window.electron.ipcRenderer.sendMessage(
+    ChannelsEnum.REQUEST_TASKS_FOR_DATE,
+    date,
+  );
   window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_OVERDUE);
 };
 
@@ -50,7 +53,7 @@ export const refreshSpace = (spaceId: string | null) => {
   );
 };
 
-export const handlePageTaskRefresh = () => {
+export const handlePageTaskRefresh = (todayPageDisplayDate: Date) => {
   const location = window.location.hash.replace('#', '');
 
   if (location === ROUTE_ACTIVE) {
@@ -58,7 +61,7 @@ export const handlePageTaskRefresh = () => {
   }
 
   if (location === ROUTE_ROOT) {
-    refreshTodayPageTasks();
+    refreshTodayPageTasksForDate(todayPageDisplayDate);
   }
 
   if (location === ROUTE_TRACKER) {

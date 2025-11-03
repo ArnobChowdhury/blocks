@@ -1,32 +1,37 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Dayjs } from 'dayjs';
 import { ChannelsEnum } from '../types';
+import { useApp } from '../context/AppProvider';
 
-function useTaskReschedule(cb?: () => void) {
+function useTaskReschedule(refreshCallback?: (date: Date) => void) {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
   const [error, setError] = useState('');
+  const { todayPageDisplayDate } = useApp();
 
-  const onTaskReschedule = async (taskId: string, rescheduledTime: Dayjs) => {
-    const dueDate = rescheduledTime.toISOString();
-    setError('');
-    setRequestOnGoing(true);
-    try {
-      await window.electron.ipcRenderer.invoke(
-        ChannelsEnum.REQUEST_TASK_RESCHEDULE,
-        {
-          id: taskId,
-          dueDate,
-        },
-      );
-      if (cb) {
-        cb();
+  const onTaskReschedule = useCallback(
+    async (taskId: string, rescheduledTime: Dayjs) => {
+      const dueDate = rescheduledTime.toISOString();
+      setError('');
+      setRequestOnGoing(true);
+      try {
+        await window.electron.ipcRenderer.invoke(
+          ChannelsEnum.REQUEST_TASK_RESCHEDULE,
+          {
+            id: taskId,
+            dueDate,
+          },
+        );
+        if (refreshCallback) {
+          refreshCallback(todayPageDisplayDate.toDate());
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setRequestOnGoing(false);
       }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setRequestOnGoing(false);
-    }
-  };
+    },
+    [refreshCallback, todayPageDisplayDate],
+  );
 
   return {
     requestOnGoing,

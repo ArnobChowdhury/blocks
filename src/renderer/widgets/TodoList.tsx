@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import CheckIcon from '@mui/icons-material/Check';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import NoTaskToday from '../images/NoTaskToday';
 
 import {
@@ -20,7 +20,7 @@ import {
   TaskWithTags,
 } from '../types';
 import { TodoListItem, TaskScoring, SectionHeader } from '../components';
-import { formatDate, refreshTodayPageTasks } from '../utils';
+import { formatDate, refreshTodayPageTasksForDate } from '../utils';
 import {
   useBulkFailure,
   useToggleTaskCompletionStatus,
@@ -30,12 +30,7 @@ import {
 import { TimeColors } from '../constants';
 import { useApp } from '../context/AppProvider';
 
-interface TodoListProps {
-  dateToday: Dayjs;
-  setDateToday: React.Dispatch<React.SetStateAction<Dayjs>>;
-}
-
-function TodoList({ dateToday, setDateToday }: TodoListProps) {
+function TodoList() {
   const [tasksMorning, setTasksMorning] = useState<TaskWithTags[]>([]);
   const [tasksAfternoon, setTasksAfternoon] = useState<TaskWithTags[]>([]);
   const [tasksEvening, setTasksEvening] = useState<TaskWithTags[]>([]);
@@ -50,16 +45,15 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
   }>({});
   const [taskForScoring, setTaskForScoring] = useState<TaskWithTags>();
   const [score, setScore] = useState<number | null>(null);
-  const { setNotifier, setTaskIdForEdit } = useApp();
+  const { todayPageDisplayDate, setNotifier, setTaskIdForEdit } = useApp();
 
   const [noTasksForToday, setNoTasksForToday] = useState(false);
 
   useEffect(() => {
     // sourcery skip: inline-immediately-returned-variable
     const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASKS_TODAY,
+      ChannelsEnum.RESPONSE_TASKS_FOR_DATE,
       (response) => {
-        setDateToday(dayjs());
         const tasks = response as TaskWithTags[];
         const morningTasks: TaskWithTags[] = [];
         const afternoonTasks: TaskWithTags[] = [];
@@ -95,7 +89,7 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
     );
 
     return unsubscribe;
-  }, [setDateToday]);
+  }, []);
 
   const [noOverDues, setNoOverDues] = useState(false);
 
@@ -120,8 +114,9 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
   const {
     onToggleTaskCompletionStatus,
     error: toggleTaskCompletionStatusError,
-  } = useToggleTaskCompletionStatus(refreshTodayPageTasks);
+  } = useToggleTaskCompletionStatus(refreshTodayPageTasksForDate);
 
+  // todo: in future, we can call the set notifier from the hooks itself to get rid of lots of duplication
   useEffect(() => {
     if (toggleTaskCompletionStatusError) {
       setNotifier(toggleTaskCompletionStatusError, 'error');
@@ -129,9 +124,10 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
   }, [toggleTaskCompletionStatusError, setNotifier]);
 
   const { onTaskFailure, error: taskFailureError } = useTaskFailure(
-    refreshTodayPageTasks,
+    refreshTodayPageTasksForDate,
   );
 
+  // todo: in future, we can call the set notifier from the hooks itself to get rid of lots of duplication
   useEffect(() => {
     if (taskFailureError) {
       setNotifier(taskFailureError, 'error');
@@ -142,7 +138,7 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
     onBulkFailure,
     error: bulkFailureError,
     requestOnGoing,
-  } = useBulkFailure(refreshTodayPageTasks);
+  } = useBulkFailure(refreshTodayPageTasksForDate);
 
   useEffect(() => {
     if (bulkFailureError) {
@@ -151,7 +147,7 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
   }, [bulkFailureError, setNotifier]);
 
   const { onTaskReschedule, error: taskRescheduleError } = useTaskReschedule(
-    refreshTodayPageTasks,
+    refreshTodayPageTasksForDate,
   );
 
   useEffect(() => {
@@ -199,7 +195,7 @@ function TodoList({ dateToday, setDateToday }: TodoListProps) {
     setScore(null);
   };
 
-  const todayFormatted = formatDate(dateToday);
+  const todayFormatted = formatDate(todayPageDisplayDate);
 
   const handleBulkFailure = async (date: string) => {
     const taskIds = sortedTasksOverdue[date].map((task) => task.id);

@@ -1,27 +1,32 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ChannelsEnum } from '../types';
+import { useApp } from '../context/AppProvider';
 
-function useTaskFailure(cb?: () => void) {
+function useTaskFailure(refreshCallback?: (date: Date) => void) {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
   const [error, setError] = useState('');
+  const { todayPageDisplayDate } = useApp();
 
-  const onTaskFailure = async (taskId: string) => {
-    setError('');
-    setRequestOnGoing(true);
-    try {
-      await window.electron.ipcRenderer.invoke(
-        ChannelsEnum.REQUEST_TASK_FAILURE,
-        { id: taskId },
-      );
-      if (cb) {
-        cb();
+  const onTaskFailure = useCallback(
+    async (taskId: string) => {
+      setError('');
+      setRequestOnGoing(true);
+      try {
+        await window.electron.ipcRenderer.invoke(
+          ChannelsEnum.REQUEST_TASK_FAILURE,
+          { id: taskId },
+        );
+        if (refreshCallback) {
+          refreshCallback(todayPageDisplayDate.toDate());
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setRequestOnGoing(false);
       }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setRequestOnGoing(false);
-    }
-  };
+    },
+    [refreshCallback, todayPageDisplayDate],
+  );
 
   return {
     requestOnGoing,

@@ -1,35 +1,36 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ChannelsEnum } from '../types';
+import { useApp } from '../context/AppProvider';
 
-function useToggleTaskCompletionStatus(cb?: () => void) {
+function useToggleTaskCompletionStatus(refreshCallback?: (date: Date) => void) {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
   const [error, setError] = useState('');
+  const { todayPageDisplayDate } = useApp();
 
-  const onToggleTaskCompletionStatus = async (
-    id: string,
-    checked: boolean,
-    taskScore?: number | null,
-  ) => {
-    setError('');
-    setRequestOnGoing(true);
-    try {
-      await window.electron.ipcRenderer.invoke(
-        ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
-        {
-          id,
-          checked,
-          score: taskScore,
-        },
-      );
-      if (cb) {
-        cb();
+  const onToggleTaskCompletionStatus = useCallback(
+    async (id: string, checked: boolean, taskScore?: number | null) => {
+      setError('');
+      setRequestOnGoing(true);
+      try {
+        await window.electron.ipcRenderer.invoke(
+          ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
+          {
+            id,
+            checked,
+            score: taskScore,
+          },
+        );
+        if (refreshCallback) {
+          refreshCallback(todayPageDisplayDate.toDate());
+        }
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setRequestOnGoing(false);
       }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setRequestOnGoing(false);
-    }
-  };
+    },
+    [refreshCallback, todayPageDisplayDate],
+  );
 
   return {
     requestOnGoing,
