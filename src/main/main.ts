@@ -315,6 +315,16 @@ ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
   event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, tasksOverdue);
 });
 
+/**
+ * todo: add error handling
+ */
+ipcMain.on(ChannelsEnum.REQUEST_COUNT_OF_TASKS_OVERDUE, async (event) => {
+  const userId = session.user ? session.user.id : null;
+  const count = await taskService.getCountOfTasksOverdue(userId);
+
+  event.reply(ChannelsEnum.RESPONSE_COUNT_OF_TASKS_OVERDUE, count);
+});
+
 ipcMain.handle(
   ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
   async (event, { id, checked, score }) => {
