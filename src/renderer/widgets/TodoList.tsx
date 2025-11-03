@@ -3,14 +3,11 @@ import {
   List,
   Divider,
   Typography,
-  Button,
   IconButton,
   Box,
   Popover,
 } from '@mui/material';
-import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import CheckIcon from '@mui/icons-material/Check';
-import dayjs from 'dayjs';
 import NoTaskToday from '../images/NoTaskToday';
 
 import {
@@ -22,7 +19,6 @@ import {
 import { TodoListItem, TaskScoring, SectionHeader } from '../components';
 import { formatDate, refreshTodayPageForDate } from '../utils';
 import {
-  useBulkFailure,
   useToggleTaskCompletionStatus,
   useTaskFailure,
   useTaskReschedule,
@@ -39,10 +35,6 @@ function TodoList() {
     TaskWithTags[]
   >([]);
 
-  const [tasksOverdue, setTasksOverdue] = useState<TaskWithTags[]>([]);
-  const [sortedTasksOverdue, setSortedTasksOverdue] = useState<{
-    [key: string]: TaskWithTags[];
-  }>({});
   const [taskForScoring, setTaskForScoring] = useState<TaskWithTags>();
   const [score, setScore] = useState<number | null>(null);
   const { todayPageDisplayDate, setNotifier, setTaskIdForEdit } = useApp();
@@ -91,26 +83,6 @@ function TodoList() {
     return unsubscribe;
   }, []);
 
-  const [noOverDues, setNoOverDues] = useState(false);
-
-  useEffect(() => {
-    // sourcery skip: inline-immediately-returned-variable
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASKS_OVERDUE,
-      (response) => {
-        if ((response as TaskWithTags[]).length === 0) {
-          setNoOverDues(true);
-        } else {
-          setNoOverDues(false);
-        }
-        // todo need error handling
-        setTasksOverdue(response as TaskWithTags[]);
-      },
-    );
-
-    return unsubscribe;
-  }, []);
-
   const {
     onToggleTaskCompletionStatus,
     error: toggleTaskCompletionStatusError,
@@ -134,18 +106,6 @@ function TodoList() {
     }
   }, [taskFailureError, setNotifier]);
 
-  const {
-    onBulkFailure,
-    error: bulkFailureError,
-    requestOnGoing,
-  } = useBulkFailure(refreshTodayPageForDate);
-
-  useEffect(() => {
-    if (bulkFailureError) {
-      setNotifier(bulkFailureError, 'error');
-    }
-  }, [bulkFailureError, setNotifier]);
-
   const { onTaskReschedule, error: taskRescheduleError } = useTaskReschedule(
     refreshTodayPageForDate,
   );
@@ -155,22 +115,6 @@ function TodoList() {
       setNotifier(taskRescheduleError, 'error');
     }
   }, [taskRescheduleError, setNotifier]);
-
-  useEffect(() => {
-    const tasksOverdueByDate: Record<string, TaskWithTags[]> = {};
-
-    tasksOverdue.forEach((task) => {
-      const taskDueDate = formatDate(dayjs(task.dueDate!));
-
-      if (tasksOverdueByDate[taskDueDate]) {
-        tasksOverdueByDate[taskDueDate].push(task);
-      } else {
-        tasksOverdueByDate[taskDueDate] = [task];
-      }
-    });
-
-    setSortedTasksOverdue(tasksOverdueByDate);
-  }, [tasksOverdue]);
 
   const [scoreAnchorEl, setScoreAnchorEl] =
     React.useState<HTMLInputElement | null>(null);
@@ -197,11 +141,6 @@ function TodoList() {
 
   const todayFormatted = formatDate(todayPageDisplayDate);
 
-  const handleBulkFailure = async (date: string) => {
-    const taskIds = sortedTasksOverdue[date].map((task) => task.id);
-    await onBulkFailure(taskIds);
-  };
-
   const handleTaskEdit = (taskId: string) => {
     if (taskId) {
       setTaskIdForEdit(taskId);
@@ -224,56 +163,6 @@ function TodoList() {
 
   return (
     <>
-      {tasksOverdue.length > 0 && (
-        <>
-          <Typography variant="h6" mt={2}>
-            Overdue
-          </Typography>
-          {/* todo sorting needed to ensure the dates are in correct order  */}
-          {Object.keys(sortedTasksOverdue)
-            .sort((a, b) => dayjs(a).diff(dayjs(b)))
-            .map((key) => (
-              <Box ml={2} key={key}>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  width="100%"
-                  alignItems="center"
-                >
-                  <SectionHeader mt={2}>{key}</SectionHeader>
-                  <Button
-                    size="small"
-                    startIcon={<ThumbDownIcon color="error" />}
-                    onClick={() => handleBulkFailure(key)}
-                    disabled={requestOnGoing}
-                    color="error"
-                  >
-                    Fail all
-                  </Button>
-                </Box>
-                <List>
-                  {sortedTasksOverdue[key].map((task) => (
-                    <React.Fragment key={task.id}>
-                      <TodoListItem
-                        isCompleted={task.completionStatus === 'COMPLETE'}
-                        onChange={(e) => handleTaskToggle(e, task)}
-                        taskTitle={task.title}
-                        tags={task.tags}
-                        showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
-                        onFail={() => onTaskFailure(task.id)}
-                        onReschedule={(rescheduledTime) =>
-                          onTaskReschedule(task.id, rescheduledTime)
-                        }
-                        onTaskEdit={() => handleTaskEdit(task.id)}
-                      />
-                      <Divider />
-                    </React.Fragment>
-                  ))}
-                </List>
-              </Box>
-            ))}
-        </>
-      )}
       <Typography variant="h6" mt={2}>
         {todayFormatted}
       </Typography>
@@ -328,7 +217,7 @@ function TodoList() {
           </Box>
         );
       })}
-      {noTasksForToday && noOverDues && (
+      {noTasksForToday && (
         <Box
           width="100%"
           height="600px"

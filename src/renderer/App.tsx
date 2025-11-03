@@ -34,11 +34,20 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/system';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
+import HistoryIcon from '@mui/icons-material/History';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { PageWrapper } from './layouts';
-import { Today, Active, Tracker, Space, Auth, Settings } from './pages';
+import {
+  Today,
+  Active,
+  Tracker,
+  Space,
+  Auth,
+  Settings,
+  Overdue,
+} from './pages';
 import ArrowLeft from './icons/ArrowLeft';
 import ArrowRight from './icons/ArrowRight';
 import ArrowDown from './icons/ArrowDown';
@@ -60,6 +69,7 @@ import {
   ROUTE_TASKS_WITHOUT_A_SPACE,
   ROUTE_AUTH,
   ROUTE_SETTINGS,
+  ROUTE_OVERDUE,
 } from './constants';
 import { ChannelsEnum } from './types';
 
@@ -210,6 +220,16 @@ function Navigation() {
               <TrackerIcon />
             </ListItemIcon>
             <ListItemText primary="Tracker" />
+          </ListItemButton>
+          <ListItemButton
+            component={Link}
+            to={ROUTE_OVERDUE}
+            selected={location.pathname === ROUTE_OVERDUE}
+          >
+            <ListItemIcon>
+              <HistoryIcon color="primary" />
+            </ListItemIcon>
+            <ListItemText primary="Overdue" />
           </ListItemButton>
           <ListItemButton sx={{ mt: 2 }} onClick={handleSpacesExpand}>
             <ListItemIcon>
@@ -462,6 +482,7 @@ function App() {
                     element={<Space />}
                   />
                   <Route path={ROUTE_AUTH} element={<Auth />} />
+                  <Route path={ROUTE_OVERDUE} element={<Overdue />} />
                   <Route path={ROUTE_SETTINGS} element={<Settings />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
