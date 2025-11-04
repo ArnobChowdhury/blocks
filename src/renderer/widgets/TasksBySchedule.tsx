@@ -3,12 +3,11 @@ import { List, Typography, Divider, Tab, Box } from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import {
   TaskScheduleTypeEnum,
-  DaysInAWeek,
   TaskCompletionStatusEnum,
   TaskWithTags,
   RepetitiveTaskWithTags,
 } from '../types';
-import { TodoListItem, TabHeader } from '../components';
+import { TodoListItem, TabHeader, RepetitiveTaskListItem } from '../components';
 import { handlePageTaskRefresh } from '../utils';
 import {
   useToggleTaskCompletionStatus,
@@ -162,17 +161,13 @@ function TasksBySchedule({
                 return (
                   <Fragment key={task.id}>
                     <TodoListItem
-                      schedule={task.schedule as TaskScheduleTypeEnum}
-                      taskTitle={task.title}
-                      tags={task.tags}
-                      isCompleted={
-                        task.completionStatus ===
-                        TaskCompletionStatusEnum.COMPLETE
-                      }
+                      task={task}
                       onChange={(e) =>
                         onToggleTaskCompletionStatus(
                           task.id,
-                          e.target.checked,
+                          e.target.checked
+                            ? TaskCompletionStatusEnum.COMPLETE
+                            : TaskCompletionStatusEnum.INCOMPLETE,
                           undefined,
                         )
                       }
@@ -181,7 +176,6 @@ function TasksBySchedule({
                         onTaskReschedule(task.id, rescheduledTime)
                       }
                       onTaskEdit={() => handleTaskEdit(task.id)}
-                      showClock
                       key={task.id}
                     />
                     <Divider />
@@ -201,17 +195,13 @@ function TasksBySchedule({
                 return (
                   <Fragment key={task.id}>
                     <TodoListItem
-                      schedule={task.schedule as TaskScheduleTypeEnum}
-                      taskTitle={task.title}
-                      tags={task.tags}
-                      isCompleted={
-                        task.completionStatus ===
-                        TaskCompletionStatusEnum.COMPLETE
-                      }
+                      task={task}
                       onChange={(e) =>
                         onToggleTaskCompletionStatus(
                           task.id,
-                          e.target.checked,
+                          e.target.checked
+                            ? TaskCompletionStatusEnum.COMPLETE
+                            : TaskCompletionStatusEnum.INCOMPLETE,
                           undefined,
                         )
                       }
@@ -220,9 +210,7 @@ function TasksBySchedule({
                         onTaskReschedule(task.id, rescheduledTime)
                       }
                       onTaskEdit={() => handleTaskEdit(task.id)}
-                      showClock
                       key={task.id}
-                      dueDateLabel={task.dueDate}
                     />
                     <Divider />
                   </Fragment>
@@ -240,11 +228,8 @@ function TasksBySchedule({
               {dailyTasks.map((task) => {
                 return (
                   <Fragment key={task.id}>
-                    <TodoListItem
-                      schedule={task.schedule as TaskScheduleTypeEnum}
-                      taskTitle={task.title}
-                      tags={task.tags}
-                      onChange={() => {}}
+                    <RepetitiveTaskListItem
+                      task={task}
                       key={task.id}
                       onTaskEdit={() => handleRepetitiveTaskEdit(task.id)}
                     />
@@ -262,21 +247,12 @@ function TasksBySchedule({
           {specificDaysInAWeekTasks.length > 0 && (
             <List>
               {specificDaysInAWeekTasks.map((task) => {
-                const days = Object.values(DaysInAWeek).filter(
-                  (day) => task[day],
-                );
-
                 return (
                   <Fragment key={task.id}>
-                    <TodoListItem
-                      schedule={task.schedule as TaskScheduleTypeEnum}
-                      taskTitle={task.title}
-                      tags={task.tags}
-                      onChange={() => {}}
+                    <RepetitiveTaskListItem
+                      task={task}
                       onTaskEdit={() => handleRepetitiveTaskEdit(task.id)}
-                      showClock
                       key={task.id}
-                      dayLabels={days}
                     />
                     <Divider />
                   </Fragment>

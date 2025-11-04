@@ -11,10 +11,10 @@ import CheckIcon from '@mui/icons-material/Check';
 import NoTaskToday from '../images/NoTaskToday';
 
 import {
-  TaskScheduleTypeEnum,
   ChannelsEnum,
   TimeOfDay,
   TaskWithTags,
+  TaskCompletionStatusEnum,
 } from '../types';
 import { TodoListItem, TaskScoring, SectionHeader } from '../components';
 import { formatDate, refreshTodayPageForDate } from '../utils';
@@ -23,7 +23,7 @@ import {
   useTaskFailure,
   useTaskReschedule,
 } from '../hooks';
-import { TimeColors } from '../constants';
+import { SectionColors } from '../constants';
 import { useApp } from '../context/AppProvider';
 
 function TodoList() {
@@ -34,6 +34,7 @@ function TodoList() {
   const [tasksWithoutTimeOfDay, setTasksWithoutTimeOfDay] = useState<
     TaskWithTags[]
   >([]);
+  const [tasksFailed, setTasksFailed] = useState<TaskWithTags[]>([]);
 
   const [taskForScoring, setTaskForScoring] = useState<TaskWithTags>();
   const [score, setScore] = useState<number | null>(null);
@@ -52,6 +53,7 @@ function TodoList() {
         const eveningTasks: TaskWithTags[] = [];
         const nightTasks: TaskWithTags[] = [];
         const tasksWithoutTime: TaskWithTags[] = [];
+        const failedTasks: TaskWithTags[] = [];
 
         if (tasks.length === 0) {
           setNoTasksForToday(true);
@@ -60,7 +62,9 @@ function TodoList() {
         }
 
         tasks.forEach((task) => {
-          if (task.timeOfDay === TimeOfDay.Morning) {
+          if (task.completionStatus === TaskCompletionStatusEnum.FAILED) {
+            failedTasks.push(task);
+          } else if (task.timeOfDay === TimeOfDay.Morning) {
             morningTasks.push(task);
           } else if (task.timeOfDay === TimeOfDay.Afternoon) {
             afternoonTasks.push(task);
@@ -77,6 +81,7 @@ function TodoList() {
         setTasksEvening(eveningTasks);
         setTasksNight(nightTasks);
         setTasksWithoutTimeOfDay(tasksWithoutTime);
+        setTasksFailed(failedTasks);
       },
     );
 
@@ -129,7 +134,9 @@ function TodoList() {
     } else
       onToggleTaskCompletionStatus(
         task.id,
-        e.target.checked,
+        e.target.checked
+          ? TaskCompletionStatusEnum.COMPLETE
+          : TaskCompletionStatusEnum.INCOMPLETE,
         task.shouldBeScored ? null : undefined,
       );
   };
@@ -157,7 +164,11 @@ function TodoList() {
 
   const handleScoreSubmission = () => {
     if (score === null || !taskForScoring) return;
-    onToggleTaskCompletionStatus(taskForScoring.id, true, score);
+    onToggleTaskCompletionStatus(
+      taskForScoring.id,
+      TaskCompletionStatusEnum.COMPLETE,
+      score,
+    );
     handleScoreDialogClose();
   };
 
@@ -172,39 +183,52 @@ function TodoList() {
         tasksEvening,
         tasksNight,
         tasksWithoutTimeOfDay,
+        tasksFailed,
       ].map((tasks) => {
         if (tasks.length === 0) return null;
 
-        const { timeOfDay } = tasks[0];
-        const bg = timeOfDay ? TimeColors[timeOfDay] : 'none';
-        const header = tasks[0].timeOfDay;
+        const { timeOfDay, completionStatus } = tasks[0];
+        let bg: string;
+        let header: string;
+        if (completionStatus === TaskCompletionStatusEnum.FAILED) {
+          bg = SectionColors.failed;
+          header = 'Failed';
+        } else if (timeOfDay) {
+          bg = SectionColors[timeOfDay];
+          header = timeOfDay;
+        } else {
+          bg = SectionColors.anytime;
+          header = 'Any Time';
+        }
+
         return (
           <Box
             sx={{
               background: bg,
               borderRadius: '4px',
               px: 2,
-              pt: timeOfDay ? 2 : 0,
-              mt: timeOfDay ? 2 : 0,
-              color: bg === 'none' ? 'text.primary' : 'text.onLightBackground',
+              pt: 2,
+              mt: 2,
+              color: 'text.onLightBackground',
             }}
             key={bg}
           >
-            {timeOfDay && (
-              <SectionHeader sx={{ textTransform: 'capitalize' }}>
-                {header}
-              </SectionHeader>
-            )}
+            <SectionHeader sx={{ textTransform: 'capitalize' }}>
+              {header}
+            </SectionHeader>
             <List>
               {tasks.map((task, index) => (
                 <React.Fragment key={task.id}>
                   <TodoListItem
-                    isCompleted={task.completionStatus === 'COMPLETE'}
+                    task={task}
                     onChange={(e) => handleTaskToggle(e, task)}
-                    taskTitle={task.title}
-                    tags={task.tags}
-                    showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
                     onFail={() => onTaskFailure(task.id)}
+                    onRecover={() =>
+                      onToggleTaskCompletionStatus(
+                        task.id,
+                        TaskCompletionStatusEnum.INCOMPLETE,
+                      )
+                    }
                     onReschedule={(rescheduledTime) =>
                       onTaskReschedule(task.id, rescheduledTime)
                     }

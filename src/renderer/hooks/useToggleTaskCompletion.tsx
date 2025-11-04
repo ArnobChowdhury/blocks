@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ChannelsEnum } from '../types';
+import { ChannelsEnum, TaskCompletionStatusEnum } from '../types';
 import { useApp } from '../context/AppProvider';
 
 function useToggleTaskCompletionStatus(refreshCallback?: (date: Date) => void) {
@@ -8,7 +8,11 @@ function useToggleTaskCompletionStatus(refreshCallback?: (date: Date) => void) {
   const { todayPageDisplayDate } = useApp();
 
   const onToggleTaskCompletionStatus = useCallback(
-    async (id: string, checked: boolean, taskScore?: number | null) => {
+    async (
+      id: string,
+      status: TaskCompletionStatusEnum,
+      taskScore?: number | null,
+    ) => {
       setError('');
       setRequestOnGoing(true);
       try {
@@ -16,7 +20,7 @@ function useToggleTaskCompletionStatus(refreshCallback?: (date: Date) => void) {
           ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
           {
             id,
-            checked,
+            status,
             score: taskScore,
           },
         );

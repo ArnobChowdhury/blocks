@@ -145,13 +145,10 @@ export class TaskService {
 
   toggleTaskCompletionStatus = async (
     id: string,
-    checked: boolean,
+    status: TaskCompletionStatusEnum,
     score: number | null | undefined,
     userId: string | null,
   ): Promise<Task> => {
-    const status = checked
-      ? TaskCompletionStatusEnum.COMPLETE
-      : TaskCompletionStatusEnum.INCOMPLETE;
     const isPremium = !!userId;
 
     const updatedTask = await prisma.$transaction(async (tx) => {

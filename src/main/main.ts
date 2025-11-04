@@ -327,11 +327,11 @@ ipcMain.on(ChannelsEnum.REQUEST_COUNT_OF_TASKS_OVERDUE, async (event) => {
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
-  async (event, { id, checked, score }) => {
+  async (event, { id, status, score }) => {
     // todo: need to make the one-off task in active
     const userId = session.user ? session.user.id : null;
     try {
-      await taskService.toggleTaskCompletionStatus(id, checked, score, userId);
+      await taskService.toggleTaskCompletionStatus(id, status, score, userId);
     } catch (err) {
       log.error(err);
       throw err;

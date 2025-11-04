@@ -11,7 +11,7 @@ import {
 import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import dayjs from 'dayjs';
 import { PageHeader, SectionHeader, TodoListItem } from '../components';
-import { TaskScheduleTypeEnum, ChannelsEnum, TaskWithTags } from '../types';
+import { ChannelsEnum, TaskWithTags, TaskCompletionStatusEnum } from '../types';
 import { formatDate } from '../utils';
 import {
   useBulkFailure,
@@ -157,13 +157,15 @@ function Overdue() {
                 {sortedTasksOverdue[key].map((task) => (
                   <React.Fragment key={task.id}>
                     <TodoListItem
-                      isCompleted={task.completionStatus === 'COMPLETE'}
+                      task={task}
                       onChange={(e) =>
-                        onToggleTaskCompletionStatus(task.id, e.target.checked)
+                        onToggleTaskCompletionStatus(
+                          task.id,
+                          e.target.checked
+                            ? TaskCompletionStatusEnum.COMPLETE
+                            : TaskCompletionStatusEnum.INCOMPLETE,
+                        )
                       }
-                      taskTitle={task.title}
-                      tags={task.tags}
-                      showClock={task.schedule !== TaskScheduleTypeEnum.Daily}
                       onFail={() => onTaskFailure(task.id)}
                       onReschedule={(rescheduledTime) =>
                         onTaskReschedule(task.id, rescheduledTime)

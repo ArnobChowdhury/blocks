@@ -9,53 +9,46 @@ import {
   Fade,
   Tooltip,
   Popover,
-  Chip,
   Checkbox,
   useTheme,
 } from '@mui/material';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import dayjs, { Dayjs } from 'dayjs';
 import Clock from '../icons/Clock';
-import { TaskScheduleTypeEnum, DaysInAWeek } from '../types';
+import { TaskWithTags, TaskCompletionStatusEnum } from '../types';
 import CustomChip from './CustomChip';
 
-// eslint-disable-next-line import/no-relative-packages
-import { Tag } from '../../generated/client';
-
-interface ITodoListItemProps {
-  isCompleted?: boolean;
+interface ITaskListItemProps {
+  task: TaskWithTags;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  taskTitle: string;
-  tags: Tag[];
-  showClock?: boolean;
-  schedule?: TaskScheduleTypeEnum;
-  dayLabels?: DaysInAWeek[];
-  dueDateLabel?: string | Date | Dayjs | null;
+  showDueDateLabel?: boolean;
   onFail?: () => void;
+  onRecover?: () => void;
   onReschedule?: (rescheduledTime: Dayjs) => void;
   onTaskEdit: () => void;
 }
 
 function TodoListItem({
-  isCompleted,
+  task,
   onChange,
-  taskTitle,
-  tags = [],
-  showClock = true,
-  schedule,
-  dayLabels,
-  dueDateLabel,
+  showDueDateLabel,
   onFail,
+  onRecover,
   onReschedule,
   onTaskEdit,
-}: ITodoListItemProps) {
-  const isAHabit =
-    schedule === TaskScheduleTypeEnum.Daily ||
-    schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek;
-  const [showOptions, setShowOptions] = useState(
-    Boolean(schedule) && !isAHabit,
-  );
+}: ITaskListItemProps) {
+  const {
+    title: taskTitle,
+    tags = [],
+    completionStatus,
+    dueDate: dueDateLabel,
+  } = task;
+  const isCompleted = completionStatus === TaskCompletionStatusEnum.COMPLETE;
+  const isFailed = completionStatus === TaskCompletionStatusEnum.FAILED;
+
+  const [showOptions, setShowOptions] = useState(false);
 
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLButtonElement | null>(
     null,
@@ -67,14 +60,12 @@ function TodoListItem({
   const datePopOverId = showDate ? 'datepicker-reschedule-popover' : undefined;
 
   const handleMouseEnter = () => {
-    if (schedule) return;
-    if (!isCompleted && !isAHabit) {
+    if (!isCompleted) {
       setShowOptions(true);
     }
   };
 
   const handleMouseLeave = () => {
-    if (schedule) return;
     if (!isCompleted) setShowOptions(false);
   };
 
@@ -97,58 +88,38 @@ function TodoListItem({
     >
       <Box display="flex" justifyContent="space-between" width="100%">
         <Box display="flex" alignItems="center">
-          {isAHabit && <Typography variant="body2">{taskTitle}</Typography>}
-          {!isAHabit && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  size="small"
-                  checked={isCompleted}
-                  onChange={onChange}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                />
-              }
-              label={
-                <Typography
-                  sx={{
-                    textDecoration: isCompleted ? 'line-through' : 'none',
-                  }}
-                  variant="body2"
-                  onClick={handleEditClick}
-                >
-                  {taskTitle}
-                </Typography>
-              }
-            />
-          )}
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={isCompleted}
+                onChange={onChange}
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              />
+            }
+            label={
+              <Typography
+                sx={{
+                  textDecoration: isCompleted ? 'line-through' : 'none',
+                }}
+                variant="body2"
+                onClick={handleEditClick}
+              >
+                {taskTitle}
+              </Typography>
+            }
+          />
 
           <Box ml={2}>
-            {dueDateLabel && (
+            {showDueDateLabel && dueDateLabel && (
               <CustomChip
                 size="small"
                 label={`${dayjs(dueDateLabel).date()} ${dayjs(
                   dueDateLabel,
                 ).format('MMMM')}`}
               />
-            )}
-            {dayLabels && dayLabels.length > 0 && (
-              <Box ml={2}>
-                {dayLabels.map((day) => (
-                  <Chip
-                    key={day}
-                    label={day}
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      mr: 1,
-                      color: theme.palette.primary.main,
-                      textTransform: 'capitalize',
-                    }}
-                  />
-                ))}
-              </Box>
             )}
           </Box>
           <Fade in={showOptions} timeout={200}>
@@ -178,7 +149,7 @@ function TodoListItem({
             justifyContent="flex-end"
             alignItems="center"
           >
-            {showClock && (
+            {!isCompleted && (
               <>
                 <Tooltip
                   title="Reschedule"
@@ -244,34 +215,66 @@ function TodoListItem({
                 </Popover>
               </>
             )}
-            <Tooltip
-              title="Failed"
-              placement="top"
-              arrow
-              slotProps={{
-                popper: {
-                  modifiers: [
-                    {
-                      name: 'offset',
-                      options: {
-                        offset: [0, -6],
+            {!isCompleted && !isFailed && (
+              <Tooltip
+                title="Failed"
+                placement="top"
+                arrow
+                slotProps={{
+                  popper: {
+                    modifiers: [
+                      {
+                        name: 'offset',
+                        options: {
+                          offset: [0, -6],
+                        },
                       },
-                    },
-                  ],
-                },
-              }}
-            >
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (onFail) onFail();
+                    ],
+                  },
                 }}
-                sx={{ width: '32px', height: '32px' }}
               >
-                <ThumbDownIcon sx={{ width: '16px' }} color="error" />
-              </IconButton>
-            </Tooltip>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onFail) onFail();
+                  }}
+                  sx={{ width: '32px', height: '32px' }}
+                >
+                  <ThumbDownIcon sx={{ width: '16px' }} color="error" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {isFailed && (
+              <Tooltip
+                title="Recover"
+                placement="top"
+                arrow
+                slotProps={{
+                  popper: {
+                    modifiers: [
+                      {
+                        name: 'offset',
+                        options: {
+                          offset: [0, -6],
+                        },
+                      },
+                    ],
+                  },
+                }}
+              >
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onRecover) onRecover();
+                  }}
+                  sx={{ width: '32px', height: '32px' }}
+                >
+                  <RestartAltIcon sx={{ width: '20px' }} color="success" />
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
         </Fade>
       </Box>

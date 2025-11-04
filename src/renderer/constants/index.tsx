@@ -7,11 +7,13 @@ export const scoreColors = [
   '#006620',
 ];
 
-export const TimeColors: { [key: string]: string } = {
+export const SectionColors: { [key: string]: string } = {
   morning: '#E4F8FC',
   afternoon: '#FEEED4',
-  evening: '#FFDFDC',
+  evening: '#FFE5D9',
   night: '#CDD2E9',
+  failed: '#FFDFDC',
+  anytime: '#F5F5F5',
 };
 
 export const ROUTE_ROOT = '/';

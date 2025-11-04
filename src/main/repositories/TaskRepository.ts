@@ -111,9 +111,6 @@ export class TaskRepository {
           gte: startOfDay,
           lt: startOfNextDay,
         },
-        completionStatus: {
-          not: TaskCompletionStatusEnum.FAILED,
-        },
         isActive: true,
       },
       include: {
@@ -264,8 +261,13 @@ export class TaskRepository {
     userId: string | null,
     tx?: PrismaTransactionalClient,
   ): Promise<Task> => {
-    const data: { dueDate: string; schedule?: TaskScheduleTypeEnum } = {
+    const data: {
+      dueDate: string;
+      schedule?: TaskScheduleTypeEnum;
+      completionStatus?: TaskCompletionStatusEnum;
+    } = {
       dueDate,
+      completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
     };
     if (newSchedule) {
       data.schedule = newSchedule;

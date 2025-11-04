@@ -7,6 +7,7 @@ import SectionHeader from './SectionHeader';
 import TimeOfDaySelector from './TimeOfDaySelector';
 import Selector from './Selector';
 import TabHeader from './TabHeader';
+import RepetitiveTaskListItem from './RepetitiveTaskListItem';
 
 export {
   TaskScoring,
@@ -18,4 +19,5 @@ export {
   TimeOfDaySelector,
   Selector,
   TabHeader,
+  RepetitiveTaskListItem,
 };
