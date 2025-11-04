@@ -1,5 +1,12 @@
-import { useEffect, SyntheticEvent, Fragment, useState } from 'react';
-import { List, Typography, Divider, Tab, Box } from '@mui/material';
+import { useEffect, SyntheticEvent, Fragment, useState, useRef } from 'react';
+import {
+  List,
+  Typography,
+  Divider,
+  Tab,
+  Box,
+  CircularProgress,
+} from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import {
   TaskScheduleTypeEnum,
@@ -21,6 +28,8 @@ interface TasksByScheduleProps {
   oneOffTasks: TaskWithTags[];
   dailyTasks: RepetitiveTaskWithTags[];
   specificDaysInAWeekTasks: RepetitiveTaskWithTags[];
+  isLoading: boolean;
+  spaceId?: string;
 }
 
 function TasksBySchedule({
@@ -28,6 +37,8 @@ function TasksBySchedule({
   oneOffTasks,
   dailyTasks,
   specificDaysInAWeekTasks,
+  isLoading,
+  spaceId,
 }: TasksByScheduleProps) {
   const { setNotifier, setTaskIdForEdit, setRepetitiveTaskTemplateIdForEdit } =
     useApp();
@@ -81,31 +92,54 @@ function TasksBySchedule({
     setTabValue(newValue);
   };
 
-  useEffect(() => {
-    const order = [
-      {
-        tabValue: TaskScheduleTypeEnum.Unscheduled,
-        count: unscheduledTasks.length,
-      },
-      {
-        tabValue: TaskScheduleTypeEnum.Once,
-        count: oneOffTasks.length,
-      },
-      {
-        tabValue: TaskScheduleTypeEnum.Daily,
-        count: dailyTasks.length,
-      },
-      {
-        tabValue: TaskScheduleTypeEnum.SpecificDaysInAWeek,
-        count: specificDaysInAWeekTasks.length,
-      },
-    ];
+  const hasReordered = useRef(false);
 
-    const firstTabWithContent = order.find((tab) => tab.count > 0);
-    if (firstTabWithContent) {
-      setTabValue(firstTabWithContent.tabValue);
+  useEffect(() => {
+    hasReordered.current = false;
+  }, [spaceId]);
+
+  useEffect(() => {
+    if (!hasReordered.current && !isLoading) {
+      const order = [
+        {
+          tabValue: TaskScheduleTypeEnum.Unscheduled,
+          count: unscheduledTasks.length,
+        },
+        {
+          tabValue: TaskScheduleTypeEnum.Once,
+          count: oneOffTasks.length,
+        },
+        {
+          tabValue: TaskScheduleTypeEnum.Daily,
+          count: dailyTasks.length,
+        },
+        {
+          tabValue: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+          count: specificDaysInAWeekTasks.length,
+        },
+      ];
+
+      const firstTabWithContent = order.find((tab) => tab.count > 0);
+      if (firstTabWithContent) {
+        setTabValue(firstTabWithContent.tabValue);
+      }
+      hasReordered.current = true;
     }
-  }, [unscheduledTasks, oneOffTasks, dailyTasks, specificDaysInAWeekTasks]);
+  }, [
+    isLoading,
+    dailyTasks,
+    oneOffTasks,
+    specificDaysInAWeekTasks,
+    unscheduledTasks,
+  ]);
+
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <div>
@@ -266,4 +300,7 @@ function TasksBySchedule({
   );
 }
 
+TasksBySchedule.defaultProps = {
+  spaceId: undefined,
+};
 export default TasksBySchedule;
