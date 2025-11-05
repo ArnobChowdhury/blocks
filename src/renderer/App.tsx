@@ -72,6 +72,7 @@ import {
   ROUTE_OVERDUE,
 } from './constants';
 import { ChannelsEnum } from './types';
+import { SyncIndicator } from './components';
 
 const MyStyledListItemText = styled(ListItemText)({
   color: 'red',
@@ -83,6 +84,7 @@ const Main = styled('main', {
   open: boolean;
   drawerWidth: number;
 }>(({ theme, open, drawerWidth }) => ({
+  position: 'relative',
   flexGrow: 1,
   padding: theme.spacing(1),
   marginLeft: `-${drawerWidth}px`,
@@ -371,7 +373,7 @@ function App() {
     setOpenDrawer(false);
   };
 
-  const { showSnackbar, notification, clearNotifier } = useApp();
+  const { showSnackbar, notification, clearNotifier, isSyncing } = useApp();
 
   const [drawerWidth, setDrawerWidth] = useState(240);
   const drawerRef = useRef<HTMLDivElement | null>(null);
@@ -487,6 +489,7 @@ function App() {
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </PageWrapper>
+              {isSyncing && <SyncIndicator />}
             </Main>
 
             <Snackbar

@@ -4,6 +4,7 @@ import React, {
   PropsWithChildren,
   useContext,
   useCallback,
+  useRef,
 } from 'react';
 import dayjs from 'dayjs';
 
@@ -122,6 +123,51 @@ const AppContextFn = (initialUser: User | null) => {
     handlePageTaskRefresh(todayPageDisplayDate.toDate());
   }, [todayPageDisplayDate]);
 
+  const isSyncingRef = useRef(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const runSync = useCallback(async () => {
+    if (isSyncingRef.current) return;
+
+    isSyncingRef.current = true;
+    setIsSyncing(true);
+    try {
+      await window.electron.ipcRenderer.invoke(ChannelsEnum.REQUEST_SYNC_START);
+    } catch (err: any) {
+      setNotifier(err.message || 'Sync failed', 'error');
+    } finally {
+      isSyncingRef.current = false;
+      setIsSyncing(false);
+    }
+  }, [setNotifier]);
+
+  useEffect(() => {
+    if (user) {
+      runSync();
+    }
+  }, [user, runSync]);
+
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const wasOffline = useRef(!isOnline);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (user && isOnline && wasOffline.current) {
+      runSync();
+    }
+    wasOffline.current = !isOnline;
+  }, [user, isOnline, wasOffline, runSync]);
+
   return {
     addTaskToday,
     setAddTaskToday,
@@ -145,6 +191,7 @@ const AppContextFn = (initialUser: User | null) => {
     loadingSpaces,
     todayPageDisplayDate,
     setTodayPageDisplayDate,
+    isSyncing,
   };
 };
 

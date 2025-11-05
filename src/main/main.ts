@@ -66,6 +66,7 @@ import apiClient, {
   registerTokenRefreshHandler,
   setInMemoryToken,
 } from './apiClient';
+import { syncService } from './services/SyncService';
 
 let session: {
   accessToken: string | null;
@@ -755,6 +756,10 @@ ipcMain.handle(ChannelsEnum.REQUEST_SIGN_OUT, async () => {
 
 ipcMain.handle(ChannelsEnum.REQUEST_INITIAL_AUTH_STATUS, async () => {
   return await attemptAutoSignIn();
+});
+
+ipcMain.handle(ChannelsEnum.REQUEST_SYNC_START, async () => {
+  return await syncService.runSync();
 });
 
 app.on('window-all-closed', () => {

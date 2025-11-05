@@ -180,4 +180,6 @@ export enum ChannelsEnum {
 
   REQUEST_COUNT_OF_TASKS_OVERDUE = 'request_count_of_tasks_overdue',
   RESPONSE_COUNT_OF_TASKS_OVERDUE = 'response_count_of_tasks_overdue',
+
+  REQUEST_SYNC_START = 'REQUEST_SYNC_START',
 }

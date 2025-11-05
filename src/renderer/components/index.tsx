@@ -8,6 +8,7 @@ import TimeOfDaySelector from './TimeOfDaySelector';
 import Selector from './Selector';
 import TabHeader from './TabHeader';
 import RepetitiveTaskListItem from './RepetitiveTaskListItem';
+import SyncIndicator from './SyncIndicator';
 
 export {
   TaskScoring,
@@ -20,4 +21,5 @@ export {
   Selector,
   TabHeader,
   RepetitiveTaskListItem,
+  SyncIndicator,
 };
