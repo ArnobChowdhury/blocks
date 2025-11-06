@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/prefer-default-export
 export const scoreColors = [
-  '#e8ffe9',
+  '#c0e8c2',
   '#7be187',
   '#24c241',
   '#019927',
