@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Fab, Alert, Button } from '@mui/material';
+import { Fab, Alert, Button, Box, Typography } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import dayjs from 'dayjs';
 import { TodoList } from '../widgets';
-import { PageHeader } from '../components';
-import { refreshTodayPageForDate } from '../utils';
+import { PageHeader, SectionHeader } from '../components';
+import { refreshTodayPageForDate, formatDate } from '../utils';
 import { useApp } from '../context/AppProvider';
 import { useTheme as useAppTheme } from '../context/ThemeProvider';
-import { ChannelsEnum } from '../types';
-import { ROUTE_OVERDUE } from '../constants';
+import {
+  ChannelsEnum,
+  TaskWithTags,
+  TaskCompletionStatusEnum,
+  TimeOfDay,
+} from '../types';
+import { ROUTE_OVERDUE, SectionColors } from '../constants';
+import NoTaskToday from '../images/NoTaskToday';
 
 function Today() {
   const { themeMode } = useAppTheme();
@@ -68,6 +74,64 @@ function Today() {
     setNewDayBannerVisible(false);
   };
 
+  const [tasksMorning, setTasksMorning] = useState<TaskWithTags[]>([]);
+  const [tasksAfternoon, setTasksAfternoon] = useState<TaskWithTags[]>([]);
+  const [tasksEvening, setTasksEvening] = useState<TaskWithTags[]>([]);
+  const [tasksNight, setTasksNight] = useState<TaskWithTags[]>([]);
+  const [tasksWithoutTimeOfDay, setTasksWithoutTimeOfDay] = useState<
+    TaskWithTags[]
+  >([]);
+  const [tasksFailed, setTasksFailed] = useState<TaskWithTags[]>([]);
+  const [noTasksForToday, setNoTasksForToday] = useState(false);
+
+  useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TASKS_FOR_DATE,
+      (response) => {
+        const tasks = response as TaskWithTags[];
+        const morningTasks: TaskWithTags[] = [];
+        const afternoonTasks: TaskWithTags[] = [];
+        const eveningTasks: TaskWithTags[] = [];
+        const nightTasks: TaskWithTags[] = [];
+        const tasksWithoutTime: TaskWithTags[] = [];
+        const failedTasks: TaskWithTags[] = [];
+
+        if (tasks.length === 0) {
+          setNoTasksForToday(true);
+        } else {
+          setNoTasksForToday(false);
+        }
+
+        tasks.forEach((task) => {
+          if (task.completionStatus === TaskCompletionStatusEnum.FAILED) {
+            failedTasks.push(task);
+          } else if (task.timeOfDay === TimeOfDay.Morning) {
+            morningTasks.push(task);
+          } else if (task.timeOfDay === TimeOfDay.Afternoon) {
+            afternoonTasks.push(task);
+          } else if (task.timeOfDay === TimeOfDay.Evening) {
+            eveningTasks.push(task);
+          } else if (task.timeOfDay === TimeOfDay.Night) {
+            nightTasks.push(task);
+          } else {
+            tasksWithoutTime.push(task);
+          }
+        });
+        setTasksMorning(morningTasks);
+        setTasksAfternoon(afternoonTasks);
+        setTasksEvening(eveningTasks);
+        setTasksNight(nightTasks);
+        setTasksWithoutTimeOfDay(tasksWithoutTime);
+        setTasksFailed(failedTasks);
+      },
+    );
+
+    return unsubscribe;
+  }, []);
+
+  const todayFormatted = formatDate(todayPageDisplayDate);
+
   return (
     <>
       <PageHeader>Today</PageHeader>
@@ -114,7 +178,76 @@ function Today() {
           refresh to see what&apos;s new for today.
         </Alert>
       )}
-      <TodoList />
+      <>
+        <Typography variant="h6" mt={2}>
+          {todayFormatted}
+        </Typography>
+        {[
+          tasksMorning,
+          tasksAfternoon,
+          tasksEvening,
+          tasksNight,
+          tasksWithoutTimeOfDay,
+          tasksFailed,
+        ].map((tasks) => {
+          if (tasks.length === 0) return null;
+
+          const { timeOfDay, completionStatus } = tasks[0];
+          let bg: string;
+          let header: string;
+          if (completionStatus === TaskCompletionStatusEnum.FAILED) {
+            bg = SectionColors.failed;
+            header = 'Failed';
+          } else if (timeOfDay) {
+            bg = SectionColors[timeOfDay];
+            header = timeOfDay;
+          } else {
+            bg = SectionColors.anytime;
+            header = 'Any Time';
+          }
+
+          return (
+            <Box
+              sx={{
+                background: bg,
+                borderRadius: '4px',
+                px: 2,
+                pt: 2,
+                mt: 2,
+                color: 'text.onLightBackground',
+              }}
+              key={bg}
+            >
+              <SectionHeader sx={{ textTransform: 'capitalize' }}>
+                {header}
+              </SectionHeader>
+              <TodoList
+                tasks={tasks}
+                refreshCallback={refreshTodayPageForDate}
+                isLightBG
+              />
+            </Box>
+          );
+        })}
+      </>
+
+      {noTasksForToday && (
+        <Box
+          width="100%"
+          height="600px"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          mt={2}
+        >
+          <Box>
+            <Typography sx={{ mb: 3 }} variant="body1" align="center">
+              Empty for now. Ready to be filled with something great!
+            </Typography>
+            <NoTaskToday />
+          </Box>
+        </Box>
+      )}
       {!showAddTask && (
         <Fab
           sx={{ position: 'fixed', bottom: 20, right: 20 }}

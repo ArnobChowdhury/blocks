@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   List,
   Divider,
@@ -8,91 +8,31 @@ import {
   Popover,
 } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
-import NoTaskToday from '../images/NoTaskToday';
 
-import {
-  ChannelsEnum,
-  TimeOfDay,
-  TaskWithTags,
-  TaskCompletionStatusEnum,
-} from '../types';
-import { TodoListItem, TaskScoring, SectionHeader } from '../components';
-import { formatDate, refreshTodayPageForDate } from '../utils';
+import { TaskWithTags, TaskCompletionStatusEnum } from '../types';
+import { TodoListItem, TaskScoring } from '../components';
 import {
   useToggleTaskCompletionStatus,
   useTaskFailure,
   useTaskReschedule,
 } from '../hooks';
-import { SectionColors } from '../constants';
 import { useApp } from '../context/AppProvider';
 
-function TodoList() {
-  const [tasksMorning, setTasksMorning] = useState<TaskWithTags[]>([]);
-  const [tasksAfternoon, setTasksAfternoon] = useState<TaskWithTags[]>([]);
-  const [tasksEvening, setTasksEvening] = useState<TaskWithTags[]>([]);
-  const [tasksNight, setTasksNight] = useState<TaskWithTags[]>([]);
-  const [tasksWithoutTimeOfDay, setTasksWithoutTimeOfDay] = useState<
-    TaskWithTags[]
-  >([]);
-  const [tasksFailed, setTasksFailed] = useState<TaskWithTags[]>([]);
+interface TodoListProps {
+  tasks: TaskWithTags[];
+  isLightBG?: boolean;
+  refreshCallback: (date: Date) => void;
+}
 
+function TodoList({ tasks, refreshCallback, isLightBG }: TodoListProps) {
   const [taskForScoring, setTaskForScoring] = useState<TaskWithTags>();
   const [score, setScore] = useState<number | null>(null);
-  const { todayPageDisplayDate, setTaskIdForEdit } = useApp();
+  const { setTaskIdForEdit } = useApp();
 
-  const [noTasksForToday, setNoTasksForToday] = useState(false);
-
-  useEffect(() => {
-    // sourcery skip: inline-immediately-returned-variable
-    const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_TASKS_FOR_DATE,
-      (response) => {
-        const tasks = response as TaskWithTags[];
-        const morningTasks: TaskWithTags[] = [];
-        const afternoonTasks: TaskWithTags[] = [];
-        const eveningTasks: TaskWithTags[] = [];
-        const nightTasks: TaskWithTags[] = [];
-        const tasksWithoutTime: TaskWithTags[] = [];
-        const failedTasks: TaskWithTags[] = [];
-
-        if (tasks.length === 0) {
-          setNoTasksForToday(true);
-        } else {
-          setNoTasksForToday(false);
-        }
-
-        tasks.forEach((task) => {
-          if (task.completionStatus === TaskCompletionStatusEnum.FAILED) {
-            failedTasks.push(task);
-          } else if (task.timeOfDay === TimeOfDay.Morning) {
-            morningTasks.push(task);
-          } else if (task.timeOfDay === TimeOfDay.Afternoon) {
-            afternoonTasks.push(task);
-          } else if (task.timeOfDay === TimeOfDay.Evening) {
-            eveningTasks.push(task);
-          } else if (task.timeOfDay === TimeOfDay.Night) {
-            nightTasks.push(task);
-          } else {
-            tasksWithoutTime.push(task);
-          }
-        });
-        setTasksMorning(morningTasks);
-        setTasksAfternoon(afternoonTasks);
-        setTasksEvening(eveningTasks);
-        setTasksNight(nightTasks);
-        setTasksWithoutTimeOfDay(tasksWithoutTime);
-        setTasksFailed(failedTasks);
-      },
-    );
-
-    return unsubscribe;
-  }, []);
-
-  const { onToggleTaskCompletionStatus } = useToggleTaskCompletionStatus(
-    refreshTodayPageForDate,
-  );
-  const { onTaskFailure } = useTaskFailure(refreshTodayPageForDate);
-  const { onTaskReschedule } = useTaskReschedule(refreshTodayPageForDate);
+  const { onToggleTaskCompletionStatus } =
+    useToggleTaskCompletionStatus(refreshCallback);
+  const { onTaskFailure } = useTaskFailure(refreshCallback);
+  const { onTaskReschedule } = useTaskReschedule(refreshCallback);
 
   const [scoreAnchorEl, setScoreAnchorEl] =
     React.useState<HTMLInputElement | null>(null);
@@ -118,8 +58,6 @@ function TodoList() {
     setTaskForScoring(undefined);
     setScore(null);
   };
-
-  const todayFormatted = formatDate(todayPageDisplayDate);
 
   const handleTaskEdit = (taskId: string) => {
     if (taskId) {
@@ -147,90 +85,35 @@ function TodoList() {
 
   return (
     <>
-      <Typography variant="h6" mt={2}>
-        {todayFormatted}
-      </Typography>
-      {[
-        tasksMorning,
-        tasksAfternoon,
-        tasksEvening,
-        tasksNight,
-        tasksWithoutTimeOfDay,
-        tasksFailed,
-      ].map((tasks) => {
-        if (tasks.length === 0) return null;
-
-        const { timeOfDay, completionStatus } = tasks[0];
-        let bg: string;
-        let header: string;
-        if (completionStatus === TaskCompletionStatusEnum.FAILED) {
-          bg = SectionColors.failed;
-          header = 'Failed';
-        } else if (timeOfDay) {
-          bg = SectionColors[timeOfDay];
-          header = timeOfDay;
-        } else {
-          bg = SectionColors.anytime;
-          header = 'Any Time';
-        }
-
-        return (
-          <Box
-            sx={{
-              background: bg,
-              borderRadius: '4px',
-              px: 2,
-              pt: 2,
-              mt: 2,
-              color: 'text.onLightBackground',
-            }}
-            key={bg}
-          >
-            <SectionHeader sx={{ textTransform: 'capitalize' }}>
-              {header}
-            </SectionHeader>
-            <List>
-              {tasks.map((task, index) => (
-                <React.Fragment key={task.id}>
-                  <TodoListItem
-                    task={task}
-                    onChange={(e) => handleTaskToggle(e, task)}
-                    onFail={() => onTaskFailure(task.id)}
-                    onRecover={() =>
-                      onToggleTaskCompletionStatus(
-                        task.id,
-                        TaskCompletionStatusEnum.INCOMPLETE,
-                      )
-                    }
-                    onReschedule={(rescheduledTime) =>
-                      onTaskReschedule(task.id, rescheduledTime)
-                    }
-                    onTaskEdit={() => handleTaskEdit(task.id)}
-                  />
-                  {index !== tasks.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          </Box>
-        );
-      })}
-      {noTasksForToday && (
-        <Box
-          width="100%"
-          height="600px"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          mt={2}
-        >
-          <Box>
-            <Typography sx={{ mb: 3 }} variant="body1" align="center">
-              Empty for now. Ready to be filled with something great!
-            </Typography>
-            <NoTaskToday />
-          </Box>
-        </Box>
-      )}
+      <List>
+        {tasks.map((task, index) => (
+          <React.Fragment key={task.id}>
+            <TodoListItem
+              task={task}
+              onChange={(e) => handleTaskToggle(e, task)}
+              onFail={() => onTaskFailure(task.id)}
+              onRecover={() =>
+                onToggleTaskCompletionStatus(
+                  task.id,
+                  TaskCompletionStatusEnum.INCOMPLETE,
+                )
+              }
+              onReschedule={(rescheduledTime) =>
+                onTaskReschedule(task.id, rescheduledTime)
+              }
+              onTaskEdit={() => handleTaskEdit(task.id)}
+            />
+            {index !== tasks.length - 1 && (
+              <Divider
+                sx={{
+                  borderColor: isLightBG ? 'rgba(0, 0, 0, 0.12)' : 'divider',
+                }}
+                component="li"
+              />
+            )}
+          </React.Fragment>
+        ))}
+      </List>
       <Popover
         open={Boolean(taskForScoring)}
         anchorEl={scoreAnchorEl}
@@ -261,5 +144,9 @@ function TodoList() {
     </>
   );
 }
+
+TodoList.defaultProps = {
+  isLightBG: false,
+};
 
 export default TodoList;

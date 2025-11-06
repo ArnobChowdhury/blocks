@@ -1,25 +1,13 @@
 /* eslint-disable no-nested-ternary */
 import React, { useState, useEffect } from 'react';
-import {
-  List,
-  Divider,
-  Button,
-  Box,
-  CircularProgress,
-  Typography,
-} from '@mui/material';
+import { Button, Box, CircularProgress, Typography } from '@mui/material';
 import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import dayjs from 'dayjs';
-import { PageHeader, SectionHeader, TodoListItem } from '../components';
-import { ChannelsEnum, TaskWithTags, TaskCompletionStatusEnum } from '../types';
+import { PageHeader, SectionHeader } from '../components';
+import { TodoList } from '../widgets';
+import { ChannelsEnum, TaskWithTags } from '../types';
 import { formatDate } from '../utils';
-import {
-  useBulkFailure,
-  useToggleTaskCompletionStatus,
-  useTaskFailure,
-  useTaskReschedule,
-} from '../hooks';
-import { useApp } from '../context/AppProvider';
+import { useBulkFailure } from '../hooks';
 
 function Overdue() {
   const [tasksOverdue, setTasksOverdue] = useState<TaskWithTags[]>([]);
@@ -27,7 +15,6 @@ function Overdue() {
   const [sortedTasksOverdue, setSortedTasksOverdue] = useState<{
     [key: string]: TaskWithTags[];
   }>({});
-  const { setTaskIdForEdit } = useApp();
 
   const refreshOverduePage = () => {
     window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_OVERDUE);
@@ -48,11 +35,7 @@ function Overdue() {
     return unsubscribe;
   }, []);
 
-  const { onToggleTaskCompletionStatus } =
-    useToggleTaskCompletionStatus(refreshOverduePage);
-  const { onTaskFailure } = useTaskFailure(refreshOverduePage);
   const { onBulkFailure, requestOnGoing } = useBulkFailure(refreshOverduePage);
-  const { onTaskReschedule } = useTaskReschedule(refreshOverduePage);
 
   useEffect(() => {
     const tasksOverdueByDate: Record<string, TaskWithTags[]> = {};
@@ -73,12 +56,6 @@ function Overdue() {
   const handleBulkFailure = async (date: string) => {
     const taskIds = sortedTasksOverdue[date].map((task) => task.id);
     await onBulkFailure(taskIds);
-  };
-
-  const handleTaskEdit = (taskId: string) => {
-    if (taskId) {
-      setTaskIdForEdit(taskId);
-    }
   };
 
   return (
@@ -118,29 +95,10 @@ function Overdue() {
                   Fail all
                 </Button>
               </Box>
-              <List>
-                {sortedTasksOverdue[key].map((task) => (
-                  <React.Fragment key={task.id}>
-                    <TodoListItem
-                      task={task}
-                      onChange={(e) =>
-                        onToggleTaskCompletionStatus(
-                          task.id,
-                          e.target.checked
-                            ? TaskCompletionStatusEnum.COMPLETE
-                            : TaskCompletionStatusEnum.INCOMPLETE,
-                        )
-                      }
-                      onFail={() => onTaskFailure(task.id)}
-                      onReschedule={(rescheduledTime) =>
-                        onTaskReschedule(task.id, rescheduledTime)
-                      }
-                      onTaskEdit={() => handleTaskEdit(task.id)}
-                    />
-                    <Divider />
-                  </React.Fragment>
-                ))}
-              </List>
+              <TodoList
+                tasks={sortedTasksOverdue[key]}
+                refreshCallback={refreshOverduePage}
+              />
             </Box>
           ))
       )}
