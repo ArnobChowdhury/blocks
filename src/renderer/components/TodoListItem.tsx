@@ -88,30 +88,35 @@ function TodoListItem({
     >
       <Box display="flex" justifyContent="space-between" width="100%">
         <Box display="flex" alignItems="center">
-          <FormControlLabel
-            control={
-              <Checkbox
-                size="small"
-                checked={isCompleted}
-                onChange={onChange}
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              />
-            }
-            label={
-              <Typography
-                sx={{
-                  textDecoration: isCompleted ? 'line-through' : 'none',
-                }}
-                variant="body2"
-                onClick={handleEditClick}
-              >
-                {taskTitle}
-              </Typography>
-            }
-          />
-
+          {!isFailed && (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={isCompleted}
+                  onChange={onChange}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                />
+              }
+              label={
+                <Typography
+                  sx={{
+                    textDecoration: isCompleted ? 'line-through' : 'none',
+                  }}
+                  variant="body2"
+                >
+                  {taskTitle}
+                </Typography>
+              }
+            />
+          )}
+          {isFailed && (
+            <Typography py="9px" variant="body2">
+              {taskTitle}
+            </Typography>
+          )}
           <Box ml={2}>
             {showDueDateLabel && dueDateLabel && (
               <CustomChip
