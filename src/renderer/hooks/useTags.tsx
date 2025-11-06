@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
 import { ChannelsEnum, Tag } from '../types';
+import { useApp } from '../context/AppProvider';
 
 function useTags() {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
-  const [error, setError] = useState('');
   const [allTags, setAllTags] = useState<Tag[]>([]);
+  const { setNotifier } = useApp();
 
   const handleLoadingTags = useCallback(async () => {
-    setError('');
     setRequestOnGoing(true);
     try {
       const tags = await window.electron.ipcRenderer.invoke(
@@ -15,14 +15,13 @@ function useTags() {
       );
       setAllTags(tags);
     } catch (err: any) {
-      setError(err.message);
+      setNotifier(err.message, 'error');
     } finally {
       setRequestOnGoing(false);
     }
-  }, []);
+  }, [setNotifier]);
 
   const createTag = async (tagName: string) => {
-    setError('');
     setRequestOnGoing(true);
     try {
       const createdTag: Tag = await window.electron.ipcRenderer.invoke(
@@ -31,7 +30,7 @@ function useTags() {
       );
       return createdTag;
     } catch (err: any) {
-      setError(err.message);
+      setNotifier(err.message, 'error');
       return null;
     } finally {
       setRequestOnGoing(false);
@@ -41,7 +40,6 @@ function useTags() {
   return {
     allTags,
     requestOnGoing,
-    error,
     handleLoadingTags,
     createTag,
   };

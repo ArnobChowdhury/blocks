@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, forwardRef } from 'react';
+import React, { useState, useMemo, forwardRef } from 'react';
 import { useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -65,13 +65,7 @@ const AddTask = forwardRef<HTMLDivElement, IAddTaskProps>((props, ref) => {
 
   const [selectedSpace, setSelectedSpace] = useState<Space>();
 
-  const { createSpace, error: spaceRequestError } = useSpace();
-
-  useEffect(() => {
-    if (spaceRequestError) {
-      setNotifier(spaceRequestError, 'error');
-    }
-  }, [spaceRequestError, setNotifier]);
+  const { createSpace } = useSpace();
 
   const editor: Editor | null = useEditor({
     extensions: [

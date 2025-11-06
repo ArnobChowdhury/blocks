@@ -40,21 +40,15 @@ function TasksBySchedule({
   isLoading,
   spaceId,
 }: TasksByScheduleProps) {
-  const { setNotifier, setTaskIdForEdit, setRepetitiveTaskTemplateIdForEdit } =
-    useApp();
+  const { setTaskIdForEdit, setRepetitiveTaskTemplateIdForEdit } = useApp();
 
-  const {
-    onToggleTaskCompletionStatus,
-    error: toggleTaskCompletionStatusError,
-  } = useToggleTaskCompletionStatus(handlePageTaskRefresh);
-
-  const { onTaskFailure, error: taskFailureError } = useTaskFailure(
+  const { onToggleTaskCompletionStatus } = useToggleTaskCompletionStatus(
     handlePageTaskRefresh,
   );
 
-  const { onTaskReschedule, error: taskRescheduleError } = useTaskReschedule(
-    handlePageTaskRefresh,
-  );
+  const { onTaskFailure } = useTaskFailure(handlePageTaskRefresh);
+
+  const { onTaskReschedule } = useTaskReschedule(handlePageTaskRefresh);
 
   const handleTaskEdit = (taskId: string) => {
     setTaskIdForEdit(taskId);
@@ -63,24 +57,6 @@ function TasksBySchedule({
   const handleRepetitiveTaskEdit = (taskId: string) => {
     setRepetitiveTaskTemplateIdForEdit(taskId);
   };
-
-  useEffect(() => {
-    if (toggleTaskCompletionStatusError) {
-      setNotifier(toggleTaskCompletionStatusError, 'error');
-    }
-  }, [setNotifier, toggleTaskCompletionStatusError]);
-
-  useEffect(() => {
-    if (taskFailureError) {
-      setNotifier(taskFailureError, 'error');
-    }
-  }, [setNotifier, taskFailureError]);
-
-  useEffect(() => {
-    if (taskRescheduleError) {
-      setNotifier(taskRescheduleError, 'error');
-    }
-  }, [setNotifier, taskRescheduleError]);
 
   const [tabValue, setTabValue] = useState<TaskScheduleTypeEnum>(
     TaskScheduleTypeEnum.Unscheduled,

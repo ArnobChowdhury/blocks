@@ -27,7 +27,7 @@ function Overdue() {
   const [sortedTasksOverdue, setSortedTasksOverdue] = useState<{
     [key: string]: TaskWithTags[];
   }>({});
-  const { setNotifier, setTaskIdForEdit } = useApp();
+  const { setTaskIdForEdit } = useApp();
 
   const refreshOverduePage = () => {
     window.electron.ipcRenderer.sendMessage(ChannelsEnum.REQUEST_TASKS_OVERDUE);
@@ -48,46 +48,11 @@ function Overdue() {
     return unsubscribe;
   }, []);
 
-  const {
-    onToggleTaskCompletionStatus,
-    error: toggleTaskCompletionStatusError,
-  } = useToggleTaskCompletionStatus(refreshOverduePage);
-
-  useEffect(() => {
-    if (toggleTaskCompletionStatusError) {
-      setNotifier(toggleTaskCompletionStatusError, 'error');
-    }
-  }, [toggleTaskCompletionStatusError, setNotifier]);
-
-  const { onTaskFailure, error: taskFailureError } =
-    useTaskFailure(refreshOverduePage);
-
-  useEffect(() => {
-    if (taskFailureError) {
-      setNotifier(taskFailureError, 'error');
-    }
-  }, [taskFailureError, setNotifier]);
-
-  const {
-    onBulkFailure,
-    error: bulkFailureError,
-    requestOnGoing,
-  } = useBulkFailure(refreshOverduePage);
-
-  useEffect(() => {
-    if (bulkFailureError) {
-      setNotifier(bulkFailureError, 'error');
-    }
-  }, [bulkFailureError, setNotifier]);
-
-  const { onTaskReschedule, error: taskRescheduleError } =
-    useTaskReschedule(refreshOverduePage);
-
-  useEffect(() => {
-    if (taskRescheduleError) {
-      setNotifier(taskRescheduleError, 'error');
-    }
-  }, [taskRescheduleError, setNotifier]);
+  const { onToggleTaskCompletionStatus } =
+    useToggleTaskCompletionStatus(refreshOverduePage);
+  const { onTaskFailure } = useTaskFailure(refreshOverduePage);
+  const { onBulkFailure, requestOnGoing } = useBulkFailure(refreshOverduePage);
+  const { onTaskReschedule } = useTaskReschedule(refreshOverduePage);
 
   useEffect(() => {
     const tasksOverdueByDate: Record<string, TaskWithTags[]> = {};

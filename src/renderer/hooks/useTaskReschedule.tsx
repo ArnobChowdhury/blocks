@@ -5,13 +5,11 @@ import { useApp } from '../context/AppProvider';
 
 function useTaskReschedule(refreshCallback?: (date: Date) => void) {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
-  const [error, setError] = useState('');
-  const { todayPageDisplayDate } = useApp();
+  const { todayPageDisplayDate, setNotifier } = useApp();
 
   const onTaskReschedule = useCallback(
     async (taskId: string, rescheduledTime: Dayjs) => {
       const dueDate = rescheduledTime.toISOString();
-      setError('');
       setRequestOnGoing(true);
       try {
         await window.electron.ipcRenderer.invoke(
@@ -25,17 +23,16 @@ function useTaskReschedule(refreshCallback?: (date: Date) => void) {
           refreshCallback(todayPageDisplayDate.toDate());
         }
       } catch (err: any) {
-        setError(err.message);
+        setNotifier(err.message, 'error');
       } finally {
         setRequestOnGoing(false);
       }
     },
-    [refreshCallback, todayPageDisplayDate],
+    [refreshCallback, setNotifier, todayPageDisplayDate],
   );
 
   return {
     requestOnGoing,
-    error,
     onTaskReschedule,
   };
 }

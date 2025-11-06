@@ -4,12 +4,10 @@ import { useApp } from '../context/AppProvider';
 
 function useTaskFailure(refreshCallback?: (date: Date) => void) {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
-  const [error, setError] = useState('');
-  const { todayPageDisplayDate } = useApp();
+  const { todayPageDisplayDate, setNotifier } = useApp();
 
   const onTaskFailure = useCallback(
     async (taskId: string) => {
-      setError('');
       setRequestOnGoing(true);
       try {
         await window.electron.ipcRenderer.invoke(
@@ -20,17 +18,16 @@ function useTaskFailure(refreshCallback?: (date: Date) => void) {
           refreshCallback(todayPageDisplayDate.toDate());
         }
       } catch (err: any) {
-        setError(err.message);
+        setNotifier(err.message, 'error');
       } finally {
         setRequestOnGoing(false);
       }
     },
-    [refreshCallback, todayPageDisplayDate],
+    [refreshCallback, setNotifier, todayPageDisplayDate],
   );
 
   return {
     requestOnGoing,
-    error,
     onTaskFailure,
   };
 }

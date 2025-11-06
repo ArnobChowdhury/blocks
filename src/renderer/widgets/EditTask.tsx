@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -95,13 +95,7 @@ function EditTask({
   const [selectedSpace, setSelectedSpace] = useState<Space>(task.space);
   const { setNotifier, allSpaces, handleLoadingSpaces } = useApp();
 
-  const { error: spaceRequestError, createSpace } = useSpace();
-
-  useEffect(() => {
-    if (spaceRequestError) {
-      setNotifier(spaceRequestError, 'error');
-    }
-  }, [spaceRequestError, setNotifier]);
+  const { createSpace } = useSpace();
 
   const theme = useTheme();
 

@@ -38,7 +38,7 @@ function TodoList() {
 
   const [taskForScoring, setTaskForScoring] = useState<TaskWithTags>();
   const [score, setScore] = useState<number | null>(null);
-  const { todayPageDisplayDate, setNotifier, setTaskIdForEdit } = useApp();
+  const { todayPageDisplayDate, setTaskIdForEdit } = useApp();
 
   const [noTasksForToday, setNoTasksForToday] = useState(false);
 
@@ -88,38 +88,11 @@ function TodoList() {
     return unsubscribe;
   }, []);
 
-  const {
-    onToggleTaskCompletionStatus,
-    error: toggleTaskCompletionStatusError,
-  } = useToggleTaskCompletionStatus(refreshTodayPageForDate);
-
-  // todo: in future, we can call the set notifier from the hooks itself to get rid of lots of duplication
-  useEffect(() => {
-    if (toggleTaskCompletionStatusError) {
-      setNotifier(toggleTaskCompletionStatusError, 'error');
-    }
-  }, [toggleTaskCompletionStatusError, setNotifier]);
-
-  const { onTaskFailure, error: taskFailureError } = useTaskFailure(
+  const { onToggleTaskCompletionStatus } = useToggleTaskCompletionStatus(
     refreshTodayPageForDate,
   );
-
-  // todo: in future, we can call the set notifier from the hooks itself to get rid of lots of duplication
-  useEffect(() => {
-    if (taskFailureError) {
-      setNotifier(taskFailureError, 'error');
-    }
-  }, [taskFailureError, setNotifier]);
-
-  const { onTaskReschedule, error: taskRescheduleError } = useTaskReschedule(
-    refreshTodayPageForDate,
-  );
-
-  useEffect(() => {
-    if (taskRescheduleError) {
-      setNotifier(taskRescheduleError, 'error');
-    }
-  }, [taskRescheduleError, setNotifier]);
+  const { onTaskFailure } = useTaskFailure(refreshTodayPageForDate);
+  const { onTaskReschedule } = useTaskReschedule(refreshTodayPageForDate);
 
   const [scoreAnchorEl, setScoreAnchorEl] =
     React.useState<HTMLInputElement | null>(null);

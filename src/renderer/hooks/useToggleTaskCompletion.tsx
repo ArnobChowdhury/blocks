@@ -4,8 +4,7 @@ import { useApp } from '../context/AppProvider';
 
 function useToggleTaskCompletionStatus(refreshCallback?: (date: Date) => void) {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
-  const [error, setError] = useState('');
-  const { todayPageDisplayDate } = useApp();
+  const { todayPageDisplayDate, setNotifier } = useApp();
 
   const onToggleTaskCompletionStatus = useCallback(
     async (
@@ -13,7 +12,6 @@ function useToggleTaskCompletionStatus(refreshCallback?: (date: Date) => void) {
       status: TaskCompletionStatusEnum,
       taskScore?: number | null,
     ) => {
-      setError('');
       setRequestOnGoing(true);
       try {
         await window.electron.ipcRenderer.invoke(
@@ -28,17 +26,16 @@ function useToggleTaskCompletionStatus(refreshCallback?: (date: Date) => void) {
           refreshCallback(todayPageDisplayDate.toDate());
         }
       } catch (err: any) {
-        setError(err.message);
+        setNotifier(err.message, 'error');
       } finally {
         setRequestOnGoing(false);
       }
     },
-    [refreshCallback, todayPageDisplayDate],
+    [refreshCallback, setNotifier, todayPageDisplayDate],
   );
 
   return {
     requestOnGoing,
-    error,
     onToggleTaskCompletionStatus,
   };
 }

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { ChannelsEnum, Space } from '../types';
+import { useApp } from '../context/AppProvider';
 
 function useSpace() {
   const [requestOnGoing, setRequestOnGoing] = useState(false);
-  const [error, setError] = useState('');
+  const { setNotifier } = useApp();
 
   const createSpace = async (spaceName: string) => {
-    setError('');
     setRequestOnGoing(true);
     try {
       const createdSpace: Space = await window.electron.ipcRenderer.invoke(
@@ -15,7 +15,7 @@ function useSpace() {
       );
       return createdSpace;
     } catch (err: any) {
-      setError(err.message);
+      setNotifier(err.message, 'error');
       return null;
     } finally {
       setRequestOnGoing(false);
@@ -24,7 +24,6 @@ function useSpace() {
 
   return {
     requestOnGoing,
-    error,
     createSpace,
   };
 }
