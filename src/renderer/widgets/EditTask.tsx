@@ -181,6 +181,7 @@ function EditTask({
       description: stringifiedDescription,
       shouldBeScored,
       timeOfDay: selectedTimeOfDay,
+      schedule: task.schedule,
       // tagIds: selectedTagIds,
       spaceId: selectedSpace?.id,
     };

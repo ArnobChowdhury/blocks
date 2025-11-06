@@ -13,13 +13,13 @@ export const getTodayEnd = () => {
 
 export const getDaysForSpecificDaysInAWeekTasks = (days: DaysInAWeek[]) => {
   const week: { [key in DaysInAWeek]: boolean | undefined } = {
-    [DaysInAWeek.Monday]: undefined,
-    [DaysInAWeek.Tuesday]: undefined,
-    [DaysInAWeek.Wednesday]: undefined,
-    [DaysInAWeek.Thursday]: undefined,
-    [DaysInAWeek.Friday]: undefined,
-    [DaysInAWeek.Saturday]: undefined,
-    [DaysInAWeek.Sunday]: undefined,
+    [DaysInAWeek.Monday]: false,
+    [DaysInAWeek.Tuesday]: false,
+    [DaysInAWeek.Wednesday]: false,
+    [DaysInAWeek.Thursday]: false,
+    [DaysInAWeek.Friday]: false,
+    [DaysInAWeek.Saturday]: false,
+    [DaysInAWeek.Sunday]: false,
   };
 
   days.forEach((day) => {

@@ -50,9 +50,9 @@ export class RepetitiveTaskTemplateRepository {
 
     let dayBooleans: { [key: string]: boolean | undefined } = {};
 
-    if (schedule === 'Daily') {
+    if (schedule === TaskScheduleTypeEnum.Daily) {
       dayBooleans = getDaysForDailyTasks();
-    } else if (schedule === 'Specific Days in a Week' && days) {
+    } else if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek && days) {
       dayBooleans = getDaysForSpecificDaysInAWeekTasks(days);
     }
 
@@ -90,9 +90,9 @@ export class RepetitiveTaskTemplateRepository {
 
     let dayBooleans: { [key: string]: boolean | undefined } = {};
 
-    if (schedule === 'Daily') {
+    if (schedule === TaskScheduleTypeEnum.Daily) {
       dayBooleans = getDaysForDailyTasks();
-    } else if (schedule === 'Specific Days in a Week' && days) {
+    } else if (schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek && days) {
       dayBooleans = getDaysForSpecificDaysInAWeekTasks(days);
     }
 
