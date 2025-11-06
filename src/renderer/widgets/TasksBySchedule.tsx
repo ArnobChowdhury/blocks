@@ -206,6 +206,7 @@ function TasksBySchedule({
                   <Fragment key={task.id}>
                     <TodoListItem
                       task={task}
+                      showDueDateLabel
                       onChange={(e) =>
                         onToggleTaskCompletionStatus(
                           task.id,
