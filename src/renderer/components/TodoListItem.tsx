@@ -17,7 +17,11 @@ import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import dayjs, { Dayjs } from 'dayjs';
 import Clock from '../icons/Clock';
-import { TaskWithTags, TaskCompletionStatusEnum } from '../types';
+import {
+  TaskWithTags,
+  TaskCompletionStatusEnum,
+  TaskScheduleTypeEnum,
+} from '../types';
 import CustomChip from './CustomChip';
 
 interface ITaskListItemProps {
@@ -44,9 +48,11 @@ function TodoListItem({
     tags = [],
     completionStatus,
     dueDate: dueDateLabel,
+    schedule,
   } = task;
   const isCompleted = completionStatus === TaskCompletionStatusEnum.COMPLETE;
   const isFailed = completionStatus === TaskCompletionStatusEnum.FAILED;
+  const isDailyTask = schedule === TaskScheduleTypeEnum.Daily;
 
   const [showOptions, setShowOptions] = useState(false);
 
@@ -154,7 +160,7 @@ function TodoListItem({
             justifyContent="flex-end"
             alignItems="center"
           >
-            {!isCompleted && (
+            {!isCompleted && !isDailyTask && (
               <>
                 <Tooltip
                   title="Reschedule"
