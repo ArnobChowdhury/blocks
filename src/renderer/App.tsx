@@ -33,7 +33,7 @@ import {
   Collapse,
 } from '@mui/material';
 import { styled } from '@mui/system';
-import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
+import Grid3x3Icon from '@mui/icons-material/Grid3x3';
 import HistoryIcon from '@mui/icons-material/History';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -255,7 +255,8 @@ function Navigation() {
                   }
                 >
                   <ListItemIcon sx={{ minWidth: theme.spacing(5) }}>
-                    <LocalOfferOutlinedIcon fontSize="small" />
+                    {/* <LocalOfferOutlinedIcon fontSize="small" /> */}
+                    <Grid3x3Icon color="secondary" fontSize="small" />
                   </ListItemIcon>
                   <ListItemText
                     primary={space.name}
@@ -273,7 +274,8 @@ function Navigation() {
                 selected={location.pathname === ROUTE_TASKS_WITHOUT_A_SPACE}
               >
                 <ListItemIcon sx={{ minWidth: theme.spacing(5) }}>
-                  <LocalOfferOutlinedIcon fontSize="small" />
+                  {/* <LocalOfferOutlinedIcon fontSize="small" /> */}
+                  <Grid3x3Icon color="secondary" fontSize="small" />
                 </ListItemIcon>
                 <ListItemText
                   primary="Tasks without a space"
