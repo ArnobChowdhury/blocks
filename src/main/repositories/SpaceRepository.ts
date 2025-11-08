@@ -56,17 +56,27 @@ export class SpaceRepository {
       return;
     }
 
-    const upsertPromises = spaces.map((space) => {
-      const { id, ...spaceData } = space;
-      return tx.space.upsert({
+    const upsertPromises = spaces.map(async (incomingSpace) => {
+      const { id, ...incomingSpaceData } = incomingSpace;
+
+      const existingSpace = await tx.space.findUnique({
         where: { id },
-        create: {
-          id,
-          ...spaceData,
-        },
-        update: {
-          ...spaceData,
-        },
+      });
+
+      if (existingSpace) {
+        if (
+          new Date(incomingSpace.modifiedAt) >
+          new Date(existingSpace.modifiedAt)
+        ) {
+          return tx.space.update({
+            where: { id },
+            data: incomingSpaceData,
+          });
+        }
+        return Promise.resolve();
+      }
+      return tx.space.create({
+        data: incomingSpace,
       });
     });
 

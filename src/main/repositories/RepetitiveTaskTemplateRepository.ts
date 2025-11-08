@@ -304,17 +304,27 @@ export class RepetitiveTaskTemplateRepository {
       return;
     }
 
-    const upsertPromises = templates.map((template) => {
-      const { id, ...templateData } = template;
-      return tx.repetitiveTaskTemplate.upsert({
+    const upsertPromises = templates.map(async (incomingTemplate) => {
+      const { id, ...incomingTemplateData } = incomingTemplate;
+
+      const existingTemplate = await tx.repetitiveTaskTemplate.findUnique({
         where: { id },
-        create: {
-          id,
-          ...templateData,
-        },
-        update: {
-          ...templateData,
-        },
+      });
+
+      if (existingTemplate) {
+        if (
+          new Date(incomingTemplate.modifiedAt) >
+          new Date(existingTemplate.modifiedAt)
+        ) {
+          return tx.repetitiveTaskTemplate.update({
+            where: { id },
+            data: incomingTemplateData,
+          });
+        }
+        return Promise.resolve();
+      }
+      return tx.repetitiveTaskTemplate.create({
+        data: incomingTemplate,
       });
     });
 

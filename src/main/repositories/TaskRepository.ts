@@ -355,17 +355,26 @@ export class TaskRepository {
       return;
     }
 
-    const upsertPromises = tasks.map((task) => {
-      const { id, ...taskData } = task;
-      return tx.task.upsert({
+    const upsertPromises = tasks.map(async (incomingTask) => {
+      const { id, ...incomingTaskData } = incomingTask;
+
+      const existingTask = await tx.task.findUnique({
         where: { id },
-        create: {
-          id,
-          ...taskData,
-        },
-        update: {
-          ...taskData,
-        },
+      });
+
+      if (existingTask) {
+        if (
+          new Date(incomingTask.modifiedAt) > new Date(existingTask.modifiedAt)
+        ) {
+          return tx.task.update({
+            where: { id },
+            data: incomingTaskData,
+          });
+        }
+        return Promise.resolve();
+      }
+      return tx.task.create({
+        data: incomingTask,
       });
     });
 
