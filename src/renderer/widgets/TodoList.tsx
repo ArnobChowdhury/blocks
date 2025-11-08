@@ -78,7 +78,7 @@ function TodoList({ tasks, refreshCallback, isLightBG }: TodoListProps) {
     onToggleTaskCompletionStatus(
       taskForScoring.id,
       TaskCompletionStatusEnum.COMPLETE,
-      score,
+      score + 1,
     );
     handleScoreDialogClose();
   };

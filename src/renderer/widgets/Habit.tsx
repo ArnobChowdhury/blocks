@@ -150,7 +150,7 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
                     entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
                   ) {
                     if (entry.score !== null) {
-                      const bg = scoreColors[entry.score];
+                      const bg = scoreColors[entry.score - 1];
                       return (
                         <StyledTd sx={{ backgroundColor: bg }} key={key} />
                       );
