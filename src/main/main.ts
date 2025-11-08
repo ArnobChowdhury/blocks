@@ -734,24 +734,35 @@ ipcMain.handle(ChannelsEnum.REQUEST_GOOGLE_AUTH_START, async () => {
 
 ipcMain.handle(ChannelsEnum.REQUEST_SIGN_OUT, async () => {
   try {
-    await keytar.deletePassword(
-      KEYCHAIN_SERVICE,
-      KEYCHAIN_ACCESS_TOKEN_ACCOUNT,
+    await apiClient.post('/auth/signout');
+    log.info('Successfully invalidated tokens on the backend.');
+  } catch (apiError: any) {
+    log.error(
+      'Backend sign-out failed, proceeding with local sign-out:',
+      apiError.message,
     );
-    await keytar.deletePassword(
-      KEYCHAIN_SERVICE,
-      KEYCHAIN_REFRESH_TOKEN_ACCOUNT,
-    );
-    session.accessToken = null;
-    session.user = null;
-    setInMemoryToken(null);
-    log.info('User signed out successfully.');
-
-    return { success: true };
-  } catch (err: any) {
-    log.error('Sign out failed:', err.message);
-    return { success: false, error: `Failed to sign out: ${err.message}` };
+  } finally {
+    try {
+      await keytar.deletePassword(
+        KEYCHAIN_SERVICE,
+        KEYCHAIN_ACCESS_TOKEN_ACCOUNT,
+      );
+      await keytar.deletePassword(
+        KEYCHAIN_SERVICE,
+        KEYCHAIN_REFRESH_TOKEN_ACCOUNT,
+      );
+      session.accessToken = null;
+      session.user = null;
+      setInMemoryToken(null);
+      log.info('Local user session and tokens cleared successfully.');
+    } catch (keytarError: any) {
+      log.error(
+        'Failed to clear local tokens from keychain:',
+        keytarError.message,
+      );
+    }
   }
+  return { success: true };
 });
 
 ipcMain.handle(ChannelsEnum.REQUEST_INITIAL_AUTH_STATUS, async () => {
