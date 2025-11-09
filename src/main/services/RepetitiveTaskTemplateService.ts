@@ -16,7 +16,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 // eslint-disable-next-line import/no-relative-packages
-import { RepetitiveTaskTemplate, Task } from '../../generated/client';
+import {
+  RepetitiveTaskTemplate,
+  Task,
+  PrismaClient,
+} from '../../generated/client';
 import {
   ITaskIPC,
   TaskScheduleTypeEnum,
@@ -30,6 +34,11 @@ import { syncService } from './SyncService';
 import { TaskService } from './TaskService';
 import dayjs from 'dayjs';
 import log from 'electron-log';
+
+type PrismaTransactionalClient = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
 
 export class RepetitiveTaskTemplateService {
   private repetitiveTaskTemplateRepository: RepetitiveTaskTemplateRepository;
@@ -228,6 +237,41 @@ export class RepetitiveTaskTemplateService {
     );
   };
 
+  updateLastDateOfTaskGeneration = async (
+    templateId: string,
+    lastDate: Date,
+    userId: string | null,
+    tx: PrismaTransactionalClient,
+  ): Promise<RepetitiveTaskTemplate> => {
+    const updatedTemplate =
+      await this.repetitiveTaskTemplateRepository.updateLastDateOfTaskGeneration(
+        templateId,
+        lastDate,
+        tx,
+      );
+
+    const isPremium = !!userId;
+    if (isPremium) {
+      if (!updatedTemplate) {
+        throw new Error(
+          `[RepetitiveTaskTemplateService] Cannot update last generation date for non-existent template with ID ${templateId}`,
+        );
+      }
+
+      await this.pendingOpRepository.enqueueOperation(
+        {
+          userId: userId!,
+          operationType: 'update',
+          entityType: 'repetitive_task_template',
+          entityId: templateId,
+          payload: JSON.stringify({ ...updatedTemplate, tags: [] }),
+        },
+        tx,
+      );
+    }
+    return updatedTemplate;
+  };
+
   generateDueTasks = async (userId: string | null): Promise<void> => {
     const dueTemplates =
       await this.repetitiveTaskTemplateRepository.getDueRepetitiveTemplates(
@@ -303,9 +347,10 @@ export class RepetitiveTaskTemplateService {
         await Promise.all(taskCreationPromises);
 
         if (latestDueDateForTemplate) {
-          await this.repetitiveTaskTemplateRepository.updateLastDateOfTaskGeneration(
+          await this.updateLastDateOfTaskGeneration(
             template.id,
             latestDueDateForTemplate,
+            userId,
             tx,
           );
         }
