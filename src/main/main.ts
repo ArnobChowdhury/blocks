@@ -786,9 +786,9 @@ app
   .then(() => {
     registerTokenRefreshHandler(handleSuccessfulSignIn);
     registerAuthFailureHandler(() => {
-      /**
-       * to be figured out
-       */
+      mainWindow?.webContents.send(
+        ChannelsEnum.RESPONSE_TOKEN_REFRESHING_FAILED,
+      );
     });
     createWindow();
     app.on('activate', () => {

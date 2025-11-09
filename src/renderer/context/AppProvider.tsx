@@ -106,6 +106,20 @@ const AppContextFn = (initialUser: User | null) => {
   useEffect(() => {
     // sourcery skip: inline-immediately-returned-variable
     const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_TOKEN_REFRESHING_FAILED,
+      () => {
+        setNotifier(
+          'Failed to refresh your session. Sync is paused. Please sign out and sign in again to resume.',
+          'error',
+        );
+      },
+    );
+    return unsubscribe;
+  }, [setNotifier]);
+
+  useEffect(() => {
+    // sourcery skip: inline-immediately-returned-variable
+    const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK,
       () => {
         handlePageTaskRefresh(todayPageDisplayDate.toDate());
