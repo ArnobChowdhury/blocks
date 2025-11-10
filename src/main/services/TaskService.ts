@@ -337,8 +337,4 @@ export class TaskService {
     await this.taskRepository.deactivateCompletedOnceTasks(userId);
     return this.taskRepository.getActiveOnceTasksWithSpaceId(spaceId, userId);
   };
-
-  deleteTaskById = async (taskId: string): Promise<void> => {
-    await this.taskRepository.deleteTaskById(taskId);
-  };
 }
