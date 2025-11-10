@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import log from 'electron-log';
 
-import apiClient from '../apiClient';
+import apiClient, { CustomAxiosError } from '../apiClient';
 import {
   PendingOperation,
   PendingOperationRepository,
@@ -189,7 +189,7 @@ class SyncService {
   }
 
   private async handleAxiosError(
-    error: AxiosError<{ result: { code: string; data: any; message: string } }>,
+    error: CustomAxiosError,
     operation: PendingOperation,
   ) {
     const { id, entityType, entityId, operationType } = operation;

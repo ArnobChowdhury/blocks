@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import keytar from 'keytar';
 import log from 'electron-log';
 import {
@@ -23,6 +23,17 @@ import {
   KEYCHAIN_SERVICE,
   KEYCHAIN_REFRESH_TOKEN_ACCOUNT,
 } from './constants';
+
+interface BackendErrorResponseData {
+  result?: {
+    code?: string;
+    message?: string;
+    data?: { canonical_id?: string };
+  };
+}
+
+export interface CustomAxiosError
+  extends AxiosError<BackendErrorResponseData> {}
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
