@@ -380,4 +380,8 @@ export class TaskRepository {
 
     await Promise.all(upsertPromises);
   };
+
+  deleteTaskById = async (taskId: string): Promise<void> => {
+    await prisma.task.delete({ where: { id: taskId } });
+  };
 }

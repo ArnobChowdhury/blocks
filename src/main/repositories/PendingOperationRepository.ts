@@ -98,6 +98,20 @@ export class PendingOperationRepository {
   };
 
   /**
+   * Remaps the entityId for all pending operations that match the oldId.
+   * This is crucial when a duplicate 'create' operation is resolved by the server
+   * providing a canonical ID.
+   * @param oldId The client-generated ID that was found to be a duplicate.
+   * @param newId The canonical ID provided by the server.
+   */
+  remapEntityId = async (oldId: string, newId: string): Promise<void> => {
+    await prisma.pendingOperation.updateMany({
+      where: { entityId: oldId },
+      data: { entityId: newId },
+    });
+  };
+
+  /**
    * Deletes a pending operation from the queue, typically after a successful sync.
    * @param operationId The ID of the operation to delete.
    * @returns The deleted PendingOperation record.

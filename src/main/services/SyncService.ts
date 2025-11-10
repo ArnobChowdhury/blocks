@@ -1,22 +1,6 @@
-/*
- * Blocks Tracker - Todoing and habit tracking in one place.
- * Copyright (C) 2025 Chowdhury Md Sami Al Muntahi
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
- */
 import axios, { AxiosError } from 'axios';
 import log from 'electron-log';
+
 import apiClient from '../apiClient';
 import {
   PendingOperation,
@@ -26,6 +10,7 @@ import { SettingsRepository } from '../repositories/SettingsRepository';
 import { TaskRepository } from '../repositories/TaskRepository';
 import { SpaceRepository } from '../repositories/SpaceRepository';
 import { RepetitiveTaskTemplateRepository } from '../repositories/RepetitiveTaskTemplateRepository';
+import { TaskService } from './TaskService';
 import { apiEndpoints } from '../config/apiEndpoints';
 import { prisma } from '../prisma';
 
@@ -42,6 +27,8 @@ class SyncService {
 
   private rttRepo: RepetitiveTaskTemplateRepository;
 
+  private taskService: TaskService;
+
   private onSyncStatusChange: ((isSyncing: boolean) => void) | null = null;
 
   constructor() {
@@ -50,6 +37,7 @@ class SyncService {
     this.taskRepo = new TaskRepository();
     this.spaceRepo = new SpaceRepository();
     this.rttRepo = new RepetitiveTaskTemplateRepository();
+    this.taskService = new TaskService();
   }
 
   public initialize(callbacks: {
@@ -125,10 +113,10 @@ class SyncService {
       log.info(
         `[SyncService] Operation ${id} synced successfully. Deleting from queue.`,
       );
-      await this.pendingOpRepo.deleteOperation(id);
+      await this.pendingOpRepo.deleteOperation(operation.id);
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        await this.handleAxiosError(error, id);
+        await this.handleAxiosError(error, operation);
       } else {
         log.warn(
           `[SyncService] An unexpected network error occurred for operation ${id}. Recording failed attempt.`,
@@ -200,27 +188,79 @@ class SyncService {
     }
   }
 
-  private async handleAxiosError(error: AxiosError, operationId: number) {
-    if (error.response) {
-      const { status } = error.response;
+  private async handleAxiosError(
+    error: AxiosError<{ result: { code: string; data: any; message: string } }>,
+    operation: PendingOperation,
+  ) {
+    const { id, entityType, entityId, operationType } = operation;
 
-      if (status >= 500) {
+    if (error.response) {
+      const { status, data } = error.response;
+      const errorCode = data?.result?.code;
+
+      if (status === 409) {
+        if (errorCode === 'DUPLICATE_ENTITY') {
+          const canonicalId = data?.result?.data?.canonical_id;
+          if (canonicalId) {
+            log.warn(
+              `[SyncService] Duplicate entity conflict for operation ${id} (entityId: ${entityId}). Canonical ID: ${canonicalId}. Remapping and deleting local entity.`,
+            );
+            await this.pendingOpRepo.remapEntityId(entityId, canonicalId);
+
+            switch (entityType) {
+              case 'task':
+                await this.taskService.deleteTaskById(entityId);
+                break;
+            }
+            await this.pendingOpRepo.deleteOperation(id);
+          } else {
+            log.error(
+              `[SyncService] DUPLICATE_ENTITY conflict for operation ${id} but no canonical_id provided. Marking as failed.`,
+              error.response.data,
+            );
+            await this.pendingOpRepo.updateOperationStatus(id, 'failed');
+          }
+        } else if (errorCode === 'STALE_DATA') {
+          log.warn(
+            `[SyncService] Stale data conflict for operation ${id}. Deleting operation.`,
+          );
+          await this.pendingOpRepo.deleteOperation(id);
+        } else {
+          log.error(
+            `[SyncService] Unknown 409 conflict for operation ${id}. Marking as failed.`,
+            error.response.data,
+          );
+          await this.pendingOpRepo.updateOperationStatus(id, 'failed');
+        }
+      } else if (status === 404) {
         log.warn(
-          `[SyncService] Server error (${status}) for operation ${operationId}. Recording failed attempt.`,
+          `[SyncService] Entity not found (404) for operation ${id}. Deleting operation.`,
         );
-        await this.pendingOpRepo.recordFailedAttempt(operationId);
+        await this.pendingOpRepo.deleteOperation(id);
+      } else if (status === 401) {
+        log.warn(
+          `[SyncService] Unauthorized (401) for operation ${id}. Recording failed attempt.`,
+        );
+        await this.pendingOpRepo.recordFailedAttempt(id);
+      } else if (status >= 500) {
+        log.warn(
+          `[SyncService] Server error (${status}) for operation ${id}. Recording failed attempt.`,
+        );
+        await this.pendingOpRepo.recordFailedAttempt(id);
       } else if (status >= 400) {
+        // Other 4xx errors (400, 422, etc.)
         log.error(
-          `[SyncService] Client error (${status}) for operation ${operationId}. Marking as failed.`,
+          `[SyncService] Client error (${status}) for operation ${id}. Marking as failed.`,
           error.response.data,
         );
-        await this.pendingOpRepo.updateOperationStatus(operationId, 'failed');
+        await this.pendingOpRepo.updateOperationStatus(id, 'failed');
       }
     } else if (error.request) {
+      // Network error (no response received)
       log.warn(
-        `[SyncService] No response received for operation ${operationId}. Recording failed attempt.`,
+        `[SyncService] No response received (network error) for operation ${id}. Recording failed attempt.`,
       );
-      await this.pendingOpRepo.recordFailedAttempt(operationId);
+      await this.pendingOpRepo.recordFailedAttempt(id);
     }
   }
 }
