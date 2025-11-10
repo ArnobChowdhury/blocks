@@ -76,8 +76,6 @@ model Tag {
   modifiedAt      DateTime                    @updatedAt
   user            User?                       @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          String?
-
-  @@unique([name, userId])
 }
 
 model Space {
@@ -89,8 +87,6 @@ model Space {
   modifiedAt      DateTime                 @updatedAt
   user            User?                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          String?
-
-  @@unique([name, userId])
 }
 
 model User {
