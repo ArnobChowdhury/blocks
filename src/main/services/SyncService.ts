@@ -27,8 +27,6 @@ class SyncService {
 
   private rttRepo: RepetitiveTaskTemplateRepository;
 
-  private taskService: TaskService;
-
   private onSyncStatusChange: ((isSyncing: boolean) => void) | null = null;
 
   constructor() {
@@ -37,7 +35,6 @@ class SyncService {
     this.taskRepo = new TaskRepository();
     this.spaceRepo = new SpaceRepository();
     this.rttRepo = new RepetitiveTaskTemplateRepository();
-    this.taskService = new TaskService();
   }
 
   public initialize(callbacks: {
@@ -209,7 +206,7 @@ class SyncService {
 
             switch (entityType) {
               case 'task':
-                await this.taskService.deleteTaskById(entityId);
+                await this.taskRepo.deleteTaskById(entityId);
                 break;
             }
             await this.pendingOpRepo.deleteOperation(id);
