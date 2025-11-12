@@ -63,22 +63,22 @@ export class PendingOperationRepository {
    * @returns The pending operation object or null if the queue is empty or blocked.
    */
   getOldestPendingOperation = async (): Promise<PendingOperation | null> => {
-    const result = await prisma.$queryRaw<PendingOperation[]>`
-      SELECT *
-      FROM "PendingOperation" po1
-      WHERE
-        po1.status = 'pending' AND
-        NOT EXISTS (
-          SELECT 1
-          FROM "PendingOperation" po2
-          WHERE
-            po2.entityId = po1.entityId AND
-            po2.status IN ('processing', 'failed')
-        )
-      ORDER BY po1.id ASC
-      LIMIT 1`;
-
-    return result.length > 0 ? result[0] : null;
+    const blockedEntities = await prisma.pendingOperation.findMany({
+      where: {
+        status: {
+          in: ['processing', 'failed'],
+        },
+      },
+      select: {
+        entityId: true,
+      },
+      distinct: ['entityId'],
+    });
+    const blockedEntityIds = blockedEntities.map((op) => op.entityId);
+    return prisma.pendingOperation.findFirst({
+      where: { status: 'pending', entityId: { notIn: blockedEntityIds } },
+      orderBy: { id: 'asc' },
+    });
   };
 
   /**

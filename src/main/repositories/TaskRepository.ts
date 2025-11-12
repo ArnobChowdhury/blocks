@@ -364,7 +364,7 @@ export class TaskRepository {
 
       if (existingTask) {
         if (
-          new Date(incomingTask.modifiedAt) > new Date(existingTask.modifiedAt)
+          new Date(incomingTask.modifiedAt) >= new Date(existingTask.modifiedAt)
         ) {
           return tx.task.update({
             where: { id },

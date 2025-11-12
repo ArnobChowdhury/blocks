@@ -313,7 +313,7 @@ export class RepetitiveTaskTemplateRepository {
 
       if (existingTemplate) {
         if (
-          new Date(incomingTemplate.modifiedAt) >
+          new Date(incomingTemplate.modifiedAt) >=
           new Date(existingTemplate.modifiedAt)
         ) {
           return tx.repetitiveTaskTemplate.update({

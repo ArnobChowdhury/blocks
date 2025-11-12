@@ -65,7 +65,7 @@ export class SpaceRepository {
 
       if (existingSpace) {
         if (
-          new Date(incomingSpace.modifiedAt) >
+          new Date(incomingSpace.modifiedAt) >=
           new Date(existingSpace.modifiedAt)
         ) {
           return tx.space.update({
