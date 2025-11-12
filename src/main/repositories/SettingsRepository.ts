@@ -15,9 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+import { PrismaClient } from '../../generated/client';
 import { prisma } from '../prisma';
 
 const LAST_CHANGE_ID_KEY = 'last_change_id';
+
+type PrismaTransactionalClient = Omit<
+  PrismaClient,
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+>;
 
 export class SettingsRepository {
   async getLastChangeId(): Promise<number> {
@@ -28,8 +34,12 @@ export class SettingsRepository {
     return setting ? parseInt(setting.value, 10) : 0;
   }
 
-  async setLastChangeId(changeId: number): Promise<void> {
-    await prisma.settings.upsert({
+  async setLastChangeId(
+    changeId: number,
+    tx?: PrismaTransactionalClient,
+  ): Promise<void> {
+    const db = tx || prisma;
+    await db.settings.upsert({
       where: { key: LAST_CHANGE_ID_KEY },
       update: { value: changeId.toString() },
       create: { key: LAST_CHANGE_ID_KEY, value: changeId.toString() },

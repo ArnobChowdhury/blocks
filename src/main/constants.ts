@@ -19,7 +19,7 @@ export const KEYCHAIN_REFRESH_TOKEN_ACCOUNT = 'currentUserRefreshToken';
 process.env.DATABASE_URL = dbUrl;
 
 // This needs to be updated every time you create a migration!
-export const latestMigration = '20251016104205_init';
+export const latestMigration = '20251111062844_init';
 export const platformToExecutables: any = {
   win32: {
     migrationEngine: 'node_modules/@prisma/engines/schema-engine-windows.exe',

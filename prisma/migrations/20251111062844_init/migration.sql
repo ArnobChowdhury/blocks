@@ -120,10 +120,4 @@ CREATE TABLE "RepetitiveTaskTemplateTag" (
 CREATE UNIQUE INDEX "Task_repetitiveTaskTemplateId_dueDate_key" ON "Task"("repetitiveTaskTemplateId", "dueDate");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Tag_name_userId_key" ON "Tag"("name", "userId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Space_name_userId_key" ON "Space"("name", "userId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");

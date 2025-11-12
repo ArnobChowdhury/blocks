@@ -16,7 +16,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 // eslint-disable-next-line import/no-relative-packages
-import { Prisma, PrismaClient, Task } from '../../generated/client';
+import { PrismaClient, Task } from '../../generated/client';
 import {
   ITaskIPC,
   TaskCompletionStatusEnum,
