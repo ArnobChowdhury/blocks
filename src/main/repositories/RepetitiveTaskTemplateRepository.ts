@@ -18,7 +18,11 @@
 // eslint-disable-next-line import/no-relative-packages
 import { PrismaClient, RepetitiveTaskTemplate } from '../../generated/client';
 import dayjs from 'dayjs';
-import { ITaskIPC, TaskScheduleTypeEnum } from '../../renderer/types';
+import {
+  ITaskIPC,
+  TaskScheduleTypeEnum,
+  SyncedRepetitiveTask,
+} from '../../renderer/types';
 import {
   getDaysForDailyTasks,
   getDaysForSpecificDaysInAWeekTasks,
@@ -297,7 +301,7 @@ export class RepetitiveTaskTemplateRepository {
   };
 
   upsertMany = async (
-    templates: RepetitiveTaskTemplate[],
+    templates: SyncedRepetitiveTask[],
     tx: PrismaTransactionalClient,
   ): Promise<void> => {
     if (templates.length === 0) {
@@ -305,7 +309,7 @@ export class RepetitiveTaskTemplateRepository {
     }
 
     const upsertPromises = templates.map(async (incomingTemplate) => {
-      const { id, ...incomingTemplateData } = incomingTemplate;
+      const { id, lastChangeId, ...incomingTemplateData } = incomingTemplate;
 
       const existingTemplate = await tx.repetitiveTaskTemplate.findUnique({
         where: { id },
@@ -324,7 +328,7 @@ export class RepetitiveTaskTemplateRepository {
         return Promise.resolve();
       }
       return tx.repetitiveTaskTemplate.create({
-        data: incomingTemplate,
+        data: { id, ...incomingTemplateData },
       });
     });
 

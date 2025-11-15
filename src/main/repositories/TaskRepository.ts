@@ -21,6 +21,7 @@ import {
   ITaskIPC,
   TaskCompletionStatusEnum,
   TaskScheduleTypeEnum,
+  SyncedTask,
 } from '../../renderer/types';
 import { getTodayStart } from '../helpers';
 import { prisma } from '../prisma';
@@ -348,7 +349,7 @@ export class TaskRepository {
   };
 
   upsertMany = async (
-    tasks: Task[],
+    tasks: SyncedTask[],
     tx: PrismaTransactionalClient,
   ): Promise<void> => {
     if (tasks.length === 0) {
@@ -356,7 +357,7 @@ export class TaskRepository {
     }
 
     const upsertPromises = tasks.map(async (incomingTask) => {
-      const { id, ...incomingTaskData } = incomingTask;
+      const { id, lastChangeId, ...incomingTaskData } = incomingTask;
 
       const existingTask = await tx.task.findUnique({
         where: { id },
@@ -368,13 +369,17 @@ export class TaskRepository {
         ) {
           return tx.task.update({
             where: { id },
-            data: incomingTaskData,
+            data: { ...incomingTaskData },
           });
         }
         return Promise.resolve();
       }
+
       return tx.task.create({
-        data: incomingTask,
+        data: {
+          id,
+          ...incomingTaskData,
+        },
       });
     });
 

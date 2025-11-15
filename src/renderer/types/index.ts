@@ -20,6 +20,11 @@ export interface ExtendedRepetitiveTaskTemplate extends RepetitiveTaskTemplate {
 }
 export type { Tag, Task, Space };
 
+export type SyncedTask = Task & { lastChangeId: number };
+export type SyncedRepetitiveTask = RepetitiveTaskTemplate & {
+  lastChangeId: number;
+};
+
 export enum DaysInAWeek {
   Sunday = 'sunday',
   Monday = 'monday',
