@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { styled, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import {
-  TaskScheduleTypeEnum,
   TaskCompletionStatusEnum,
   Task,
   ExtendedRepetitiveTaskTemplate,
@@ -144,51 +143,26 @@ function HabitTracker({ habits, header }: HabitTrackerProps) {
                 }
                 const key = `${timestamp}-${entry.id}`;
 
-                // daily task logic
-                if (habit?.schedule === TaskScheduleTypeEnum.Daily) {
-                  if (
-                    entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
-                  ) {
-                    if (entry.score !== null) {
-                      const bg = scoreColors[entry.score - 1];
-                      return (
-                        <StyledTd sx={{ backgroundColor: bg }} key={key} />
-                      );
-                    }
-                    return (
-                      <StyledTd
-                        sx={{ backgroundColor: scoreColors[4] }}
-                        key={key}
-                      />
-                    );
+                if (
+                  entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
+                ) {
+                  if (entry.score !== null) {
+                    const bg = scoreColors[entry.score - 1];
+                    return <StyledTd sx={{ backgroundColor: bg }} key={key} />;
                   }
-                  if (
-                    entry.completionStatus === TaskCompletionStatusEnum.FAILED
-                  ) {
-                    return (
-                      <StyledTd sx={{ backgroundColor: '#d43f3f' }} key={key} />
-                    );
-                  }
-                } else {
-                  // logic for specific tasks in a week
-                  if (
-                    entry.completionStatus === TaskCompletionStatusEnum.COMPLETE
-                  ) {
-                    return (
-                      <StyledTd
-                        sx={{ backgroundColor: scoreColors[4] }}
-                        key={key}
-                      />
-                    );
-                  }
-                  if (
-                    entry.completionStatus === TaskCompletionStatusEnum.FAILED
-                  ) {
-                    return (
-                      <StyledTd sx={{ backgroundColor: '#d43f3f' }} key={key} />
-                    );
-                  }
-                  return <StyledTd key={key} />;
+                  return (
+                    <StyledTd
+                      sx={{ backgroundColor: scoreColors[4] }}
+                      key={key}
+                    />
+                  );
+                }
+                if (
+                  entry.completionStatus === TaskCompletionStatusEnum.FAILED
+                ) {
+                  return (
+                    <StyledTd sx={{ backgroundColor: '#d43f3f' }} key={key} />
+                  );
                 }
                 return <StyledTd key={key} />;
               })}
