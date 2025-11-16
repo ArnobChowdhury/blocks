@@ -18,6 +18,7 @@
 // eslint-disable-next-line import/no-relative-packages
 import { PrismaClient, Space } from '../../generated/client';
 import { prisma } from '../prisma';
+import { SyncedSpace } from '../../renderer/types';
 
 type PrismaTransactionalClient = Omit<
   PrismaClient,
@@ -49,7 +50,7 @@ export class SpaceRepository {
   };
 
   upsertMany = async (
-    spaces: Space[],
+    spaces: SyncedSpace[],
     tx: PrismaTransactionalClient,
   ): Promise<void> => {
     if (spaces.length === 0) {
@@ -57,7 +58,7 @@ export class SpaceRepository {
     }
 
     const upsertPromises = spaces.map(async (incomingSpace) => {
-      const { id, ...incomingSpaceData } = incomingSpace;
+      const { id, lastChangeId, ...incomingSpaceData } = incomingSpace;
 
       const existingSpace = await tx.space.findUnique({
         where: { id },
@@ -76,7 +77,7 @@ export class SpaceRepository {
         return Promise.resolve();
       }
       return tx.space.create({
-        data: incomingSpace,
+        data: { id, ...incomingSpaceData },
       });
     });
 

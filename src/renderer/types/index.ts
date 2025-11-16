@@ -25,6 +25,10 @@ export type SyncedRepetitiveTask = RepetitiveTaskTemplate & {
   lastChangeId: number;
 };
 
+export type SyncedSpace = Space & {
+  lastChangeId: number;
+};
+
 export enum DaysInAWeek {
   Sunday = 'sunday',
   Monday = 'monday',
