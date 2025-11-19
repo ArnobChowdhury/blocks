@@ -18,7 +18,7 @@ export type RepetitiveTaskWithTagsAndSpace = RepetitiveTaskTemplate & {
 export interface ExtendedRepetitiveTaskTemplate extends RepetitiveTaskTemplate {
   tasks: Task[];
 }
-export type { Tag, Task, Space };
+export type { Tag, RepetitiveTaskTemplate, Task, Space };
 
 export type SyncedTask = Task & { lastChangeId: number };
 export type SyncedRepetitiveTask = RepetitiveTaskTemplate & {

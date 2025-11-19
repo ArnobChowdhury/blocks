@@ -48,7 +48,12 @@ function TasksBySchedule({
 
   const { onTaskFailure } = useTaskFailure(handlePageTaskRefresh);
 
-  const { onTaskReschedule } = useTaskReschedule(handlePageTaskRefresh);
+  const {
+    onTaskReschedule,
+    handleDatePickerEndDate,
+    datePickerEndDate,
+    resetDatePickerEndDate,
+  } = useTaskReschedule(handlePageTaskRefresh);
 
   const handleTaskEdit = (taskId: string) => {
     setTaskIdForEdit(taskId);
@@ -187,6 +192,9 @@ function TasksBySchedule({
                       }
                       onTaskEdit={() => handleTaskEdit(task.id)}
                       key={task.id}
+                      setDatePickerEndDate={() => handleDatePickerEndDate(task)}
+                      datePickerEndDate={datePickerEndDate}
+                      resetDatePickerEndDate={resetDatePickerEndDate}
                     />
                     <Divider />
                   </Fragment>
@@ -222,6 +230,9 @@ function TasksBySchedule({
                       }
                       onTaskEdit={() => handleTaskEdit(task.id)}
                       key={task.id}
+                      setDatePickerEndDate={() => handleDatePickerEndDate(task)}
+                      datePickerEndDate={datePickerEndDate}
+                      resetDatePickerEndDate={resetDatePickerEndDate}
                     />
                     <Divider />
                   </Fragment>

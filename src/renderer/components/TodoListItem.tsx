@@ -31,6 +31,9 @@ interface ITaskListItemProps {
   onFail?: () => void;
   onRecover?: () => void;
   onReschedule?: (rescheduledTime: Dayjs) => void;
+  datePickerEndDate?: Dayjs;
+  setDatePickerEndDate: () => Promise<void>;
+  resetDatePickerEndDate: () => void;
   onTaskEdit: () => void;
 }
 
@@ -41,6 +44,9 @@ function TodoListItem({
   onFail,
   onRecover,
   onReschedule,
+  datePickerEndDate,
+  setDatePickerEndDate,
+  resetDatePickerEndDate,
   onTaskEdit,
 }: ITaskListItemProps) {
   const {
@@ -60,7 +66,7 @@ function TodoListItem({
     null,
   );
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>();
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
 
   const showDate = Boolean(dateAnchorEl);
   const datePopOverId = showDate ? 'datepicker-reschedule-popover' : undefined;
@@ -82,6 +88,11 @@ function TodoListItem({
   ) => {
     e.preventDefault();
     onTaskEdit();
+  };
+
+  const handleDatePickerReset = () => {
+    setDateAnchorEl(null);
+    resetDatePickerEndDate();
   };
 
   return (
@@ -183,6 +194,7 @@ function TodoListItem({
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
+                      setDatePickerEndDate();
                       setDateAnchorEl(e.currentTarget);
                     }}
                     sx={{ width: '32px', height: '32px' }}
@@ -196,7 +208,7 @@ function TodoListItem({
                   onClick={(e) => e.stopPropagation()}
                   open={showDate}
                   anchorEl={dateAnchorEl}
-                  onClose={() => setDateAnchorEl(null)}
+                  onClose={() => handleDatePickerReset()}
                   anchorOrigin={{
                     vertical: 'top',
                     horizontal: 'left',
@@ -212,12 +224,13 @@ function TodoListItem({
                     // defaultValue={dayjs()}
                     disablePast
                     onChange={setSelectedDate}
+                    maxDate={datePickerEndDate}
                     value={selectedDate}
-                    onClose={() => setDateAnchorEl(null)}
+                    onClose={() => handleDatePickerReset()}
                     onAccept={(val) => {
                       if (val) {
                         setSelectedDate(val);
-                        setDateAnchorEl(null);
+                        handleDatePickerReset();
                         if (onReschedule) onReschedule(val);
                       }
                     }}

@@ -32,7 +32,12 @@ function TodoList({ tasks, refreshCallback, isLightBG }: TodoListProps) {
   const { onToggleTaskCompletionStatus } =
     useToggleTaskCompletionStatus(refreshCallback);
   const { onTaskFailure } = useTaskFailure(refreshCallback);
-  const { onTaskReschedule } = useTaskReschedule(refreshCallback);
+  const {
+    onTaskReschedule,
+    datePickerEndDate,
+    handleDatePickerEndDate,
+    resetDatePickerEndDate,
+  } = useTaskReschedule(refreshCallback);
 
   const [scoreAnchorEl, setScoreAnchorEl] =
     React.useState<HTMLInputElement | null>(null);
@@ -102,6 +107,9 @@ function TodoList({ tasks, refreshCallback, isLightBG }: TodoListProps) {
                 onTaskReschedule(task.id, rescheduledTime)
               }
               onTaskEdit={() => handleTaskEdit(task.id)}
+              datePickerEndDate={datePickerEndDate}
+              setDatePickerEndDate={() => handleDatePickerEndDate(task)}
+              resetDatePickerEndDate={resetDatePickerEndDate}
             />
             {index !== tasks.length - 1 && (
               <Divider
