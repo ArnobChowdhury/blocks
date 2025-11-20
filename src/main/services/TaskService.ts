@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+import dayjs from 'dayjs';
 // eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
 import {
@@ -23,9 +24,11 @@ import {
   TaskScheduleTypeEnum,
 } from '../../renderer/types';
 import { TaskRepository } from '../repositories/TaskRepository';
+import { RepetitiveTaskTemplateRepository } from '../repositories/RepetitiveTaskTemplateRepository';
 import { PendingOperationRepository } from '../repositories/PendingOperationRepository';
 import { syncService } from './SyncService';
 import { prisma } from '../prisma';
+import { getNextIterationDateForRepetitiveTask } from '../../renderer/utils';
 
 type PrismaTransactionalClient = Omit<
   typeof prisma,
@@ -34,12 +37,15 @@ type PrismaTransactionalClient = Omit<
 
 export class TaskService {
   private taskRepository: TaskRepository;
+  private repetitiveTaskTemplateRepository: RepetitiveTaskTemplateRepository;
 
   private pendingOpRepository: PendingOperationRepository;
 
   constructor() {
     this.taskRepository = new TaskRepository();
     this.pendingOpRepository = new PendingOperationRepository();
+    this.repetitiveTaskTemplateRepository =
+      new RepetitiveTaskTemplateRepository();
   }
 
   _createTaskInternal = async (
@@ -246,6 +252,28 @@ export class TaskService {
 
     if (task.schedule === TaskScheduleTypeEnum.Daily) {
       throw new Error('Daily tasks cannot be rescheduled.');
+    }
+
+    if (
+      task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek &&
+      task.repetitiveTaskTemplateId
+    ) {
+      const repetitiveTaskTemplate =
+        await this.repetitiveTaskTemplateRepository.getRepetitiveTaskTemplateDetails(
+          task.repetitiveTaskTemplateId,
+          userId,
+        );
+
+      const nextIterationDate = getNextIterationDateForRepetitiveTask(
+        repetitiveTaskTemplate,
+        dayjs(task.dueDate),
+      );
+
+      if (!dayjs(dueDate).isBefore(nextIterationDate)) {
+        throw new Error(
+          'Rescheduled due date must be before the next iteration date.',
+        );
+      }
     }
 
     let newSchedule: TaskScheduleTypeEnum | undefined;
