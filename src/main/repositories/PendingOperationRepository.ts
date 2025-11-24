@@ -62,7 +62,9 @@ export class PendingOperationRepository {
    * no other operations for the same entity are currently being processed or have failed.
    * @returns The pending operation object or null if the queue is empty or blocked.
    */
-  getOldestPendingOperation = async (): Promise<PendingOperation | null> => {
+  getOldestPendingOperation = async (
+    excludedIds: number[] = [],
+  ): Promise<PendingOperation | null> => {
     const blockedEntities = await prisma.pendingOperation.findMany({
       where: {
         status: {
@@ -76,7 +78,13 @@ export class PendingOperationRepository {
     });
     const blockedEntityIds = blockedEntities.map((op) => op.entityId);
     return prisma.pendingOperation.findFirst({
-      where: { status: 'pending', entityId: { notIn: blockedEntityIds } },
+      where: {
+        status: 'pending',
+        entityId: { notIn: blockedEntityIds },
+        id: {
+          notIn: excludedIds,
+        },
+      },
       orderBy: { id: 'asc' },
     });
   };
@@ -90,8 +98,10 @@ export class PendingOperationRepository {
   updateOperationStatus = async (
     operationId: number,
     status: 'processing' | 'failed',
+    tx?: PrismaTransactionalClient,
   ): Promise<PendingOperation> => {
-    return prisma.pendingOperation.update({
+    const db = tx || prisma;
+    return db.pendingOperation.update({
       where: { id: operationId },
       data: { status },
     });
@@ -104,8 +114,13 @@ export class PendingOperationRepository {
    * @param oldId The client-generated ID that was found to be a duplicate.
    * @param newId The canonical ID provided by the server.
    */
-  remapEntityId = async (oldId: string, newId: string): Promise<void> => {
-    await prisma.pendingOperation.updateMany({
+  remapEntityId = async (
+    oldId: string,
+    newId: string,
+    tx?: PrismaTransactionalClient,
+  ): Promise<void> => {
+    const db = tx || prisma;
+    await db.pendingOperation.updateMany({
       where: { entityId: oldId },
       data: { entityId: newId },
     });
@@ -116,8 +131,12 @@ export class PendingOperationRepository {
    * @param operationId The ID of the operation to delete.
    * @returns The deleted PendingOperation record.
    */
-  deleteOperation = async (operationId: number): Promise<PendingOperation> => {
-    return prisma.pendingOperation.delete({
+  deleteOperation = async (
+    operationId: number,
+    tx?: PrismaTransactionalClient,
+  ): Promise<PendingOperation> => {
+    const db = tx || prisma;
+    return db.pendingOperation.delete({
       where: { id: operationId },
     });
   };

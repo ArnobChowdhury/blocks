@@ -386,7 +386,11 @@ export class TaskRepository {
     await Promise.all(upsertPromises);
   };
 
-  deleteTaskById = async (taskId: string): Promise<void> => {
-    await prisma.task.delete({ where: { id: taskId } });
+  deleteTaskById = async (
+    taskId: string,
+    tx?: PrismaTransactionalClient,
+  ): Promise<void> => {
+    const db = tx || prisma;
+    await db.task.delete({ where: { id: taskId } });
   };
 }

@@ -55,12 +55,17 @@ class SyncService {
 
     try {
       log.info('[SyncService] Starting PUSH phase...');
+      const processedInThisRun: number[] = [];
       while (true) {
-        const operation = await this.pendingOpRepo.getOldestPendingOperation();
+        const operation =
+          await this.pendingOpRepo.getOldestPendingOperation(
+            processedInThisRun,
+          );
         if (!operation) {
           log.info('[SyncService] Local queue is empty. PUSH phase complete.');
           break;
         }
+        processedInThisRun.push(operation.id);
         await this.processOperation(operation);
       }
 
@@ -153,6 +158,9 @@ class SyncService {
         syncData.repetitiveTaskTemplates?.length > 0;
 
       if (!hasNewChanges) {
+        log.info(
+          `[SyncService] No new changes found. PULL phase complete. Synced up to change ID: ${syncData.latestChangeId}`,
+        );
         await this.settingsRepo.setLastChangeId(syncData.latestChangeId);
         break;
       }
@@ -169,7 +177,10 @@ class SyncService {
           if (syncData.tasks?.length > 0) {
             await this.taskRepo.upsertMany(syncData.tasks, tx);
           }
-          await this.settingsRepo.setLastChangeId(syncData.latestChangeId);
+          log.info(
+            `[SyncService] Synced up to change ID: ${syncData.latestChangeId}`,
+          );
+          await this.settingsRepo.setLastChangeId(syncData.latestChangeId, tx);
         });
 
         log.info(
@@ -196,44 +207,48 @@ class SyncService {
       const errorCode = data?.result?.code;
 
       if (status === 409) {
-        if (errorCode === 'DUPLICATE_ENTITY') {
-          const canonicalId = data?.result?.data?.canonical_id;
-          if (canonicalId) {
-            log.warn(
-              `[SyncService] Duplicate entity conflict for operation ${id} (entityId: ${entityId}). Canonical ID: ${canonicalId}. Remapping and deleting local entity.`,
-            );
-            await this.pendingOpRepo.remapEntityId(entityId, canonicalId);
+        await prisma.$transaction(async (tx) => {
+          if (errorCode === 'DUPLICATE_ENTITY') {
+            const canonicalId = data?.result?.data?.canonical_id;
+            if (canonicalId) {
+              log.warn(
+                `[SyncService] Duplicate entity conflict for operation ${id} (entityId: ${entityId}). Canonical ID: ${canonicalId}. Remapping and deleting local entity.`,
+              );
+              await this.pendingOpRepo.remapEntityId(entityId, canonicalId, tx);
 
-            switch (entityType) {
-              case 'task':
-                await this.taskRepo.deleteTaskById(entityId);
-                break;
+              switch (entityType) {
+                case 'task':
+                  await this.taskRepo.deleteTaskById(entityId, tx);
+                  break;
+              }
+              await this.pendingOpRepo.deleteOperation(id, tx);
+            } else {
+              log.error(
+                `[SyncService] DUPLICATE_ENTITY conflict for operation ${id} but no canonical_id provided. Marking as failed.`,
+                error.response?.data,
+              );
+              await this.pendingOpRepo.updateOperationStatus(id, 'failed', tx);
             }
-            await this.pendingOpRepo.deleteOperation(id);
+          } else if (errorCode === 'STALE_DATA') {
+            log.warn(
+              `[SyncService] Stale data conflict for operation ${id}. Deleting operation.`,
+            );
+            await this.pendingOpRepo.deleteOperation(id, tx);
           } else {
             log.error(
-              `[SyncService] DUPLICATE_ENTITY conflict for operation ${id} but no canonical_id provided. Marking as failed.`,
-              error.response.data,
+              `[SyncService] Unknown 409 conflict for operation ${id}. Marking as failed.`,
+              error.response?.data,
             );
-            await this.pendingOpRepo.updateOperationStatus(id, 'failed');
+            await this.pendingOpRepo.updateOperationStatus(id, 'failed', tx);
           }
-        } else if (errorCode === 'STALE_DATA') {
-          log.warn(
-            `[SyncService] Stale data conflict for operation ${id}. Deleting operation.`,
-          );
-          await this.pendingOpRepo.deleteOperation(id);
-        } else {
-          log.error(
-            `[SyncService] Unknown 409 conflict for operation ${id}. Marking as failed.`,
-            error.response.data,
-          );
-          await this.pendingOpRepo.updateOperationStatus(id, 'failed');
-        }
+        });
       } else if (status === 404) {
         log.warn(
           `[SyncService] Entity not found (404) for operation ${id}. Deleting operation.`,
         );
-        await this.pendingOpRepo.deleteOperation(id);
+        await prisma.$transaction(async (tx) => {
+          await this.pendingOpRepo.deleteOperation(id, tx);
+        });
       } else if (status === 401) {
         log.warn(
           `[SyncService] Unauthorized (401) for operation ${id}. Recording failed attempt.`,
