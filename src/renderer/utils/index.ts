@@ -56,7 +56,7 @@ export const refreshSpace = (spaceId: string | null) => {
 };
 
 export const handlePageTaskRefresh = (todayPageDisplayDate: Date) => {
-  const location = window.location.hash.replace('#', '');
+  let location = window.location.hash.replace('#', '') || ROUTE_ROOT;
 
   if (location === ROUTE_ACTIVE) {
     refreshAllTasks();

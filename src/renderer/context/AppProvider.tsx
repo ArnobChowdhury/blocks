@@ -154,6 +154,23 @@ const AppContextFn = (initialUser: User | null) => {
     }
   }, [setNotifier]);
 
+  const wasSyncing = useRef(!isSyncing);
+  useEffect(() => {
+    window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_SYNC_STATUS_CHANGE,
+      (_isSyncing: unknown) => {
+        setIsSyncing(_isSyncing as boolean);
+      },
+    );
+  });
+
+  useEffect(() => {
+    if (user && !isSyncing && wasSyncing.current) {
+      handlePageTaskRefresh(todayPageDisplayDate.toDate());
+    }
+    wasSyncing.current = isSyncing;
+  }, [user, isSyncing, todayPageDisplayDate, wasSyncing]);
+
   useEffect(() => {
     if (user) {
       runSync();
