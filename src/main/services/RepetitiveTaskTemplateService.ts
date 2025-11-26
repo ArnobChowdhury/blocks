@@ -284,6 +284,8 @@ export class RepetitiveTaskTemplateService {
 
     const isPremium = !!userId;
 
+    let writeOperationOccurred = false;
+
     const processingPromises = dueTemplates.map((template) =>
       prisma.$transaction(async (tx) => {
         const todayStart = dayjs().startOf('day');
@@ -341,6 +343,7 @@ export class RepetitiveTaskTemplateService {
             );
 
             latestDueDateForTemplate = targetDueDate.toDate();
+            writeOperationOccurred = true;
           }
         }
 
@@ -369,7 +372,7 @@ export class RepetitiveTaskTemplateService {
       }
     });
 
-    if (isPremium) {
+    if (isPremium && writeOperationOccurred) {
       syncService.runSync();
     }
   };

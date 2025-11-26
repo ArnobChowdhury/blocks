@@ -790,6 +790,15 @@ app
         ChannelsEnum.RESPONSE_TOKEN_REFRESHING_FAILED,
       );
     });
+    syncService.initialize({
+      onSyncStatusChange: (isSyncing) => {
+        mainWindow?.webContents.send(
+          ChannelsEnum.RESPONSE_SYNC_STATUS_CHANGE,
+          isSyncing,
+        );
+      },
+    });
+
     createWindow();
     app.on('activate', () => {
       log.info('app activated');

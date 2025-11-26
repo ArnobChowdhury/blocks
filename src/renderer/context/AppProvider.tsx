@@ -143,26 +143,26 @@ const AppContextFn = (initialUser: User | null) => {
     if (isSyncingRef.current) return;
 
     isSyncingRef.current = true;
-    setIsSyncing(true);
     try {
       await window.electron.ipcRenderer.invoke(ChannelsEnum.REQUEST_SYNC_START);
     } catch (err: any) {
       setNotifier(err.message || 'Sync failed', 'error');
     } finally {
       isSyncingRef.current = false;
-      setIsSyncing(false);
     }
   }, [setNotifier]);
 
   const wasSyncing = useRef(!isSyncing);
   useEffect(() => {
-    window.electron.ipcRenderer.on(
+    // sourcery skip: inline-immediately-returned-variable
+    const unsubscribe = window.electron.ipcRenderer.on(
       ChannelsEnum.RESPONSE_SYNC_STATUS_CHANGE,
       (_isSyncing: unknown) => {
         setIsSyncing(_isSyncing as boolean);
       },
     );
-  });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     if (user && !isSyncing && wasSyncing.current) {
