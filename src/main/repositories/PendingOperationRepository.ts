@@ -28,7 +28,7 @@ type PrismaTransactionalClient = Omit<
 
 export interface PendingOperationData {
   userId: string;
-  operationType: 'create' | 'update' | 'delete';
+  operationType: 'create' | 'update' | 'delete' | 'lastGenDateUpdate';
   entityType: 'task' | 'space' | 'tag' | 'repetitive_task_template';
   entityId: string;
   payload: string;

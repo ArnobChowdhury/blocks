@@ -40,6 +40,10 @@ export const apiEndpoints: ApiEndpoints = {
   repetitive_task_template: {
     create: { method: 'POST', path: '/tasks/repetitive' },
     update: { method: 'PUT', path: '/tasks/repetitive/:id' },
+    lastGenDateUpdate: {
+      method: 'PUT',
+      path: '/tasks/repetitive/:id/last-gen-date',
+    },
   },
   sync: {
     fetch: { method: 'GET', path: '/changes/sync' },

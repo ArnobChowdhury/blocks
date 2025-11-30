@@ -261,10 +261,14 @@ export class RepetitiveTaskTemplateService {
       await this.pendingOpRepository.enqueueOperation(
         {
           userId: userId!,
-          operationType: 'update',
+          operationType: 'lastGenDateUpdate',
           entityType: 'repetitive_task_template',
           entityId: templateId,
-          payload: JSON.stringify({ ...updatedTemplate, tags: [] }),
+          payload: JSON.stringify({
+            lastDateOfTaskGeneration:
+              updatedTemplate.lastDateOfTaskGeneration?.toISOString(),
+            modifiedAt: updatedTemplate.modifiedAt.toISOString(),
+          }),
         },
         tx,
       );
