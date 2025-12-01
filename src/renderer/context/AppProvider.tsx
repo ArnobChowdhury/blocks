@@ -130,7 +130,6 @@ const AppContextFn = (initialUser: User | null) => {
 
   const clearNotifier = useCallback(() => {
     setShowSnackbar(false);
-    setNotification(undefined);
   }, []);
 
   const handlePageRefresh = useCallback(() => {

@@ -210,6 +210,7 @@ function EditTask({
       }
 
       widgetCloseFunc();
+      setNotifier(`'${taskTitle}' updated successfully`, 'success');
     } catch (err: any) {
       setNotifier(err.message, 'error');
     }

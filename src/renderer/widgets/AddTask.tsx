@@ -162,6 +162,7 @@ const AddTask = forwardRef<HTMLDivElement, IAddTaskProps>((props, ref) => {
       );
 
       widgetCloseFunc(false);
+      setNotifier(`'${taskTitle}' created successfully`, 'success');
     } catch (err: any) {
       setNotifier(err.message, 'error');
     }
