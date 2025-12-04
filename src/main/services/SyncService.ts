@@ -13,6 +13,8 @@ import { RepetitiveTaskTemplateRepository } from '../repositories/RepetitiveTask
 import { TaskService } from './TaskService';
 import { apiEndpoints } from '../config/apiEndpoints';
 import { prisma } from '../prisma';
+import { sendToMainWindow } from '../windowManager';
+import { ChannelsEnum } from '../../renderer/types';
 
 let isSyncing = false;
 
@@ -27,20 +29,12 @@ class SyncService {
 
   private rttRepo: RepetitiveTaskTemplateRepository;
 
-  private onSyncStatusChange: ((isSyncing: boolean) => void) | null = null;
-
   constructor() {
     this.pendingOpRepo = new PendingOperationRepository();
     this.settingsRepo = new SettingsRepository();
     this.taskRepo = new TaskRepository();
     this.spaceRepo = new SpaceRepository();
     this.rttRepo = new RepetitiveTaskTemplateRepository();
-  }
-
-  public initialize(callbacks: {
-    onSyncStatusChange: (isSyncing: boolean) => void;
-  }) {
-    this.onSyncStatusChange = callbacks.onSyncStatusChange;
   }
 
   public async runSync(): Promise<void> {
@@ -51,7 +45,7 @@ class SyncService {
 
     log.info('[SyncService] Starting sync process...');
     isSyncing = true;
-    this.onSyncStatusChange?.(true);
+    sendToMainWindow(ChannelsEnum.RESPONSE_SYNC_START);
 
     const processedInCurrentRun: number[] = [];
 
@@ -100,7 +94,8 @@ class SyncService {
       );
     } finally {
       isSyncing = false;
-      this.onSyncStatusChange?.(false);
+      sendToMainWindow(ChannelsEnum.RESPONSE_SYNC_END);
+      await this.settingsRepo.setLastSync(Date.now());
       log.info('[SyncService] Sync process finished.');
     }
   }

@@ -136,45 +136,107 @@ const AppContextFn = (initialUser: User | null) => {
     handlePageTaskRefresh(todayPageDisplayDate.toDate());
   }, [todayPageDisplayDate]);
 
-  const isSyncingRef = useRef(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const runSync = useCallback(async () => {
-    if (isSyncingRef.current) return;
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const TWO_MINUTES = 2 * 60 * 1000;
 
-    isSyncingRef.current = true;
+  const [isSyncing, setIsSyncing] = useState(false);
+  const runSyncNow = useCallback(async () => {
+    if (isSyncing || !user) {
+      console.log(
+        '[SyncManager] Skipping sync request (already syncing or logged out).',
+      );
+      return;
+    }
+    console.log('[SyncManager] Conditions met. Requesting sync start.');
     try {
       await window.electron.ipcRenderer.invoke(ChannelsEnum.REQUEST_SYNC_START);
     } catch (err: any) {
       setNotifier(err.message || 'Sync failed', 'error');
-    } finally {
-      isSyncingRef.current = false;
     }
-  }, [setNotifier]);
+  }, [user, isSyncing, setNotifier]);
 
-  const wasSyncing = useRef(!isSyncing);
+  const resetSyncTimer = useCallback(
+    (duration = TWO_MINUTES) => {
+      if (syncTimerRef.current) {
+        clearTimeout(syncTimerRef.current);
+      }
+
+      console.log(
+        `[SyncManager] Scheduling next sync in ${duration / 1000} seconds.`,
+      );
+      syncTimerRef.current = setTimeout(runSyncNow, duration);
+    },
+    [runSyncNow, TWO_MINUTES],
+  );
+
   useEffect(() => {
     // sourcery skip: inline-immediately-returned-variable
     const unsubscribe = window.electron.ipcRenderer.on(
-      ChannelsEnum.RESPONSE_SYNC_STATUS_CHANGE,
-      (_isSyncing: unknown) => {
-        setIsSyncing(_isSyncing as boolean);
+      ChannelsEnum.RESPONSE_SYNC_START,
+      () => {
+        setIsSyncing(true);
       },
     );
     return unsubscribe;
   }, []);
 
   useEffect(() => {
-    if (user && !isSyncing && wasSyncing.current) {
-      handlePageTaskRefresh(todayPageDisplayDate.toDate());
-    }
-    wasSyncing.current = isSyncing;
-  }, [user, isSyncing, todayPageDisplayDate, wasSyncing]);
+    // sourcery skip: inline-immediately-returned-variable
+    const unsubscribe = window.electron.ipcRenderer.on(
+      ChannelsEnum.RESPONSE_SYNC_END,
+      () => {
+        setIsSyncing(false);
+        handlePageTaskRefresh(todayPageDisplayDate.toDate());
+        resetSyncTimer();
+      },
+    );
+    return unsubscribe;
+  }, [todayPageDisplayDate, resetSyncTimer]);
 
   useEffect(() => {
-    if (user) {
-      runSync();
-    }
-  }, [user, runSync]);
+    const handleFocus = async () => {
+      const lastSync = await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_LAST_SYNC,
+      );
+      const now = Date.now();
+
+      if (now - lastSync > TWO_MINUTES) {
+        console.log(
+          '[SyncManager] Last sync was more than 2 minutes ago. Syncing immediately.',
+        );
+        runSyncNow();
+      } else {
+        const timeUntilNextSync = TWO_MINUTES - (now - lastSync);
+        console.log(
+          `[SyncManager - handleFocus] Scheduling next sync in ${Math.round(
+            timeUntilNextSync / 1000,
+          )} seconds.`,
+        );
+        resetSyncTimer(timeUntilNextSync);
+      }
+    };
+
+    const handleBlur = () => {
+      console.log('[SyncManager] Window blurred. Clearing sync interval.');
+      if (syncTimerRef.current) {
+        clearTimeout(syncTimerRef.current);
+        syncTimerRef.current = null;
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
+
+    handleFocus(); // Initial check
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+      if (syncTimerRef.current) {
+        clearTimeout(syncTimerRef.current);
+      }
+    };
+  }, [runSyncNow, TWO_MINUTES, resetSyncTimer]);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const wasOffline = useRef(!isOnline);
@@ -193,10 +255,10 @@ const AppContextFn = (initialUser: User | null) => {
 
   useEffect(() => {
     if (user && isOnline && wasOffline.current) {
-      runSync();
+      runSyncNow();
     }
     wasOffline.current = !isOnline;
-  }, [user, isOnline, wasOffline, runSync]);
+  }, [user, isOnline, wasOffline, runSyncNow]);
 
   return {
     addTaskToday,

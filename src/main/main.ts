@@ -66,7 +66,9 @@ import apiClient, {
   registerTokenRefreshHandler,
   setInMemoryToken,
 } from './apiClient';
+import { SettingsService } from './services/SettingsService';
 import { syncService } from './services/SyncService';
+import { sendToMainWindow, setMainWindow } from './windowManager';
 
 let session: {
   accessToken: string | null;
@@ -77,6 +79,7 @@ const spaceService = new SpaceService();
 const userService = new UserService();
 const taskService = new TaskService();
 const repetitiveTaskTemplateService = new RepetitiveTaskTemplateService();
+const settingsService = new SettingsService();
 
 class AppUpdater {
   constructor() {
@@ -85,8 +88,7 @@ class AppUpdater {
     autoUpdater.checkForUpdatesAndNotify();
   }
 }
-
-let mainWindow: BrowserWindow | null = null;
+let localMainWindow: BrowserWindow | null = null;
 
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
@@ -175,7 +177,7 @@ const createWindow = async () => {
     await installExtensions();
   }
 
-  mainWindow = new BrowserWindow({
+  localMainWindow = new BrowserWindow({
     show: false,
     width: 1500,
     height: 928,
@@ -187,29 +189,31 @@ const createWindow = async () => {
     },
   });
 
-  mainWindow.loadURL(resolveHtmlPath('index.html'));
+  setMainWindow(localMainWindow);
 
-  mainWindow.on('ready-to-show', () => {
-    if (!mainWindow) {
+  localMainWindow.loadURL(resolveHtmlPath('index.html'));
+
+  localMainWindow.on('ready-to-show', () => {
+    if (!localMainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
     if (process.env.START_MINIMIZED) {
-      mainWindow.minimize();
+      localMainWindow.minimize();
     } else {
-      mainWindow.show();
+      localMainWindow.show();
     }
   });
 
-  mainWindow.on('closed', () => {
+  localMainWindow.on('closed', () => {
     log.info('Window closed');
-    mainWindow = null;
+    setMainWindow(null);
   });
 
-  const menuBuilder = new MenuBuilder(mainWindow);
+  const menuBuilder = new MenuBuilder(localMainWindow);
   menuBuilder.buildMenu();
 
   // Open urls in the user's browser
-  mainWindow.webContents.setWindowOpenHandler((edata) => {
+  localMainWindow.webContents.setWindowOpenHandler((edata) => {
     shell.openExternal(edata.url);
     return { action: 'deny' };
   });
@@ -726,8 +730,8 @@ ipcMain.handle(ChannelsEnum.REQUEST_GOOGLE_AUTH_START, async () => {
     log.error('Google Auth Error:', errorMessage);
     return { success: false, error: errorMessage };
   } finally {
-    if (mainWindow) {
-      mainWindow.focus();
+    if (localMainWindow) {
+      localMainWindow.focus();
     }
   }
 });
@@ -773,6 +777,10 @@ ipcMain.handle(ChannelsEnum.REQUEST_SYNC_START, async () => {
   return await syncService.runSync();
 });
 
+ipcMain.handle(ChannelsEnum.REQUEST_LAST_SYNC, async () => {
+  return settingsService.getLastSync();
+});
+
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
   // after all windows have been closed
@@ -786,23 +794,19 @@ app
   .then(() => {
     registerTokenRefreshHandler(handleSuccessfulSignIn);
     registerAuthFailureHandler(() => {
-      mainWindow?.webContents.send(
-        ChannelsEnum.RESPONSE_TOKEN_REFRESHING_FAILED,
-      );
-    });
-    syncService.initialize({
-      onSyncStatusChange: (isSyncing) => {
-        mainWindow?.webContents.send(
-          ChannelsEnum.RESPONSE_SYNC_STATUS_CHANGE,
-          isSyncing,
-        );
-      },
+      sendToMainWindow(ChannelsEnum.RESPONSE_TOKEN_REFRESHING_FAILED);
     });
 
-    createWindow();
-    app.on('activate', () => {
-      log.info('app activated');
-      if (mainWindow === null) createWindow();
+    createWindow().then(() => {
+      app.on('activate', () => {
+        log.info('app activated');
+        const localMainWindow = BrowserWindow.getAllWindows()[0];
+        if (!localMainWindow) {
+          createWindow();
+        } else {
+          localMainWindow.show();
+        }
+      });
     });
   })
   .catch((err) => {

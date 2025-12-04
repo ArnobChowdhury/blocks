@@ -193,5 +193,9 @@ export enum ChannelsEnum {
   REQUEST_SYNC_START = 'REQUEST_SYNC_START',
 
   RESPONSE_TOKEN_REFRESHING_FAILED = 'response_token_refreshing_failed',
-  RESPONSE_SYNC_STATUS_CHANGE = 'response_sync_status_change',
+
+  RESPONSE_SYNC_START = 'response_sync_start',
+  RESPONSE_SYNC_END = 'response_sync_end',
+
+  REQUEST_LAST_SYNC = 'request_last_sync',
 }

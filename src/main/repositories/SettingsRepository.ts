@@ -19,6 +19,7 @@ import { PrismaClient } from '../../generated/client';
 import { prisma } from '../prisma';
 
 const LAST_CHANGE_ID_KEY = 'last_change_id';
+const LAST_SYNC_TIMESTAMP_KEY = 'last_sync_timestamp';
 
 type PrismaTransactionalClient = Omit<
   PrismaClient,
@@ -44,5 +45,38 @@ export class SettingsRepository {
       update: { value: changeId.toString() },
       create: { key: LAST_CHANGE_ID_KEY, value: changeId.toString() },
     });
+  }
+
+  /**
+   * Retrieves the timestamp of the last successful sync.
+   * @returns The timestamp in milliseconds since epoch, or 0 if not found.
+   */
+  async getLastSync(): Promise<number> {
+    const setting = await prisma.settings.findUnique({
+      where: { key: LAST_SYNC_TIMESTAMP_KEY },
+    });
+    if (setting?.value) {
+      const parsedValue = parseInt(setting.value, 10);
+      return isNaN(parsedValue) ? 0 : parsedValue;
+    }
+    return 0;
+  }
+
+  /**
+   * Stores the timestamp of the last successful sync.
+   * @param timestamp The timestamp in milliseconds since epoch.
+   * @param tx Optional transaction object.
+   */
+  async setLastSync(
+    timestamp: number,
+    tx?: PrismaTransactionalClient,
+  ): Promise<void> {
+    const db = tx || prisma;
+    await db.settings.upsert({
+      where: { key: LAST_SYNC_TIMESTAMP_KEY },
+      update: { value: timestamp.toString() },
+      create: { key: LAST_SYNC_TIMESTAMP_KEY, value: timestamp.toString() },
+    });
+    console.log(`[DB Repo] Updated last_sync_timestamp to ${timestamp}`);
   }
 }
