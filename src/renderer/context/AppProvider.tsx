@@ -140,14 +140,16 @@ const AppContextFn = (initialUser: User | null) => {
   const TWO_MINUTES = 2 * 60 * 1000;
 
   const [isSyncing, setIsSyncing] = useState(false);
+  const [firstSyncDone, setFirstSyncDone] = useState(!user);
+
   const runSyncNow = useCallback(async () => {
     if (isSyncing || !user) {
       console.log(
-        '[SyncManager] Skipping sync request (already syncing or logged out).',
+        '[AppProvider] Skipping sync request (already syncing or logged out).',
       );
       return;
     }
-    console.log('[SyncManager] Conditions met. Requesting sync start.');
+    console.log('[AppProvider] Conditions met. Requesting sync start.');
     try {
       await window.electron.ipcRenderer.invoke(ChannelsEnum.REQUEST_SYNC_START);
     } catch (err: any) {
@@ -162,7 +164,7 @@ const AppContextFn = (initialUser: User | null) => {
       }
 
       console.log(
-        `[SyncManager] Scheduling next sync in ${duration / 1000} seconds.`,
+        `[AppProvider] Scheduling next sync in ${duration / 1000} seconds.`,
       );
       syncTimerRef.current = setTimeout(runSyncNow, duration);
     },
@@ -186,6 +188,7 @@ const AppContextFn = (initialUser: User | null) => {
       ChannelsEnum.RESPONSE_SYNC_END,
       () => {
         setIsSyncing(false);
+        setFirstSyncDone(true);
         handlePageTaskRefresh(todayPageDisplayDate.toDate());
         resetSyncTimer();
       },
@@ -200,15 +203,13 @@ const AppContextFn = (initialUser: User | null) => {
       );
       const now = Date.now();
 
-      if (now - lastSync > TWO_MINUTES) {
-        console.log(
-          '[SyncManager] Last sync was more than 2 minutes ago. Syncing immediately.',
-        );
+      if (!firstSyncDone || now - lastSync > TWO_MINUTES) {
+        console.log('[AppProvider] Syncing immediately.');
         runSyncNow();
       } else {
         const timeUntilNextSync = TWO_MINUTES - (now - lastSync);
         console.log(
-          `[SyncManager - handleFocus] Scheduling next sync in ${Math.round(
+          `[AppProvider - handleFocus] Scheduling next sync in ${Math.round(
             timeUntilNextSync / 1000,
           )} seconds.`,
         );
@@ -217,7 +218,7 @@ const AppContextFn = (initialUser: User | null) => {
     };
 
     const handleBlur = () => {
-      console.log('[SyncManager] Window blurred. Clearing sync interval.');
+      console.log('[AppProvider] Window blurred. Clearing sync interval.');
       if (syncTimerRef.current) {
         clearTimeout(syncTimerRef.current);
         syncTimerRef.current = null;
@@ -236,7 +237,7 @@ const AppContextFn = (initialUser: User | null) => {
         clearTimeout(syncTimerRef.current);
       }
     };
-  }, [runSyncNow, TWO_MINUTES, resetSyncTimer]);
+  }, [runSyncNow, TWO_MINUTES, resetSyncTimer, firstSyncDone]);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const wasOffline = useRef(!isOnline);
@@ -284,6 +285,7 @@ const AppContextFn = (initialUser: User | null) => {
     todayPageDisplayDate,
     setTodayPageDisplayDate,
     isSyncing,
+    firstSyncDone,
   };
 };
 

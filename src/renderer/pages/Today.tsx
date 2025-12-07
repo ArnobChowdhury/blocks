@@ -29,13 +29,16 @@ function Today() {
     setShowAddTask,
     todayPageDisplayDate,
     setTodayPageDisplayDate,
+    firstSyncDone,
   } = useApp();
 
   const [newDayBannerVisible, setNewDayBannerVisible] = useState(false);
 
   useEffect(() => {
-    refreshTodayPageForDate(todayPageDisplayDate.toDate());
-  }, [todayPageDisplayDate]);
+    if (firstSyncDone) {
+      refreshTodayPageForDate(todayPageDisplayDate.toDate());
+    }
+  }, [todayPageDisplayDate, firstSyncDone]);
 
   const [countOfTaskOverdue, setCountOfTaskOverdue] = useState(0);
 
