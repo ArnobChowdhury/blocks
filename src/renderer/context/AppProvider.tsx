@@ -142,6 +142,10 @@ const AppContextFn = (initialUser: User | null) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [firstSyncDone, setFirstSyncDone] = useState(!user);
 
+  useEffect(() => {
+    setFirstSyncDone(!user);
+  }, [user]);
+
   const runSyncNow = useCallback(async () => {
     if (isSyncing || !user) {
       console.log(
