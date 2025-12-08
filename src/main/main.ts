@@ -774,11 +774,17 @@ ipcMain.handle(ChannelsEnum.REQUEST_INITIAL_AUTH_STATUS, async () => {
 });
 
 ipcMain.handle(ChannelsEnum.REQUEST_SYNC_START, async () => {
-  return await syncService.runSync();
+  if (!session.user) {
+    throw new Error('User not authenticated');
+  }
+  return await syncService.runSync(session.user.id);
 });
 
 ipcMain.handle(ChannelsEnum.REQUEST_LAST_SYNC, async () => {
-  return settingsService.getLastSync();
+  if (!session.user) {
+    throw new Error('User not authenticated');
+  }
+  return settingsService.getLastSync(session.user.id);
 });
 
 app.on('window-all-closed', () => {

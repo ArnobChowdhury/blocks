@@ -87,7 +87,7 @@ export class RepetitiveTaskTemplateService {
     });
 
     if (isPremium) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
 
     return newTemplate;
@@ -131,7 +131,7 @@ export class RepetitiveTaskTemplateService {
     });
 
     if (isPremium) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
 
     return updatedTemplate;
@@ -211,7 +211,7 @@ export class RepetitiveTaskTemplateService {
     });
 
     if (isPremium) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
 
     return stoppedTemplate;
@@ -377,7 +377,7 @@ export class RepetitiveTaskTemplateService {
     });
 
     if (isPremium && writeOperationOccurred) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
   };
 }

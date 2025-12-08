@@ -63,6 +63,7 @@ export class PendingOperationRepository {
    * @returns The pending operation object or null if the queue is empty or blocked.
    */
   getOldestPendingOperation = async (
+    userId: string,
     excludedIds: number[] = [],
   ): Promise<PendingOperation | null> => {
     const blockedEntities = await prisma.pendingOperation.findMany({
@@ -70,6 +71,7 @@ export class PendingOperationRepository {
         status: {
           in: ['processing', 'failed'],
         },
+        userId,
       },
       select: {
         entityId: true,
@@ -84,6 +86,7 @@ export class PendingOperationRepository {
         id: {
           notIn: excludedIds,
         },
+        userId,
       },
       orderBy: { id: 'asc' },
     });

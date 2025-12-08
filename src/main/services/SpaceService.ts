@@ -62,7 +62,7 @@ export class SpaceService {
     });
 
     if (isPremium) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
 
     return newSpace;

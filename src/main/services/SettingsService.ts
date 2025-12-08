@@ -22,10 +22,10 @@ export class SettingsService {
   constructor() {
     this.settingsRepository = new SettingsRepository();
   }
-  async getLastSync(): Promise<number> {
-    return this.settingsRepository.getLastSync();
+  async getLastSync(userId: string): Promise<number> {
+    return this.settingsRepository.getLastSync(userId);
   }
-  async setLastSync(timestamp: number): Promise<void> {
-    return this.settingsRepository.setLastSync(timestamp);
+  async setLastSync(timestamp: number, userId: string): Promise<void> {
+    return this.settingsRepository.setLastSync(timestamp, userId);
   }
 }

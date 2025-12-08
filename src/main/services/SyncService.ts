@@ -37,7 +37,7 @@ class SyncService {
     this.rttRepo = new RepetitiveTaskTemplateRepository();
   }
 
-  public async runSync(): Promise<void> {
+  public async runSync(userId: string): Promise<void> {
     if (isSyncing) {
       log.info('[SyncService] Sync process already running. Exiting.');
       return;
@@ -55,6 +55,7 @@ class SyncService {
 
         while (true) {
           const operation = await this.pendingOpRepo.getOldestPendingOperation(
+            userId,
             processedInCurrentRun,
           );
 
@@ -71,10 +72,11 @@ class SyncService {
         }
 
         log.info('[SyncService] Starting PULL phase...');
-        await this.pullRemoteChanges();
+        await this.pullRemoteChanges(userId);
 
         const newOperationCheck =
           await this.pendingOpRepo.getOldestPendingOperation(
+            userId,
             processedInCurrentRun,
           );
 
@@ -95,7 +97,7 @@ class SyncService {
     } finally {
       isSyncing = false;
       sendToMainWindow(ChannelsEnum.RESPONSE_SYNC_END);
-      await this.settingsRepo.setLastSync(Date.now());
+      await this.settingsRepo.setLastSync(Date.now(), userId);
       log.info('[SyncService] Sync process finished.');
     }
   }
@@ -146,12 +148,12 @@ class SyncService {
     }
   }
 
-  private async pullRemoteChanges(): Promise<void> {
+  private async pullRemoteChanges(userId: string): Promise<void> {
     while (true) {
       let syncData;
       let lastChangeId;
       try {
-        lastChangeId = await this.settingsRepo.getLastChangeId();
+        lastChangeId = await this.settingsRepo.getLastChangeId(userId);
         log.info(
           `[SyncService] Fetching changes since change ID: ${lastChangeId}`,
         );
@@ -178,7 +180,10 @@ class SyncService {
         log.info(
           `[SyncService] No new changes found. PULL phase complete. Synced up to change ID: ${syncData.latestChangeId}`,
         );
-        await this.settingsRepo.setLastChangeId(syncData.latestChangeId);
+        await this.settingsRepo.setLastChangeId(
+          syncData.latestChangeId,
+          userId,
+        );
         break;
       }
 
@@ -197,7 +202,11 @@ class SyncService {
           log.info(
             `[SyncService] Synced up to change ID: ${syncData.latestChangeId}`,
           );
-          await this.settingsRepo.setLastChangeId(syncData.latestChangeId, tx);
+          await this.settingsRepo.setLastChangeId(
+            syncData.latestChangeId,
+            userId,
+            tx,
+          );
         });
 
         log.info(

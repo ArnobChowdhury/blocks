@@ -201,62 +201,68 @@ const AppContextFn = (initialUser: User | null) => {
   }, [todayPageDisplayDate, resetSyncTimer]);
 
   useEffect(() => {
-    const handleFocus = async () => {
-      const lastSync = await window.electron.ipcRenderer.invoke(
-        ChannelsEnum.REQUEST_LAST_SYNC,
-      );
-      const now = Date.now();
-
-      if (!firstSyncDone || now - lastSync > TWO_MINUTES) {
-        console.log('[AppProvider] Syncing immediately.');
-        runSyncNow();
-      } else {
-        const timeUntilNextSync = TWO_MINUTES - (now - lastSync);
-        console.log(
-          `[AppProvider - handleFocus] Scheduling next sync in ${Math.round(
-            timeUntilNextSync / 1000,
-          )} seconds.`,
+    if (user) {
+      const handleFocus = async () => {
+        const lastSync = await window.electron.ipcRenderer.invoke(
+          ChannelsEnum.REQUEST_LAST_SYNC,
         );
-        resetSyncTimer(timeUntilNextSync);
-      }
-    };
+        const now = Date.now();
 
-    const handleBlur = () => {
-      console.log('[AppProvider] Window blurred. Clearing sync interval.');
-      if (syncTimerRef.current) {
-        clearTimeout(syncTimerRef.current);
-        syncTimerRef.current = null;
-      }
-    };
+        if (!firstSyncDone || now - lastSync > TWO_MINUTES) {
+          console.log('[AppProvider] Syncing immediately.');
+          runSyncNow();
+        } else {
+          const timeUntilNextSync = TWO_MINUTES - (now - lastSync);
+          console.log(
+            `[AppProvider - handleFocus] Scheduling next sync in ${Math.round(
+              timeUntilNextSync / 1000,
+            )} seconds.`,
+          );
+          resetSyncTimer(timeUntilNextSync);
+        }
+      };
 
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('blur', handleBlur);
+      const handleBlur = () => {
+        console.log('[AppProvider] Window blurred. Clearing sync interval.');
+        if (syncTimerRef.current) {
+          clearTimeout(syncTimerRef.current);
+          syncTimerRef.current = null;
+        }
+      };
 
-    handleFocus(); // Initial check
+      window.addEventListener('focus', handleFocus);
+      window.addEventListener('blur', handleBlur);
 
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('blur', handleBlur);
-      if (syncTimerRef.current) {
-        clearTimeout(syncTimerRef.current);
-      }
-    };
-  }, [runSyncNow, TWO_MINUTES, resetSyncTimer, firstSyncDone]);
+      handleFocus(); // Initial check
+
+      return () => {
+        window.removeEventListener('focus', handleFocus);
+        window.removeEventListener('blur', handleBlur);
+        if (syncTimerRef.current) {
+          clearTimeout(syncTimerRef.current);
+        }
+      };
+    }
+    return undefined;
+  }, [runSyncNow, TWO_MINUTES, resetSyncTimer, firstSyncDone, user]);
 
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const wasOffline = useRef(!isOnline);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    if (user) {
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
 
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+    return undefined;
+  }, [user]);
 
   useEffect(() => {
     if (user && isOnline && wasOffline.current) {

@@ -86,7 +86,7 @@ export class TaskService {
     });
 
     if (isPremium) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
 
     return newTask;
@@ -128,7 +128,7 @@ export class TaskService {
     });
 
     if (isPremium) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
 
     return updatedTask;
@@ -183,7 +183,7 @@ export class TaskService {
     });
 
     if (isPremium) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
 
     return updatedTask;
@@ -221,7 +221,7 @@ export class TaskService {
     });
 
     if (isPremium) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
 
     return failedTask;
@@ -308,7 +308,7 @@ export class TaskService {
     });
 
     if (isPremium) {
-      syncService.runSync();
+      syncService.runSync(userId);
     }
 
     return rescheduledTask;
@@ -332,7 +332,7 @@ export class TaskService {
         return Promise.all(promises);
       });
 
-      syncService.runSync();
+      syncService.runSync(userId);
 
       return { count: failedTasks.length };
     }

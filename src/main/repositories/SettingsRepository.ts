@@ -27,9 +27,9 @@ type PrismaTransactionalClient = Omit<
 >;
 
 export class SettingsRepository {
-  async getLastChangeId(): Promise<number> {
+  async getLastChangeId(userId: string): Promise<number> {
     const setting = await prisma.settings.findUnique({
-      where: { key: LAST_CHANGE_ID_KEY },
+      where: { userId_key: { userId, key: LAST_CHANGE_ID_KEY } },
     });
     // The value is stored as a string, so we parse it. Default to 0 if not found.
     return setting ? parseInt(setting.value, 10) : 0;
@@ -37,13 +37,18 @@ export class SettingsRepository {
 
   async setLastChangeId(
     changeId: number,
+    userId: string,
     tx?: PrismaTransactionalClient,
   ): Promise<void> {
     const db = tx || prisma;
     await db.settings.upsert({
-      where: { key: LAST_CHANGE_ID_KEY },
+      where: { userId_key: { userId, key: LAST_CHANGE_ID_KEY } },
       update: { value: changeId.toString() },
-      create: { key: LAST_CHANGE_ID_KEY, value: changeId.toString() },
+      create: {
+        key: LAST_CHANGE_ID_KEY,
+        value: changeId.toString(),
+        userId,
+      },
     });
   }
 
@@ -51,9 +56,9 @@ export class SettingsRepository {
    * Retrieves the timestamp of the last successful sync.
    * @returns The timestamp in milliseconds since epoch, or 0 if not found.
    */
-  async getLastSync(): Promise<number> {
+  async getLastSync(userId: string): Promise<number> {
     const setting = await prisma.settings.findUnique({
-      where: { key: LAST_SYNC_TIMESTAMP_KEY },
+      where: { userId_key: { userId, key: LAST_SYNC_TIMESTAMP_KEY } },
     });
     if (setting?.value) {
       const parsedValue = parseInt(setting.value, 10);
@@ -69,13 +74,18 @@ export class SettingsRepository {
    */
   async setLastSync(
     timestamp: number,
+    userId: string,
     tx?: PrismaTransactionalClient,
   ): Promise<void> {
     const db = tx || prisma;
     await db.settings.upsert({
-      where: { key: LAST_SYNC_TIMESTAMP_KEY },
+      where: { userId_key: { userId, key: LAST_SYNC_TIMESTAMP_KEY } },
       update: { value: timestamp.toString() },
-      create: { key: LAST_SYNC_TIMESTAMP_KEY, value: timestamp.toString() },
+      create: {
+        key: LAST_SYNC_TIMESTAMP_KEY,
+        value: timestamp.toString(),
+        userId,
+      },
     });
     console.log(`[DB Repo] Updated last_sync_timestamp to ${timestamp}`);
   }
