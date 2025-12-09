@@ -138,7 +138,7 @@ function Today() {
   return (
     <>
       <PageHeader>Today</PageHeader>
-      {countOfTaskOverdue > 0 && (
+      {countOfTaskOverdue > 0 && !newDayBannerVisible && (
         <Alert
           severity="warning"
           action={
