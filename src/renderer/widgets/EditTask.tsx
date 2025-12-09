@@ -42,6 +42,7 @@ import {
 import CustomChip from '../components/CustomChip';
 import { useApp } from '../context/AppProvider';
 import { useSpace } from '../hooks';
+import { getNextIterationDateForRepetitiveTask } from '../utils';
 
 const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
   textTransform: 'capitalize',
@@ -91,6 +92,7 @@ function EditTask({
         ? (task.completionStatus as TaskCompletionStatusEnum)
         : null,
     );
+  const [datePickerEndDate, setDatePickerEndDate] = useState<Dayjs>();
 
   const [selectedSpace, setSelectedSpace] = useState<Space>(task.space);
   const { setNotifier, allSpaces, handleLoadingSpaces } = useApp();
@@ -140,14 +142,37 @@ function EditTask({
    * todo:
    * 1. add specific days in a week to isTaskReSchedulable c
    */
-  const isTaskReSchedulable =
-    task.schedule === TaskScheduleTypeEnum.Once ||
-    task.schedule === TaskScheduleTypeEnum.Unscheduled;
+  const isTaskReSchedulable = task.schedule !== TaskScheduleTypeEnum.Daily;
 
-  const openDueDatePicker = (
+  const openDueDatePicker = async (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
-    if (isTaskReSchedulable) setDateAnchorEl(e.currentTarget);
+    if (isTaskReSchedulable) {
+      setDateAnchorEl(e.currentTarget);
+
+      if (
+        !isRepetitiveTaskTemplate &&
+        task.schedule === TaskScheduleTypeEnum.SpecificDaysInAWeek
+      ) {
+        const repetitiveTaskTemplate: RepetitiveTaskWithTagsAndSpace =
+          await window.electron.ipcRenderer.invoke(
+            ChannelsEnum.REQUEST_REPETITIVE_TASK_DETAILS,
+            task.repetitiveTaskTemplateId,
+          );
+        if (!repetitiveTaskTemplate) return;
+
+        const nextIteration = getNextIterationDateForRepetitiveTask(
+          repetitiveTaskTemplate,
+          dayjs(task.dueDate),
+        );
+
+        if (!nextIteration) {
+          return;
+        }
+
+        setDatePickerEndDate(nextIteration.subtract(1, 'day').startOf('day'));
+      }
+    }
   };
 
   const handleDayToggle = (day: DaysInAWeek) => {
@@ -456,6 +481,7 @@ function EditTask({
           disablePast
           onChange={setSelectedDate}
           value={selectedDate}
+          maxDate={datePickerEndDate}
           onClose={() => setDateAnchorEl(null)}
           onAccept={(val) => {
             if (val) {
