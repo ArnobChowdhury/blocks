@@ -198,4 +198,8 @@ export enum ChannelsEnum {
   RESPONSE_SYNC_END = 'response_sync_end',
 
   REQUEST_LAST_SYNC = 'request_last_sync',
+
+  REQUEST_DEVICE_SETTINGS = 'request_device_settings',
+  REQUEST_SET_DEVICE_SETTINGS = 'request_set_device_settings',
+
 }

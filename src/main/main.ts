@@ -68,6 +68,7 @@ import apiClient, {
 } from './apiClient';
 import { SettingsService } from './services/SettingsService';
 import { syncService } from './services/SyncService';
+import { deviceSettingsService } from './services/DeviceSettingsService';
 import { sendToMainWindow, setMainWindow } from './windowManager';
 
 let session: {
@@ -786,6 +787,17 @@ ipcMain.handle(ChannelsEnum.REQUEST_LAST_SYNC, async () => {
   }
   return settingsService.getLastSync(session.user.id);
 });
+
+ipcMain.handle(ChannelsEnum.REQUEST_DEVICE_SETTINGS, async () => {
+  return deviceSettingsService.getSettings();
+});
+
+ipcMain.handle(
+  ChannelsEnum.REQUEST_SET_DEVICE_SETTINGS,
+  async (_event, data) => {
+    return deviceSettingsService.setSettings(data);
+  },
+);
 
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even

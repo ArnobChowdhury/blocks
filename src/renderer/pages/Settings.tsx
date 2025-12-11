@@ -1,3 +1,4 @@
+import { useLayoutEffect, useState } from 'react';
 import { styled } from '@mui/material/styles';
 import {
   List,
@@ -11,6 +12,8 @@ import {
   // CustomThemeProvider,
   useTheme as useAppTheme,
 } from '../context/ThemeProvider';
+import { useApp } from '../context/AppProvider';
+import { ChannelsEnum } from '../types';
 
 const ThemeSwitch = styled(Switch)(({ theme }) => ({
   width: 62,
@@ -64,6 +67,35 @@ const ThemeSwitch = styled(Switch)(({ theme }) => ({
 
 function Settings() {
   const { themeMode, setThemeMode } = useAppTheme();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const { setNotifier } = useApp();
+
+  useLayoutEffect(() => {
+    window.electron.ipcRenderer
+      .invoke(ChannelsEnum.REQUEST_DEVICE_SETTINGS)
+      .then((settings) => {
+        console.log('[Settings] Received device settings', settings);
+        setNotificationsEnabled(settings.notificationsEnabled);
+      });
+  }, []);
+
+  const handleNotificationsToggle = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    try {
+      const isChecked = event.target.checked;
+      await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_SET_DEVICE_SETTINGS,
+        {
+          notificationsEnabled: isChecked,
+        },
+      );
+      setNotificationsEnabled(isChecked);
+    } catch (error) {
+      console.error('Error updating notification settings:', error);
+      setNotifier('Error updating notification settings', 'error');
+    }
+  };
 
   return (
     <>
@@ -76,6 +108,19 @@ function Settings() {
           <ThemeSwitch
             checked={themeMode === 'dark'}
             onChange={(e) => setThemeMode(e.target.checked ? 'dark' : 'light')}
+          />
+        </ListItem>
+        <ListItem>
+          <ListItemText
+            primary={
+              <Typography variant="body1">Desktop notifications</Typography>
+            }
+            secondary="Get reminders at 8 AM, 12 PM, 5 PM, and 8 PM if you have tasks for those times."
+          />
+          <Switch
+            edge="end"
+            checked={notificationsEnabled}
+            onChange={handleNotificationsToggle}
           />
         </ListItem>
       </List>
