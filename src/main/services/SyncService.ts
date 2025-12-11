@@ -163,10 +163,11 @@ class SyncService {
           params: { last_change_id: lastChangeId },
         });
         syncData = response.data.result.data;
-      } catch (error) {
+      } catch (error: any) {
+        const message = error?.message ? error.message : 'Unknown error';
         log.error(
           '[SyncService] Failed to fetch remote changes from API:',
-          error,
+          message,
         );
         break;
       }
