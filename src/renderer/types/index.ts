@@ -201,5 +201,4 @@ export enum ChannelsEnum {
 
   REQUEST_DEVICE_SETTINGS = 'request_device_settings',
   REQUEST_SET_DEVICE_SETTINGS = 'request_set_device_settings',
-
 }

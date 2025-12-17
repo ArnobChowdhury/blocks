@@ -22,6 +22,8 @@ import {
   ITaskIPC,
   TaskScheduleTypeEnum,
   SyncedRepetitiveTask,
+  TimeOfDay,
+  DaysInAWeek,
 } from '../../renderer/types';
 import {
   getDaysForDailyTasks,
@@ -333,5 +335,41 @@ export class RepetitiveTaskTemplateRepository {
     });
 
     await Promise.all(upsertPromises);
+  };
+
+  getCountOfIncompleteRepetitiveTasksForTimeOfDay = async (
+    userId: string | null,
+    timeOfDay: TimeOfDay,
+  ): Promise<number> => {
+    const todayStart = getTodayStart();
+
+    const dayOfWeekLowercase = dayjs(todayStart)
+      .format('dddd')
+      .toLowerCase() as DaysInAWeek;
+
+    return await prisma.repetitiveTaskTemplate.count({
+      where: {
+        userId,
+        isActive: true,
+        timeOfDay,
+        AND: [
+          {
+            OR: [
+              { lastDateOfTaskGeneration: { lt: todayStart } },
+              { lastDateOfTaskGeneration: null },
+            ],
+          },
+          {
+            OR: [
+              { schedule: TaskScheduleTypeEnum.Daily },
+              {
+                schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+                [dayOfWeekLowercase]: true,
+              },
+            ],
+          },
+        ],
+      },
+    });
   };
 }

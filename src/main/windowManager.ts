@@ -25,6 +25,10 @@ export function setMainWindow(window: BrowserWindow | null) {
   mainWindow = window;
 }
 
+export function getMainWindow() {
+  return mainWindow;
+}
+
 export function sendToMainWindow(channel: ChannelsEnum, ...args: any[]) {
   mainWindow?.webContents.send(channel, ...args);
 }

@@ -28,7 +28,17 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  shell,
+  ipcMain,
+  Tray,
+  Menu,
+  Notification,
+  IpcMainInvokeEvent,
+  IpcMainEvent,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import 'dotenv/config';
@@ -69,12 +79,13 @@ import apiClient, {
 import { SettingsService } from './services/SettingsService';
 import { syncService } from './services/SyncService';
 import { deviceSettingsService } from './services/DeviceSettingsService';
+import { notificationService } from './services/NotificationService';
 import { sendToMainWindow, setMainWindow } from './windowManager';
+import { getSession, setSession } from './sessionManager';
 
-let session: {
-  accessToken: string | null;
-  user: { id: string; email: string } | null;
-} = { accessToken: null, user: null };
+let tray: Tray | null = null;
+
+let forceQuit = false;
 
 const spaceService = new SpaceService();
 const userService = new UserService();
@@ -198,16 +209,34 @@ const createWindow = async () => {
     if (!localMainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
-    if (process.env.START_MINIMIZED) {
-      localMainWindow.minimize();
+
+    const loginItemSettings = app.getLoginItemSettings();
+    const shouldStartHidden =
+      loginItemSettings.wasOpenedAsHidden || process.argv.includes('--hidden');
+
+    if (shouldStartHidden) {
+      log.info(
+        '[Main] App launched as hidden login item or with --hidden flag. Keeping window hidden.',
+      );
+      // Do nothing, window remains hidden.
+      // We might want to explicitly hide it if it somehow shows up briefly.
+      localMainWindow.hide(); // Ensure it's hidden
+    } else if (process.env.START_MINIMIZED) {
+      localMainWindow.minimize(); // Existing logic for START_MINIMIZED
     } else {
       localMainWindow.show();
     }
   });
 
-  localMainWindow.on('closed', () => {
-    log.info('Window closed');
-    setMainWindow(null);
+  localMainWindow.on('close', (event: Electron.Event) => {
+    const settings = deviceSettingsService.getSettings();
+
+    if (forceQuit || !settings.notificationsEnabled) {
+      setMainWindow(null);
+    } else {
+      event.preventDefault();
+      localMainWindow?.hide();
+    }
   });
 
   const menuBuilder = new MenuBuilder(localMainWindow);
@@ -222,25 +251,70 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
+
+  const icon = getAssetPath('icon.png');
+  tray = new Tray(icon);
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show App',
+      click: () => {
+        localMainWindow?.show();
+      },
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        forceQuit = true;
+        app.quit();
+      },
+    },
+  ]);
+
+  tray.setToolTip('BlocksTracker');
+  tray.setContextMenu(contextMenu);
 };
 
-/**
- * todo for ipc events
- * 1. Error handling
- * 2. DB calls should be moved to a separate service
- */
+async function configureLaunchOnStartup(shouldLaunch: boolean) {
+  log.info(`[Main] Configuring launch on startup to: ${shouldLaunch}`);
 
-/**
- * DBs
- */
-// The generateDueRepetitiveTasks function has been moved to RepetitiveTaskTemplateRepository
-// and is now called via repetitiveTaskTemplateService.generateDueTasks.
+  if (process.platform === 'darwin' || process.platform === 'win32') {
+    app.setLoginItemSettings({
+      openAtLogin: shouldLaunch,
+      openAsHidden: shouldLaunch,
+    });
+  } else if (process.platform === 'linux') {
+    try {
+      const { setLinuxLaunchOnStartup } = await import(
+        path.join(__dirname, 'linuxStartupHelper')
+      );
+      await setLinuxLaunchOnStartup(shouldLaunch);
+    } catch (error) {
+      log.error('[Main] Failed to configure Linux launch on startup:', error);
+    }
+  }
+}
+
+type IpcEvent = IpcMainInvokeEvent | IpcMainEvent;
+
+const withUser =
+  <E extends IpcEvent>(
+    handler: (
+      event: E,
+      userId: string | null,
+      ...args: any[]
+    ) => Promise<any> | any,
+  ) =>
+  (event: E, ...args: any[]) => {
+    const session = getSession();
+    const userId = session.user ? session.user.id : null;
+    return handler(event, userId, ...args);
+  };
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_TASK,
-  async (event, task: ITaskIPC) => {
+  withUser(async (event, userId: string | null, task: ITaskIPC) => {
     const { schedule } = task;
-    const userId = session.user ? session.user.id : null;
 
     try {
       if (
@@ -259,14 +333,12 @@ ipcMain.handle(
       log.error(err);
       throw err;
     }
-  },
+  }),
 );
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_TASK,
-  async (event, task: ITaskIPC) => {
-    const userId = session.user ? session.user.id : null;
-
+  withUser(async (event, userId, task: ITaskIPC) => {
     try {
       await taskService.updateTask(task, userId);
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
@@ -274,14 +346,12 @@ ipcMain.handle(
       log.error(err);
       throw err;
     }
-  },
+  }),
 );
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_REPETITIVE_TASK,
-  async (event, task: ITaskIPC) => {
-    const userId = session.user ? session.user.id : null;
-
+  withUser(async (event, userId, task: ITaskIPC) => {
     try {
       await repetitiveTaskTemplateService.updateRepetitiveTaskTemplate(
         task,
@@ -292,105 +362,115 @@ ipcMain.handle(
       log.error(err);
       throw err;
     }
-  },
+  }),
 );
 
 /**
  * todo: add error handling
  */
-ipcMain.on(ChannelsEnum.REQUEST_TASKS_FOR_DATE, async (event, date) => {
-  const userId = session.user ? session.user.id : null;
-  try {
-    await repetitiveTaskTemplateService.generateDueTasks(userId);
-    const tasksForToday = await taskService.getTasksForDate(userId, date);
-    event.reply(ChannelsEnum.RESPONSE_TASKS_FOR_DATE, tasksForToday);
-  } catch (err: any) {
-    log.error(err?.message);
-    // As per previous discussion, for 'on' events, we log and don't throw/reply with error directly.
-    // Consider adding a specific error reply if the renderer needs to react to this.
-  }
-});
+ipcMain.on(
+  ChannelsEnum.REQUEST_TASKS_FOR_DATE,
+  withUser(async (event, userId, date) => {
+    try {
+      await repetitiveTaskTemplateService.generateDueTasks(userId);
+      const tasksForToday = await taskService.getTasksForDate(userId, date);
+      event.reply(ChannelsEnum.RESPONSE_TASKS_FOR_DATE, tasksForToday);
+    } catch (err: any) {
+      log.error(err?.message);
+      // As per previous discussion, for 'on' events, we log and don't throw/reply with error directly.
+      // Consider adding a specific error reply if the renderer needs to react to this.
+    }
+  }),
+);
 
 /**
  * todo: add error handling
  */
-ipcMain.on(ChannelsEnum.REQUEST_TASKS_OVERDUE, async (event) => {
-  const userId = session.user ? session.user.id : null;
-  const tasksOverdue = await taskService.getOverdueTasks(userId);
-
-  event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, tasksOverdue);
-});
+ipcMain.on(
+  ChannelsEnum.REQUEST_TASKS_OVERDUE,
+  withUser(async (event, userId) => {
+    const tasksOverdue = await taskService.getOverdueTasks(userId);
+    event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, tasksOverdue);
+  }),
+);
 
 /**
  * todo: add error handling
  */
-ipcMain.on(ChannelsEnum.REQUEST_COUNT_OF_TASKS_OVERDUE, async (event) => {
-  const userId = session.user ? session.user.id : null;
-  const count = await taskService.getCountOfTasksOverdue(userId);
-
-  event.reply(ChannelsEnum.RESPONSE_COUNT_OF_TASKS_OVERDUE, count);
-});
+ipcMain.on(
+  ChannelsEnum.REQUEST_COUNT_OF_TASKS_OVERDUE,
+  withUser(async (event, userId) => {
+    const count = await taskService.getCountOfTasksOverdue(userId);
+    event.reply(ChannelsEnum.RESPONSE_COUNT_OF_TASKS_OVERDUE, count);
+  }),
+);
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
-  async (event, { id, status, score }) => {
+  withUser(async (_event, userId, { id, status, score }) => {
     // todo: need to make the one-off task in active
-    const userId = session.user ? session.user.id : null;
     try {
       await taskService.toggleTaskCompletionStatus(id, status, score, userId);
     } catch (err) {
       log.error(err);
       throw err;
     }
-  },
+  }),
 );
 
-ipcMain.handle(ChannelsEnum.REQUEST_TASK_FAILURE, async (event, { id }) => {
-  try {
-    const userId = session.user ? session.user.id : null;
-    await taskService.failTask(id, userId);
-  } catch (err) {
-    log.error(err);
-    throw err;
-  }
-});
+ipcMain.handle(
+  ChannelsEnum.REQUEST_TASK_FAILURE,
+  withUser(async (_event, userId, { id }) => {
+    try {
+      await taskService.failTask(id, userId);
+    } catch (err) {
+      log.error(err);
+      throw err;
+    }
+  }),
+);
 
-ipcMain.on(ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS, async (event) => {
-  const userId = session.user ? session.user.id : null;
-  try {
-    const tasks = await taskService.getAllActiveOnceTasks(userId);
-    event.reply(ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS, tasks);
-  } catch {
-    event.reply(ChannelsEnum.ERROR_ALL_ONE_OFF_ACTIVE_TASKS);
-  }
-});
+ipcMain.on(
+  ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS,
+  withUser(async (event, userId) => {
+    try {
+      const tasks = await taskService.getAllActiveOnceTasks(userId);
+      event.reply(ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS, tasks);
+    } catch {
+      event.reply(ChannelsEnum.ERROR_ALL_ONE_OFF_ACTIVE_TASKS);
+    }
+  }),
+);
 
-ipcMain.on(ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS, async (event) => {
-  const userId = session.user ? session.user.id : null;
-  try {
-    const tasks = await taskService.getAllActiveUnscheduledTasks(userId);
-    event.reply(ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS, tasks);
-  } catch {
-    event.reply(ChannelsEnum.ERROR_ALL_UNSCHEDULED_ACTIVE_TASKS);
-  }
-});
+ipcMain.on(
+  ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS,
+  withUser(async (event, userId) => {
+    try {
+      const tasks = await taskService.getAllActiveUnscheduledTasks(userId);
+      event.reply(ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS, tasks);
+    } catch {
+      event.reply(ChannelsEnum.ERROR_ALL_UNSCHEDULED_ACTIVE_TASKS);
+    }
+  }),
+);
 
-ipcMain.on(ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS, async (event) => {
-  const userId = session.user ? session.user.id : null;
-  try {
-    const tasks =
-      await repetitiveTaskTemplateService.getAllActiveDailyTemplates(userId);
+ipcMain.on(
+  ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS,
+  withUser(async (event, userId) => {
+    try {
+      const tasks =
+        await repetitiveTaskTemplateService.getAllActiveDailyTemplates(userId);
 
-    event.reply(ChannelsEnum.RESPONSE_ALL_DAILY_ACTIVE_TASKS, tasks);
-  } catch {
-    event.reply(ChannelsEnum.ERROR_ALL_DAILY_ACTIVE_TASKS);
-  }
-});
+      event.reply(ChannelsEnum.RESPONSE_ALL_DAILY_ACTIVE_TASKS, tasks);
+    } catch {
+      event.reply(ChannelsEnum.ERROR_ALL_DAILY_ACTIVE_TASKS);
+    }
+  }),
+);
 
 ipcMain.on(
   ChannelsEnum.REQUEST_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
-  async (event) => {
-    const userId = session.user ? session.user.id : null;
+  withUser(async (event, userId) => {
     try {
       const tasks =
         await repetitiveTaskTemplateService.getAllActiveSpecificDaysInAWeekTemplates(
@@ -403,41 +483,38 @@ ipcMain.on(
     } catch {
       event.reply(ChannelsEnum.ERROR_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS);
     }
-  },
+  }),
 );
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_RESCHEDULE,
-  async (_event, { id, dueDate }) => {
-    const userId = session.user ? session.user.id : null;
-
+  withUser(async (_event, userId, { id, dueDate }) => {
     try {
       await taskService.rescheduleTask(id, dueDate, userId);
     } catch (err: any) {
       log.error(err.message);
       throw err;
     }
-  },
+  }),
 );
 
-ipcMain.handle(ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT, async () => {
-  const userId = session.user ? session.user.id : null;
-
-  try {
-    return await repetitiveTaskTemplateService.getDailyTasksMonthlyReport(
-      userId,
-    );
-  } catch (err: any) {
-    log.error(err?.message);
-    throw err;
-  }
-});
+ipcMain.handle(
+  ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT,
+  withUser(async (_event, userId) => {
+    try {
+      return await repetitiveTaskTemplateService.getDailyTasksMonthlyReport(
+        userId,
+      );
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  }),
+);
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_TASKS_MONTHLY_REPORT,
-  async () => {
-    const userId = session.user ? session.user.id : null;
-
+  withUser(async (_event, userId) => {
     try {
       return await repetitiveTaskTemplateService.getSpecificDaysInAWeekTasksMonthlyReport(
         userId,
@@ -447,41 +524,36 @@ ipcMain.handle(
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_BULK_TASK_FAILURE,
-  async (_event, tasks: string[]) => {
-    const userId = session.user ? session.user.id : null;
-
+  withUser(async (_event, userId, tasks: string[]) => {
     try {
       return await taskService.bulkFailTasks(tasks, userId);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_DETAILS,
-  async (_event, taskId: string) => {
-    const userId = session.user ? session.user.id : null;
-
+  withUser(async (_event, userId, taskId: string) => {
     try {
       return await taskService.getTaskDetails(taskId, userId);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_REPETITIVE_TASK_DETAILS,
-  async (_event, templateId: string) => {
-    const userId = session.user ? session.user.id : null;
+  withUser(async (_event, userId, templateId: string) => {
     try {
       return await repetitiveTaskTemplateService.getRepetitiveTaskTemplateDetails(
         templateId,
@@ -491,14 +563,12 @@ ipcMain.handle(
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_STOP_REPETITIVE_TASK,
-  async (event, templateId: string) => {
-    const userId = session.user ? session.user.id : null;
-
+  withUser(async (event, userId, templateId: string) => {
     try {
       await repetitiveTaskTemplateService.stopRepetitiveTaskTemplate(
         templateId,
@@ -510,9 +580,10 @@ ipcMain.handle(
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
+// todo: before using this event handler, we need to make sure that we are using the correct user id/session
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_TAG,
   async (_event, tagName: string) => {
@@ -529,6 +600,7 @@ ipcMain.handle(
   },
 );
 
+// todo: before using this event handler, we need to make sure that we are using the correct user id/session
 ipcMain.handle(ChannelsEnum.REQUEST_ALL_TAGS, async () => {
   try {
     return await prisma.tag.findMany();
@@ -540,31 +612,31 @@ ipcMain.handle(ChannelsEnum.REQUEST_ALL_TAGS, async () => {
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_SPACE,
-  async (_event, spaceName: string) => {
-    const userId = session.user ? session.user.id : null;
+  withUser(async (_event, userId, spaceName: string) => {
     try {
       return await spaceService.createSpace(spaceName, userId);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
-ipcMain.handle(ChannelsEnum.REQUEST_ALL_SPACES, async () => {
-  const userId = session.user ? session.user.id : null;
-  try {
-    return await spaceService.getAllSpaces(userId);
-  } catch (err: any) {
-    log.error(err?.message);
-    throw err;
-  }
-});
+ipcMain.handle(
+  ChannelsEnum.REQUEST_ALL_SPACES,
+  withUser(async (_event, userId) => {
+    try {
+      return await spaceService.getAllSpaces(userId);
+    } catch (err: any) {
+      log.error(err?.message);
+      throw err;
+    }
+  }),
+);
 
 ipcMain.on(
   ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_FOR_SPACE,
-  async (event, spaceId: string) => {
-    const userId = session.user ? session.user.id : null;
+  withUser(async (event, userId, spaceId: string) => {
     try {
       const tasks = await taskService.getActiveUnscheduledTasksWithSpaceId(
         spaceId,
@@ -578,14 +650,12 @@ ipcMain.on(
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
 ipcMain.on(
   ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_FOR_SPACE,
-  async (event, spaceId: string) => {
-    const userId = session.user ? session.user.id : null;
-
+  withUser(async (event, userId, spaceId: string) => {
     try {
       const tasks = await taskService.getActiveOnceTasksWithSpaceId(
         spaceId,
@@ -596,13 +666,12 @@ ipcMain.on(
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
 ipcMain.on(
   ChannelsEnum.REQUEST_DAILY_ACTIVE_TEMPLATES_FOR_SPACE,
-  async (event, spaceId: string) => {
-    const userId = session.user ? session.user.id : null;
+  withUser(async (event, userId, spaceId: string) => {
     try {
       const templates =
         await repetitiveTaskTemplateService.getActiveDailyTemplatesWithSpaceId(
@@ -617,14 +686,12 @@ ipcMain.on(
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
 ipcMain.on(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TEMPLATES_FOR_SPACE,
-  async (event, spaceId: string) => {
-    const userId = session.user ? session.user.id : null;
-
+  withUser(async (event, userId, spaceId: string) => {
     try {
       const templates =
         await repetitiveTaskTemplateService.getActiveSpecificDaysInAWeekTemplatesWithSpaceId(
@@ -639,7 +706,7 @@ ipcMain.on(
       log.error(err?.message);
       throw err;
     }
-  },
+  }),
 );
 
 interface DecodedToken {
@@ -675,9 +742,8 @@ async function handleSuccessfulSignIn(
     refreshToken,
   );
 
-  session.accessToken = accessToken;
   const user = { email, id: user_id };
-  session.user = user;
+  setSession(accessToken, user);
   setInMemoryToken(accessToken);
   return user;
 }
@@ -756,8 +822,7 @@ ipcMain.handle(ChannelsEnum.REQUEST_SIGN_OUT, async () => {
         KEYCHAIN_SERVICE,
         KEYCHAIN_REFRESH_TOKEN_ACCOUNT,
       );
-      session.accessToken = null;
-      session.user = null;
+      setSession(null, null);
       setInMemoryToken(null);
       log.info('Local user session and tokens cleared successfully.');
     } catch (keytarError: any) {
@@ -774,19 +839,25 @@ ipcMain.handle(ChannelsEnum.REQUEST_INITIAL_AUTH_STATUS, async () => {
   return await attemptAutoSignIn();
 });
 
-ipcMain.handle(ChannelsEnum.REQUEST_SYNC_START, async () => {
-  if (!session.user) {
-    throw new Error('User not authenticated');
-  }
-  return await syncService.runSync(session.user.id);
-});
+ipcMain.handle(
+  ChannelsEnum.REQUEST_SYNC_START,
+  withUser(async (_event, userId) => {
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+    return await syncService.runSync(userId);
+  }),
+);
 
-ipcMain.handle(ChannelsEnum.REQUEST_LAST_SYNC, async () => {
-  if (!session.user) {
-    throw new Error('User not authenticated');
-  }
-  return settingsService.getLastSync(session.user.id);
-});
+ipcMain.handle(
+  ChannelsEnum.REQUEST_LAST_SYNC,
+  withUser(async (_event, userId) => {
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+    return settingsService.getLastSync(userId);
+  }),
+);
 
 ipcMain.handle(ChannelsEnum.REQUEST_DEVICE_SETTINGS, async () => {
   return deviceSettingsService.getSettings();
@@ -795,34 +866,44 @@ ipcMain.handle(ChannelsEnum.REQUEST_DEVICE_SETTINGS, async () => {
 ipcMain.handle(
   ChannelsEnum.REQUEST_SET_DEVICE_SETTINGS,
   async (_event, data) => {
-    return deviceSettingsService.setSettings(data);
+    deviceSettingsService.setSettings(data);
+    await configureLaunchOnStartup(data.notificationsEnabled);
+
+    return true;
   },
 );
 
 app.on('window-all-closed', () => {
   // Respect the OSX convention of having the application in memory even
-  // after all windows have been closed
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  // after all windows have been closed. On other platforms, we also want
+  // to keep it running in the background for notifications.
 });
 
 app
   .whenReady()
-  .then(() => {
+  .then(async () => {
     registerTokenRefreshHandler(handleSuccessfulSignIn);
     registerAuthFailureHandler(() => {
       sendToMainWindow(ChannelsEnum.RESPONSE_TOKEN_REFRESHING_FAILED);
     });
 
+    const deviceSettings = deviceSettingsService.getSettings();
+    await configureLaunchOnStartup(deviceSettings.launchOnStartup);
+
+    if (Notification.isSupported()) {
+      notificationService.start();
+      log.info('[Main] Notifications are supported on this OS.');
+    } else {
+      log.warn('[Main] Notifications are not supported on this OS.');
+    }
+
     createWindow().then(() => {
       app.on('activate', () => {
         log.info('app activated');
-        const localMainWindow = BrowserWindow.getAllWindows()[0];
-        if (!localMainWindow) {
+        if (BrowserWindow.getAllWindows().length === 0) {
           createWindow();
         } else {
-          localMainWindow.show();
+          localMainWindow?.show();
         }
       });
     });

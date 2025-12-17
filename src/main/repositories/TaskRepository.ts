@@ -22,6 +22,7 @@ import {
   TaskCompletionStatusEnum,
   TaskScheduleTypeEnum,
   SyncedTask,
+  TimeOfDay,
 } from '../../renderer/types';
 import { getTodayStart } from '../helpers';
 import { prisma } from '../prisma';
@@ -392,5 +393,26 @@ export class TaskRepository {
   ): Promise<void> => {
     const db = tx || prisma;
     await db.task.delete({ where: { id: taskId } });
+  };
+
+  getIncompleteTasksForTimeOfDay = async (
+    userId: string | null,
+    timeOfDay: TimeOfDay,
+  ): Promise<number> => {
+    const todayStart = getTodayStart();
+    const todayEnd = dayjs().endOf('day').toDate();
+
+    return await prisma.task.count({
+      where: {
+        userId,
+        dueDate: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
+        completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+        isActive: true,
+        timeOfDay,
+      },
+    });
   };
 }
