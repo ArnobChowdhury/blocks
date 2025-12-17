@@ -7,6 +7,7 @@ import { TaskRepository } from '../repositories/TaskRepository';
 import { RepetitiveTaskTemplateRepository } from '../repositories/RepetitiveTaskTemplateRepository';
 import { getSession } from '../sessionManager';
 import { getMainWindow, sendToMainWindow } from '../windowManager';
+import { syncService } from './SyncService';
 
 class NotificationService {
   private taskRepo: TaskRepository;
@@ -61,6 +62,13 @@ class NotificationService {
 
     const session = getSession();
     const userId = session.user ? session.user.id : null;
+
+    if (userId) {
+      log.info(
+        `[NotificationService] Running sync for user ${userId} before checking tasks.`,
+      );
+      await syncService.runSync(userId);
+    }
 
     await this.sendNotificationForTimeOfDay(timeOfDay, userId);
   }
