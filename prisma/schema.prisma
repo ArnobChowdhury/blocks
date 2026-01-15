@@ -92,6 +92,7 @@ model Space {
 model User {
   id                      String                   @id @default(uuid())
   email                   String                   @unique
+  isPremium               Boolean                  @default(false)
   createdAt               DateTime                 @default(now())
   modifiedAt              DateTime                 @updatedAt
   deletedAt               DateTime?

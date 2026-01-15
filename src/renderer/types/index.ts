@@ -201,4 +201,7 @@ export enum ChannelsEnum {
 
   REQUEST_DEVICE_SETTINGS = 'request_device_settings',
   REQUEST_SET_DEVICE_SETTINGS = 'request_set_device_settings',
+
+  REQUEST_CHECK_ANONYMOUS_DATA_EXISTS = 'request_check_anonymous_data_exists',
+  REQUEST_ASSIGN_ANONYMOUS_DATA = 'request_assign_anonymous_data',
 }

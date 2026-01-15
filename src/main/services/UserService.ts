@@ -26,7 +26,15 @@ export class UserService {
     this.userRepository = new UserRepository();
   }
 
-  saveUserLocally = async (id: string, email: string): Promise<User> => {
-    return this.userRepository.upsertUser(id, email);
+  getUserById = async (id: string): Promise<User | null> => {
+    return this.userRepository.getUserById(id);
+  };
+
+  saveUserLocally = async (
+    id: string,
+    email: string,
+    isPremium: boolean,
+  ): Promise<User> => {
+    return this.userRepository.upsertUser(id, email, isPremium);
   };
 }

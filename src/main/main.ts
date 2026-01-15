@@ -82,6 +82,7 @@ import { deviceSettingsService } from './services/DeviceSettingsService';
 import { notificationService } from './services/NotificationService';
 import { sendToMainWindow, setMainWindow } from './windowManager';
 import { getSession, setSession } from './sessionManager';
+import { dataMigrationService } from './services/DataMigrationService';
 
 let tray: Tray | null = null;
 
@@ -226,6 +227,15 @@ const createWindow = async () => {
     } else {
       localMainWindow.show();
     }
+
+    localMainWindow.on('focus', () => {
+      const session = getSession();
+      if (session?.user) {
+        checkPremiumStatus().catch((err) =>
+          log.error('[Main] Focus status check failed:', err),
+        );
+      }
+    });
   });
 
   localMainWindow.on('close', (event: Electron.Event) => {
@@ -712,6 +722,7 @@ ipcMain.on(
 interface DecodedToken {
   user_id: string;
   email: string;
+  is_premium?: boolean;
 }
 
 async function handleSuccessfulSignIn(
@@ -723,13 +734,14 @@ async function handleSuccessfulSignIn(
   }
 
   const decodedToken: DecodedToken = jwtDecode(accessToken);
-  const { email, user_id } = decodedToken;
+  const { email, user_id, is_premium } = decodedToken;
 
   if (!email) {
     throw new Error('Email not found in token.');
   }
 
-  await userService.saveUserLocally(user_id, email);
+  const oldUser = await userService.getUserById(user_id);
+  await userService.saveUserLocally(user_id, email, is_premium ?? false);
 
   await keytar.setPassword(
     KEYCHAIN_SERVICE,
@@ -742,9 +754,19 @@ async function handleSuccessfulSignIn(
     refreshToken,
   );
 
-  const user = { email, id: user_id };
+  const user = { email, id: user_id, isPremium: is_premium };
   setSession(accessToken, user);
   setInMemoryToken(accessToken);
+
+  if (oldUser && !oldUser.isPremium && user.isPremium) {
+    log.info('[Main] User is now premium. Queueing data for sync.');
+    await dataMigrationService.queueAllDataForSync(user_id);
+
+    syncService.runSync(user_id).catch((err) => {
+      log.error('[Main] Failed to run sync after sign-in:', err);
+    });
+  }
+
   return user;
 }
 
@@ -768,6 +790,35 @@ async function attemptAutoSignIn() {
   } catch (err: any) {
     log.error('Failed to retrieve tokens on startup:', err.message);
     return null;
+  }
+}
+
+async function checkPremiumStatus() {
+  try {
+    const accessToken = await keytar.getPassword(
+      KEYCHAIN_SERVICE,
+      KEYCHAIN_ACCESS_TOKEN_ACCOUNT,
+    );
+    const refreshToken = await keytar.getPassword(
+      KEYCHAIN_SERVICE,
+      KEYCHAIN_REFRESH_TOKEN_ACCOUNT,
+    );
+
+    if (accessToken && refreshToken) {
+      const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        accessToken,
+        refreshToken,
+      });
+
+      if (response.data?.result?.data) {
+        const { accessToken: newAccess, refreshToken: newRefresh } =
+          response.data.result.data;
+        await handleSuccessfulSignIn(newAccess, newRefresh);
+      }
+    }
+  } catch (error) {
+    // Silent fail is okay here, it might just mean no internet or token invalid
+    // If token is invalid, the next API call will catch it.
   }
 }
 
@@ -836,7 +887,13 @@ ipcMain.handle(ChannelsEnum.REQUEST_SIGN_OUT, async () => {
 });
 
 ipcMain.handle(ChannelsEnum.REQUEST_INITIAL_AUTH_STATUS, async () => {
-  return await attemptAutoSignIn();
+  const user = await attemptAutoSignIn();
+  if (user) {
+    checkPremiumStatus().catch((err) =>
+      log.error('[Main] Initial status check failed:', err),
+    );
+  }
+  return user;
 });
 
 ipcMain.handle(
@@ -871,6 +928,20 @@ ipcMain.handle(
 
     return true;
   },
+);
+
+ipcMain.handle(ChannelsEnum.REQUEST_CHECK_ANONYMOUS_DATA_EXISTS, async () => {
+  return await dataMigrationService.hasAnonymousData();
+});
+
+ipcMain.handle(
+  ChannelsEnum.REQUEST_ASSIGN_ANONYMOUS_DATA,
+  withUser(async (_event, userId) => {
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+    return await dataMigrationService.assignAnonymousDataToUser(userId);
+  }),
 );
 
 app.on('window-all-closed', () => {

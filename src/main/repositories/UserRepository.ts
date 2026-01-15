@@ -20,11 +20,19 @@ import { User } from '../../generated/client';
 import { prisma } from '../prisma';
 
 export class UserRepository {
-  upsertUser = async (id: string, email: string): Promise<User> => {
+  getUserById = async (id: string): Promise<User | null> => {
+    return prisma.user.findUnique({ where: { id } });
+  };
+
+  upsertUser = async (
+    id: string,
+    email: string,
+    isPremium: boolean,
+  ): Promise<User> => {
     return prisma.user.upsert({
       where: { id },
-      update: { email },
-      create: { id, email },
+      update: { email, isPremium },
+      create: { id, email, isPremium },
     });
   };
 }

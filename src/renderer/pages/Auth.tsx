@@ -7,7 +7,12 @@ import { PageHeader } from '../components';
 import { useApp } from '../context/AppProvider';
 
 function Auth() {
-  const { setNotifier, setUser, handleLoadingSpaces } = useApp();
+  const {
+    setNotifier,
+    setUser,
+    handleLoadingSpaces,
+    setShouldCheckAnonDataExistence,
+  } = useApp();
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -22,6 +27,7 @@ function Auth() {
         setNotifier('Sign in successful!', 'success');
         setUser(result.data.user);
         await handleLoadingSpaces();
+        setShouldCheckAnonDataExistence(true);
         navigate('/');
       } else {
         setNotifier(result.error || 'An unknown error occurred.', 'error');

@@ -128,6 +128,27 @@ const AppContextFn = (initialUser: User | null) => {
     return unsubscribe;
   }, [todayPageDisplayDate]);
 
+  const [shouldCheckAnonDataExistence, setShouldCheckAnonDataExistence] =
+    useState(false);
+  const [showAnonDataMigrationModal, setShowAnonDataMigrationModal] =
+    useState(false);
+
+  useEffect(() => {
+    if (shouldCheckAnonDataExistence) {
+      setShouldCheckAnonDataExistence(false);
+      window.electron.ipcRenderer
+        .invoke(ChannelsEnum.REQUEST_CHECK_ANONYMOUS_DATA_EXISTS)
+        .then((hasAnonData) => {
+          return setTimeout(() => {
+            setShowAnonDataMigrationModal(hasAnonData);
+          }, 1000);
+        })
+        .catch((err: any) => {
+          setNotifier(err.message, 'error');
+        });
+    }
+  }, [setNotifier, shouldCheckAnonDataExistence]);
+
   const clearNotifier = useCallback(() => {
     setShowSnackbar(false);
   }, []);
@@ -296,6 +317,9 @@ const AppContextFn = (initialUser: User | null) => {
     setTodayPageDisplayDate,
     isSyncing,
     firstSyncDone,
+    showAnonDataMigrationModal,
+    setShouldCheckAnonDataExistence,
+    setShowAnonDataMigrationModal,
   };
 };
 

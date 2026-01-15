@@ -71,6 +71,7 @@ CREATE TABLE "Space" (
 CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "email" TEXT NOT NULL,
+    "isPremium" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "modifiedAt" DATETIME NOT NULL,
     "deletedAt" DATETIME

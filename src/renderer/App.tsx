@@ -16,6 +16,7 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import {
+  Button,
   CssBaseline,
   Drawer,
   IconButton,
@@ -27,6 +28,10 @@ import {
   Typography,
   useTheme,
   Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
   Snackbar,
   ListItem,
   Alert,
@@ -120,6 +125,8 @@ function Navigation() {
     setNotifier,
     user,
     setUser,
+    showAnonDataMigrationModal,
+    setShowAnonDataMigrationModal,
   } = useApp();
 
   const navigate = useNavigate();
@@ -168,6 +175,24 @@ function Navigation() {
       }
     } catch (err: any) {
       setNotifier(formatErrorMessage(err.message), 'error');
+    }
+  };
+
+  const handleDismissMigration = () => {
+    setShowAnonDataMigrationModal(false);
+  };
+
+  const handleConfirmMigration = async () => {
+    try {
+      await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_ASSIGN_ANONYMOUS_DATA,
+      );
+      setNotifier('Data imported successfully!', 'success');
+      setShowAnonDataMigrationModal(false);
+      handlePageRefresh();
+    } catch (err: any) {
+      setNotifier(formatErrorMessage(err.message), 'error');
+      setShowAnonDataMigrationModal(false);
     }
   };
 
@@ -359,6 +384,24 @@ function Navigation() {
             widgetCloseFunc={handleEditRepetitiveTaskTemplateCancel}
           />
         )}
+      </Dialog>
+      <Dialog
+        open={showAnonDataMigrationModal}
+        onClose={handleDismissMigration}
+      >
+        <DialogTitle>Import Local Data</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            We found some data (tasks, spaces, or templates) created while you
+            were signed out. Would you like to import them to your account now?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDismissMigration}>No, thanks</Button>
+          <Button onClick={handleConfirmMigration} autoFocus>
+            Import
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
