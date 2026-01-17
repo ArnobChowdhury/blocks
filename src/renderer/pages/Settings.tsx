@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState, ChangeEvent } from 'react';
 import { styled } from '@mui/material/styles';
 import {
   List,
@@ -6,6 +6,7 @@ import {
   ListItemText,
   Switch,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { PageHeader } from '../components';
 import {
@@ -14,6 +15,7 @@ import {
 } from '../context/ThemeProvider';
 import { useApp } from '../context/AppProvider';
 import { ChannelsEnum } from '../types';
+import Crown from '../icons/Crown';
 
 const ThemeSwitch = styled(Switch)(({ theme }) => ({
   width: 62,
@@ -68,19 +70,24 @@ const ThemeSwitch = styled(Switch)(({ theme }) => ({
 function Settings() {
   const { themeMode, setThemeMode } = useAppTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const { setNotifier } = useApp();
+  const { setNotifier, user } = useApp();
+  const theme = useTheme();
 
   useLayoutEffect(() => {
     window.electron.ipcRenderer
       .invoke(ChannelsEnum.REQUEST_DEVICE_SETTINGS)
       .then((settings) => {
-        console.log('[Settings] Received device settings', settings);
-        setNotificationsEnabled(settings.notificationsEnabled);
+        // console.log('[Settings] Received device settings', settings);
+        return setNotificationsEnabled(settings.notificationsEnabled);
+      })
+      .catch(() => {
+        // console.error('[Settings] Error fetching device settings:', error);
+        setNotifier('Error fetching device settings', 'error');
       });
-  }, []);
+  }, [setNotifier]);
 
   const handleNotificationsToggle = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: ChangeEvent<HTMLInputElement>,
   ) => {
     try {
       const isChecked = event.target.checked;
@@ -123,6 +130,21 @@ function Settings() {
             onChange={handleNotificationsToggle}
           />
         </ListItem>
+        {user?.isPremium && (
+          <ListItem>
+            <ListItemText
+              primary={
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <Crown sx={{ color: theme.palette.primary.main }} />
+                  <Typography variant="body1">Premium Active</Typography>
+                </div>
+              }
+              secondary="Thank you for supporting BlocksTracker!"
+            />
+          </ListItem>
+        )}
       </List>
     </>
   );

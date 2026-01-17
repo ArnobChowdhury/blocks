@@ -63,6 +63,7 @@ import Logo from './icons/Logo';
 import LoginIcon from './icons/Login';
 import SettingsIcon from './icons/Settings';
 import LogoutIcon from './icons/Logout';
+import Crown from './icons/Crown';
 import { AddTask, EditTask } from './widgets';
 import { CustomThemeProvider } from './context/ThemeProvider';
 import { useApp } from './context/AppProvider';
@@ -340,6 +341,25 @@ function Navigation() {
                 }}
               />
             </ListItem>
+            {user.isPremium && (
+              <ListItem sx={{ pl: 2, pt: 0, pb: 0 }}>
+                <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
+                  <Crown
+                    fontSize="small"
+                    sx={{ color: theme.palette.primary.main }}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Premium Active"
+                  primaryTypographyProps={{
+                    variant: 'body2',
+                    color: 'primary',
+                    fontSize: '0.8rem',
+                    fontWeight: 500,
+                  }}
+                />
+              </ListItem>
+            )}
             <ListItemButton onClick={handleSignOut}>
               <ListItemIcon sx={{ minWidth: theme.spacing(4) }}>
                 <LogoutIcon />

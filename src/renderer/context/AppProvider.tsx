@@ -19,6 +19,7 @@ import {
 interface User {
   id: string;
   email: string;
+  isPremium?: boolean;
 }
 
 const AppContextFn = (initialUser: User | null) => {
