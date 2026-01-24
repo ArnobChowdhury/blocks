@@ -404,6 +404,42 @@ ipcMain.on(
   }),
 );
 
+ipcMain.handle(
+  ChannelsEnum.REQUEST_REORDER_TASK,
+  withUser(
+    async (
+      event,
+      userId,
+      { taskId, newSortOrder, newTimeOfDay, newCompletionStatus },
+    ) => {
+      try {
+        await taskService.reorderTask(
+          taskId,
+          newSortOrder,
+          newTimeOfDay,
+          newCompletionStatus,
+          userId,
+        );
+      } catch (err) {
+        log.error(err);
+        throw err;
+      }
+    },
+  ),
+);
+
+ipcMain.handle(
+  ChannelsEnum.REQUEST_REINDEX_TASKS,
+  withUser(async (event, userId, updates) => {
+    try {
+      await taskService.reindexTasks(updates, userId);
+    } catch (err) {
+      log.error(err);
+      throw err;
+    }
+  }),
+);
+
 /**
  * todo: add error handling
  */

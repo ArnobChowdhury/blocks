@@ -18,10 +18,12 @@
 import dayjs from 'dayjs';
 // eslint-disable-next-line import/no-relative-packages
 import { Task } from '../../generated/client';
+import log from 'electron-log';
 import {
   ITaskIPC,
   TaskCompletionStatusEnum,
   TaskScheduleTypeEnum,
+  TimeOfDay,
 } from '../../renderer/types';
 import { TaskRepository } from '../repositories/TaskRepository';
 import { RepetitiveTaskTemplateRepository } from '../repositories/RepetitiveTaskTemplateRepository';
@@ -364,5 +366,160 @@ export class TaskService {
   ): Promise<Task[]> => {
     await this.taskRepository.deactivateCompletedOnceTasks(userId);
     return this.taskRepository.getActiveOnceTasksWithSpaceId(spaceId, userId);
+  };
+
+  reorderTask = async (
+    taskId: string,
+    newSortOrder: number,
+    newTimeOfDay: TimeOfDay | null,
+    newCompletionStatus: TaskCompletionStatusEnum | undefined,
+    userId: string | null,
+  ): Promise<void> => {
+    const isPremium = !!userId;
+
+    await prisma.$transaction(async (tx) => {
+      const currentTask = await this.taskRepository.getTaskById(taskId, userId);
+      if (!currentTask) throw new Error('Task not found');
+
+      const updatedTask = await this.taskRepository.updateTaskSortOrder(
+        taskId,
+        newSortOrder,
+        newTimeOfDay,
+        newCompletionStatus,
+        userId,
+        tx,
+      );
+
+      if (isPremium) {
+        await this.pendingOpRepository.enqueueOperation(
+          {
+            userId: userId!,
+            operationType: 'update',
+            entityType: 'task',
+            entityId: updatedTask.id,
+            payload: JSON.stringify({ ...updatedTask, tags: [] }),
+          },
+          tx,
+        );
+      }
+
+      if (currentTask.repetitiveTaskTemplateId) {
+        try {
+          const template =
+            await this.repetitiveTaskTemplateRepository.getRepetitiveTaskTemplateDetails(
+              currentTask.repetitiveTaskTemplateId,
+              userId,
+            );
+
+          if (
+            template &&
+            newTimeOfDay === template.timeOfDay &&
+            newCompletionStatus !== TaskCompletionStatusEnum.FAILED
+          ) {
+            const updatedTemplate =
+              await this.repetitiveTaskTemplateRepository.updateSortOrder(
+                template.id,
+                newSortOrder,
+                userId,
+                tx,
+              );
+
+            if (isPremium) {
+              await this.pendingOpRepository.enqueueOperation(
+                {
+                  userId: userId!,
+                  operationType: 'update',
+                  entityType: 'repetitive_task_template',
+                  entityId: updatedTemplate.id,
+                  payload: JSON.stringify({ ...updatedTemplate, tags: [] }),
+                },
+                tx,
+              );
+            }
+          }
+        } catch (error) {
+          log.warn(
+            `[TaskService] Failed to update template sort order for task ${taskId}:`,
+            error,
+          );
+        }
+      }
+    });
+
+    if (isPremium) {
+      syncService.runSync(userId);
+    }
+  };
+
+  reindexTasks = async (
+    updates: { id: string; sortOrder: number }[],
+    userId: string | null,
+  ): Promise<void> => {
+    const isPremium = !!userId;
+
+    await prisma.$transaction(async (tx) => {
+      await this.taskRepository.bulkUpdateTaskSortOrder(updates, userId, tx);
+
+      for (const update of updates) {
+        const task = await this.taskRepository.getTaskById(update.id, userId);
+        if (!task) continue;
+
+        if (isPremium) {
+          const payloadTask = { ...task, sortOrder: update.sortOrder };
+          await this.pendingOpRepository.enqueueOperation(
+            {
+              userId: userId!,
+              operationType: 'update',
+              entityType: 'task',
+              entityId: task.id,
+              payload: JSON.stringify({ ...payloadTask, tags: [] }),
+            },
+            tx,
+          );
+        }
+
+        if (task.repetitiveTaskTemplateId) {
+          try {
+            const template =
+              await this.repetitiveTaskTemplateRepository.getRepetitiveTaskTemplateDetails(
+                task.repetitiveTaskTemplateId,
+                userId,
+              );
+
+            if (template && task.timeOfDay === template.timeOfDay) {
+              const updatedTemplate =
+                await this.repetitiveTaskTemplateRepository.updateSortOrder(
+                  template.id,
+                  update.sortOrder,
+                  userId,
+                  tx,
+                );
+
+              if (isPremium) {
+                await this.pendingOpRepository.enqueueOperation(
+                  {
+                    userId: userId!,
+                    operationType: 'update',
+                    entityType: 'repetitive_task_template',
+                    entityId: updatedTemplate.id,
+                    payload: JSON.stringify({ ...updatedTemplate, tags: [] }),
+                  },
+                  tx,
+                );
+              }
+            }
+          } catch (error) {
+            log.warn(
+              `[TaskService] Failed to update template sort order during reindex for task ${task.id}:`,
+              error,
+            );
+          }
+        }
+      }
+    });
+
+    if (isPremium) {
+      syncService.runSync(userId);
+    }
   };
 }

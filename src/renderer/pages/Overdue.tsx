@@ -5,7 +5,7 @@ import ThumbDownIcon from '@mui/icons-material/ThumbDownOutlined';
 import dayjs from 'dayjs';
 import { PageHeader, SectionHeader } from '../components';
 import { TodoList } from '../widgets';
-import { ChannelsEnum, TaskWithTags } from '../types';
+import { ChannelsEnum, TaskWithTags, TimeOfDay } from '../types';
 import { formatDate } from '../utils';
 import { useBulkFailure } from '../hooks';
 
@@ -39,6 +39,12 @@ function Overdue() {
 
   useEffect(() => {
     const tasksOverdueByDate: Record<string, TaskWithTags[]> = {};
+    const timeOfDayOrder: Record<string, number> = {
+      [TimeOfDay.Morning]: 0,
+      [TimeOfDay.Afternoon]: 1,
+      [TimeOfDay.Evening]: 2,
+      [TimeOfDay.Night]: 3,
+    };
 
     tasksOverdue.forEach((task) => {
       const taskDueDate = formatDate(dayjs(task.dueDate!));
@@ -48,6 +54,17 @@ function Overdue() {
       } else {
         tasksOverdueByDate[taskDueDate] = [task];
       }
+    });
+
+    Object.values(tasksOverdueByDate).forEach((tasks) => {
+      tasks.sort((a, b) => {
+        const orderA = a.timeOfDay ? (timeOfDayOrder[a.timeOfDay] ?? 4) : 4;
+        const orderB = b.timeOfDay ? (timeOfDayOrder[b.timeOfDay] ?? 4) : 4;
+
+        if (orderA !== orderB) return orderA - orderB;
+
+        return a.sortOrder - b.sortOrder;
+      });
     });
 
     setSortedTasksOverdue(tasksOverdueByDate);

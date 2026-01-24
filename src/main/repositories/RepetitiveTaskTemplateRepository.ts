@@ -372,4 +372,17 @@ export class RepetitiveTaskTemplateRepository {
       },
     });
   };
+
+  updateSortOrder = async (
+    templateId: string,
+    sortOrder: number,
+    userId: string | null,
+    tx?: PrismaTransactionalClient,
+  ): Promise<RepetitiveTaskTemplate> => {
+    const db = tx || prisma;
+    return db.repetitiveTaskTemplate.update({
+      where: { id: templateId, userId },
+      data: { sortOrder },
+    });
+  };
 }

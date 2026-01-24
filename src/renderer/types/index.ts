@@ -204,4 +204,7 @@ export enum ChannelsEnum {
 
   REQUEST_CHECK_ANONYMOUS_DATA_EXISTS = 'request_check_anonymous_data_exists',
   REQUEST_ASSIGN_ANONYMOUS_DATA = 'request_assign_anonymous_data',
+
+  REQUEST_REORDER_TASK = 'request_reorder_task',
+  REQUEST_REINDEX_TASKS = 'request_reindex_tasks',
 }

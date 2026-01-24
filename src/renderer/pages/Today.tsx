@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Fab, Alert, Button, Box, Typography } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import dayjs from 'dayjs';
 import { TodoList } from '../widgets';
@@ -17,6 +18,10 @@ import {
 } from '../types';
 import { ROUTE_OVERDUE, SectionColors } from '../constants';
 import NoTaskToday from '../images/NoTaskToday';
+
+type TasksBySection = {
+  [key: string]: TaskWithTags[];
+};
 
 function Today() {
   const { themeMode } = useAppTheme();
@@ -77,14 +82,15 @@ function Today() {
     setNewDayBannerVisible(false);
   };
 
-  const [tasksMorning, setTasksMorning] = useState<TaskWithTags[]>([]);
-  const [tasksAfternoon, setTasksAfternoon] = useState<TaskWithTags[]>([]);
-  const [tasksEvening, setTasksEvening] = useState<TaskWithTags[]>([]);
-  const [tasksNight, setTasksNight] = useState<TaskWithTags[]>([]);
-  const [tasksWithoutTimeOfDay, setTasksWithoutTimeOfDay] = useState<
-    TaskWithTags[]
-  >([]);
-  const [tasksFailed, setTasksFailed] = useState<TaskWithTags[]>([]);
+  const [tasksBySection, setTasksBySection] = useState<TasksBySection>({
+    Morning: [],
+    Afternoon: [],
+    Evening: [],
+    Night: [],
+    'Any Time': [],
+    Failed: [],
+  });
+
   const [noTasksForToday, setNoTasksForToday] = useState(false);
 
   useEffect(() => {
@@ -93,12 +99,14 @@ function Today() {
       ChannelsEnum.RESPONSE_TASKS_FOR_DATE,
       (response) => {
         const tasks = response as TaskWithTags[];
-        const morningTasks: TaskWithTags[] = [];
-        const afternoonTasks: TaskWithTags[] = [];
-        const eveningTasks: TaskWithTags[] = [];
-        const nightTasks: TaskWithTags[] = [];
-        const tasksWithoutTime: TaskWithTags[] = [];
-        const failedTasks: TaskWithTags[] = [];
+        const newTasksBySection: TasksBySection = {
+          Morning: [],
+          Afternoon: [],
+          Evening: [],
+          Night: [],
+          'Any Time': [],
+          Failed: [],
+        };
 
         if (tasks.length === 0) {
           setNoTasksForToday(true);
@@ -108,25 +116,20 @@ function Today() {
 
         tasks.forEach((task) => {
           if (task.completionStatus === TaskCompletionStatusEnum.FAILED) {
-            failedTasks.push(task);
+            newTasksBySection.Failed.push(task);
           } else if (task.timeOfDay === TimeOfDay.Morning) {
-            morningTasks.push(task);
+            newTasksBySection.Morning.push(task);
           } else if (task.timeOfDay === TimeOfDay.Afternoon) {
-            afternoonTasks.push(task);
+            newTasksBySection.Afternoon.push(task);
           } else if (task.timeOfDay === TimeOfDay.Evening) {
-            eveningTasks.push(task);
+            newTasksBySection.Evening.push(task);
           } else if (task.timeOfDay === TimeOfDay.Night) {
-            nightTasks.push(task);
+            newTasksBySection.Night.push(task);
           } else {
-            tasksWithoutTime.push(task);
+            newTasksBySection['Any Time'].push(task);
           }
         });
-        setTasksMorning(morningTasks);
-        setTasksAfternoon(afternoonTasks);
-        setTasksEvening(eveningTasks);
-        setTasksNight(nightTasks);
-        setTasksWithoutTimeOfDay(tasksWithoutTime);
-        setTasksFailed(failedTasks);
+        setTasksBySection(newTasksBySection);
       },
     );
 
@@ -135,8 +138,106 @@ function Today() {
 
   const todayFormatted = formatDate(todayPageDisplayDate);
 
+  const orderedSections = [
+    { header: 'Morning', bg: SectionColors.morning },
+    { header: 'Afternoon', bg: SectionColors.afternoon },
+    { header: 'Evening', bg: SectionColors.evening },
+    { header: 'Night', bg: SectionColors.night },
+    { header: 'Any Time', bg: SectionColors.anytime },
+    { header: 'Failed', bg: SectionColors.failed },
+  ];
+
+  const onDragEnd = async (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+
+    if (!destination) return;
+
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
+      return;
+    }
+
+    const sourceList = tasksBySection[source.droppableId];
+    const destList = tasksBySection[destination.droppableId];
+    const movedTask = sourceList.find((t) => t.id === draggableId);
+
+    if (!movedTask) return;
+
+    const newTasksBySection = { ...tasksBySection };
+
+    const newSourceList = Array.from(sourceList);
+    newSourceList.splice(source.index, 1);
+    newTasksBySection[source.droppableId] = newSourceList;
+
+    const newDestList = Array.from(
+      source.droppableId === destination.droppableId ? newSourceList : destList,
+    );
+    newDestList.splice(destination.index, 0, movedTask);
+    newTasksBySection[destination.droppableId] = newDestList;
+
+    setTasksBySection(newTasksBySection);
+
+    const prevTask = newDestList[destination.index - 1];
+    const nextTask = newDestList[destination.index + 1];
+
+    const prevOrder = prevTask ? prevTask.sortOrder : 0;
+    const nextOrder = nextTask ? nextTask.sortOrder : prevOrder + 10000;
+
+    let newSortOrder: number;
+    let reindexUpdates: { id: string; sortOrder: number }[] | null = null;
+
+    if (nextOrder <= prevOrder + 0.00001) {
+      reindexUpdates = newDestList.map((t, index) => ({
+        id: t.id,
+        sortOrder: (index + 1) * 10000,
+      }));
+      newSortOrder = (destination.index + 1) * 10000;
+    } else {
+      newSortOrder = (prevOrder + nextOrder) / 2;
+    }
+
+    let newTimeOfDay: TimeOfDay | null | undefined;
+    let newCompletionStatus: TaskCompletionStatusEnum | undefined;
+
+    if (destination.droppableId === 'Failed') {
+      newCompletionStatus = TaskCompletionStatusEnum.FAILED;
+      newTimeOfDay = movedTask.timeOfDay as TimeOfDay;
+    } else {
+      if (source.droppableId === 'Failed') {
+        newCompletionStatus = TaskCompletionStatusEnum.INCOMPLETE;
+      }
+
+      if (destination.droppableId === 'Any Time') {
+        newTimeOfDay = null;
+      } else {
+        newTimeOfDay = destination.droppableId.toLowerCase() as TimeOfDay;
+      }
+    }
+
+    if (reindexUpdates) {
+      await window.electron.ipcRenderer.invoke(
+        ChannelsEnum.REQUEST_REINDEX_TASKS,
+        reindexUpdates,
+      );
+    }
+
+    await window.electron.ipcRenderer.invoke(
+      ChannelsEnum.REQUEST_REORDER_TASK,
+      {
+        taskId: draggableId,
+        newSortOrder,
+        newTimeOfDay,
+        newCompletionStatus,
+      },
+    );
+
+    refreshTodayPageForDate(todayPageDisplayDate.toDate());
+  };
+
   return (
-    <>
+    <DragDropContext onDragEnd={onDragEnd}>
       <PageHeader>Today</PageHeader>
       {countOfTaskOverdue > 0 && !newDayBannerVisible && (
         <Alert
@@ -185,29 +286,9 @@ function Today() {
         <Typography variant="h6" mt={2}>
           {todayFormatted}
         </Typography>
-        {[
-          tasksMorning,
-          tasksAfternoon,
-          tasksEvening,
-          tasksNight,
-          tasksWithoutTimeOfDay,
-          tasksFailed,
-        ].map((tasks) => {
+        {orderedSections.map(({ header, bg }) => {
+          const tasks = tasksBySection[header];
           if (tasks.length === 0) return null;
-
-          const { timeOfDay, completionStatus } = tasks[0];
-          let bg: string;
-          let header: string;
-          if (completionStatus === TaskCompletionStatusEnum.FAILED) {
-            bg = SectionColors.failed;
-            header = 'Failed';
-          } else if (timeOfDay) {
-            bg = SectionColors[timeOfDay];
-            header = timeOfDay;
-          } else {
-            bg = SectionColors.anytime;
-            header = 'Any Time';
-          }
 
           return (
             <Box
@@ -228,12 +309,12 @@ function Today() {
                 tasks={tasks}
                 refreshCallback={refreshTodayPageForDate}
                 isLightBG
+                droppableBlockName={header}
               />
             </Box>
           );
         })}
       </>
-
       {noTasksForToday && (
         <Box
           width="100%"
@@ -262,7 +343,7 @@ function Today() {
           <AddIcon sx={{ color: 'white' }} />
         </Fab>
       )}
-    </>
+    </DragDropContext>
   );
 }
 

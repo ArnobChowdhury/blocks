@@ -118,9 +118,7 @@ export class TaskRepository {
       include: {
         tags: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
   };
 
@@ -414,5 +412,42 @@ export class TaskRepository {
         timeOfDay,
       },
     });
+  };
+
+  updateTaskSortOrder = async (
+    taskId: string,
+    sortOrder: number,
+    timeOfDay: TimeOfDay | null,
+    completionStatus: TaskCompletionStatusEnum | undefined,
+    userId: string | null,
+    tx?: PrismaTransactionalClient,
+  ): Promise<Task> => {
+    const db = tx || prisma;
+    const data: any = {
+      sortOrder,
+      timeOfDay,
+    };
+    if (completionStatus !== undefined) {
+      data.completionStatus = completionStatus;
+    }
+    return db.task.update({
+      where: { id: taskId, userId },
+      data,
+    });
+  };
+
+  bulkUpdateTaskSortOrder = async (
+    updates: { id: string; sortOrder: number }[],
+    userId: string | null,
+    tx?: PrismaTransactionalClient,
+  ): Promise<void> => {
+    const db = tx || prisma;
+    const promises = updates.map((u) =>
+      db.task.update({
+        where: { id: u.id, userId },
+        data: { sortOrder: u.sortOrder },
+      }),
+    );
+    await Promise.all(promises);
   };
 }

@@ -101,7 +101,7 @@ function TodoListItem({
       onMouseLeave={handleMouseLeave}
       dense
       onClick={handleEditClick}
-      sx={{ cursor: 'pointer' }}
+      sx={{ cursor: 'pointer', px: 1 }}
     >
       <Box display="flex" justifyContent="space-between" width="100%">
         <Box display="flex" alignItems="center">
