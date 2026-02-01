@@ -1,6 +1,7 @@
 interface User {
   id: string;
   email: string;
+  isPremium: boolean;
 }
 
 let session: {

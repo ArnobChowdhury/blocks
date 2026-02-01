@@ -53,6 +53,7 @@ export class TaskService {
   _createTaskInternal = async (
     taskData: ITaskIPC,
     userId: string | null,
+    isPremium: boolean,
     tx: PrismaTransactionalClient,
   ): Promise<Task> => {
     const createdTask = await this.taskRepository.createTask(
@@ -61,11 +62,10 @@ export class TaskService {
       tx,
     );
 
-    const isPremium = !!userId;
-    if (isPremium) {
+    if (userId && isPremium) {
       await this.pendingOpRepository.enqueueOperation(
         {
-          userId: userId!,
+          userId,
           operationType: 'create',
           entityType: 'task',
           entityId: createdTask.id,
@@ -80,14 +80,13 @@ export class TaskService {
   createTask = async (
     taskData: ITaskIPC,
     userId: string | null,
+    isPremium: boolean,
   ): Promise<Task> => {
-    const isPremium = !!userId;
-
     const newTask = await prisma.$transaction(async (tx) => {
-      return this._createTaskInternal(taskData, userId, tx);
+      return this._createTaskInternal(taskData, userId, isPremium, tx);
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
 
@@ -97,13 +96,12 @@ export class TaskService {
   updateTask = async (
     taskData: ITaskIPC,
     userId: string | null,
+    isPremium: boolean,
   ): Promise<Task> => {
     const { id } = taskData;
     if (!id) {
       throw new Error('Task ID is required for an update operation.');
     }
-
-    const isPremium = !!userId;
 
     const updatedTask = await prisma.$transaction(async (tx) => {
       const task = await this.taskRepository.updateTask(
@@ -113,10 +111,10 @@ export class TaskService {
         tx,
       );
 
-      if (isPremium) {
+      if (userId && isPremium) {
         await this.pendingOpRepository.enqueueOperation(
           {
-            userId: userId!,
+            userId,
             operationType: 'update',
             entityType: 'task',
             entityId: task.id,
@@ -129,7 +127,7 @@ export class TaskService {
       return task;
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
 
@@ -156,9 +154,8 @@ export class TaskService {
     status: TaskCompletionStatusEnum,
     score: number | null | undefined,
     userId: string | null,
+    isPremium: boolean,
   ): Promise<Task> => {
-    const isPremium = !!userId;
-
     const updatedTask = await prisma.$transaction(async (tx) => {
       const task = await this.taskRepository.updateTaskCompletionStatus(
         id,
@@ -168,10 +165,10 @@ export class TaskService {
         tx,
       );
 
-      if (isPremium) {
+      if (userId && isPremium) {
         await this.pendingOpRepository.enqueueOperation(
           {
-            userId: userId!,
+            userId,
             operationType: 'update',
             entityType: 'task',
             entityId: task.id,
@@ -184,7 +181,7 @@ export class TaskService {
       return task;
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
 
@@ -194,15 +191,15 @@ export class TaskService {
   private _failTaskInternal = async (
     taskId: string,
     userId: string | null,
+    isPremium: boolean,
     tx: PrismaTransactionalClient,
   ): Promise<Task> => {
     const task = await this.taskRepository.failTask(taskId, userId, tx);
 
-    const isPremium = !!userId;
-    if (isPremium) {
+    if (userId && isPremium) {
       await this.pendingOpRepository.enqueueOperation(
         {
-          userId: userId!,
+          userId,
           operationType: 'update',
           entityType: 'task',
           entityId: task.id,
@@ -215,14 +212,16 @@ export class TaskService {
     return task;
   };
 
-  failTask = async (taskId: string, userId: string | null): Promise<Task> => {
-    const isPremium = !!userId;
-
+  failTask = async (
+    taskId: string,
+    userId: string | null,
+    isPremium: boolean,
+  ): Promise<Task> => {
     const failedTask = await prisma.$transaction(async (tx) => {
-      return this._failTaskInternal(taskId, userId, tx);
+      return this._failTaskInternal(taskId, userId, isPremium, tx);
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
 
@@ -245,6 +244,7 @@ export class TaskService {
     taskId: string,
     dueDate: string,
     userId: string | null,
+    isPremium: boolean,
   ): Promise<Task> => {
     const task = await this.taskRepository.getTaskById(taskId, userId);
 
@@ -283,8 +283,6 @@ export class TaskService {
       newSchedule = TaskScheduleTypeEnum.Once;
     }
 
-    const isPremium = !!userId;
-
     const rescheduledTask = await prisma.$transaction(async (tx) => {
       const task = await this.taskRepository.rescheduleTask(
         taskId,
@@ -294,10 +292,10 @@ export class TaskService {
         tx,
       );
 
-      if (isPremium) {
+      if (userId && isPremium) {
         await this.pendingOpRepository.enqueueOperation(
           {
-            userId: userId!,
+            userId,
             operationType: 'update',
             entityType: 'task',
             entityId: task.id,
@@ -309,7 +307,7 @@ export class TaskService {
       return task;
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
 
@@ -319,17 +317,16 @@ export class TaskService {
   bulkFailTasks = async (
     taskIds: string[],
     userId: string | null,
+    isPremium: boolean,
   ): Promise<{ count: number }> => {
     if (!taskIds || taskIds.length === 0) {
       return { count: 0 };
     }
 
-    const isPremium = !!userId;
-
-    if (isPremium) {
+    if (userId && isPremium) {
       const failedTasks = await prisma.$transaction(async (tx) => {
         const promises = taskIds.map((id) =>
-          this._failTaskInternal(id, userId, tx),
+          this._failTaskInternal(id, userId, isPremium, tx),
         );
         return Promise.all(promises);
       });
@@ -374,9 +371,8 @@ export class TaskService {
     newTimeOfDay: TimeOfDay | null,
     newCompletionStatus: TaskCompletionStatusEnum | undefined,
     userId: string | null,
+    isPremium: boolean,
   ): Promise<void> => {
-    const isPremium = !!userId;
-
     await prisma.$transaction(async (tx) => {
       const currentTask = await this.taskRepository.getTaskById(taskId, userId);
       if (!currentTask) throw new Error('Task not found');
@@ -390,10 +386,10 @@ export class TaskService {
         tx,
       );
 
-      if (isPremium) {
+      if (userId && isPremium) {
         await this.pendingOpRepository.enqueueOperation(
           {
-            userId: userId!,
+            userId,
             operationType: 'update',
             entityType: 'task',
             entityId: updatedTask.id,
@@ -424,10 +420,10 @@ export class TaskService {
                 tx,
               );
 
-            if (isPremium) {
+            if (userId && isPremium) {
               await this.pendingOpRepository.enqueueOperation(
                 {
-                  userId: userId!,
+                  userId,
                   operationType: 'update',
                   entityType: 'repetitive_task_template',
                   entityId: updatedTemplate.id,
@@ -446,7 +442,7 @@ export class TaskService {
       }
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
   };
@@ -454,9 +450,8 @@ export class TaskService {
   reindexTasks = async (
     updates: { id: string; sortOrder: number }[],
     userId: string | null,
+    isPremium: boolean,
   ): Promise<void> => {
-    const isPremium = !!userId;
-
     await prisma.$transaction(async (tx) => {
       await this.taskRepository.bulkUpdateTaskSortOrder(updates, userId, tx);
 
@@ -464,11 +459,11 @@ export class TaskService {
         const task = await this.taskRepository.getTaskById(update.id, userId);
         if (!task) continue;
 
-        if (isPremium) {
+        if (userId && isPremium) {
           const payloadTask = { ...task, sortOrder: update.sortOrder };
           await this.pendingOpRepository.enqueueOperation(
             {
-              userId: userId!,
+              userId,
               operationType: 'update',
               entityType: 'task',
               entityId: task.id,
@@ -495,10 +490,10 @@ export class TaskService {
                   tx,
                 );
 
-              if (isPremium) {
+              if (userId && isPremium) {
                 await this.pendingOpRepository.enqueueOperation(
                   {
-                    userId: userId!,
+                    userId,
                     operationType: 'update',
                     entityType: 'repetitive_task_template',
                     entityId: updatedTemplate.id,
@@ -518,7 +513,7 @@ export class TaskService {
       }
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
   };

@@ -60,9 +60,8 @@ export class RepetitiveTaskTemplateService {
   createRepetitiveTaskTemplate = async (
     taskData: ITaskIPC,
     userId: string | null,
+    isPremium: boolean,
   ): Promise<RepetitiveTaskTemplate> => {
-    const isPremium = !!userId;
-
     const newTemplate = await prisma.$transaction(async (tx) => {
       const createdTemplate =
         await this.repetitiveTaskTemplateRepository.createRepetitiveTaskTemplate(
@@ -71,10 +70,10 @@ export class RepetitiveTaskTemplateService {
           tx,
         );
 
-      if (isPremium) {
+      if (userId && isPremium) {
         await this.pendingOpRepository.enqueueOperation(
           {
-            userId: userId!,
+            userId: userId,
             operationType: 'create',
             entityType: 'repetitive_task_template',
             entityId: createdTemplate.id,
@@ -86,7 +85,7 @@ export class RepetitiveTaskTemplateService {
       return createdTemplate;
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
 
@@ -96,6 +95,7 @@ export class RepetitiveTaskTemplateService {
   updateRepetitiveTaskTemplate = async (
     taskData: ITaskIPC,
     userId: string | null,
+    isPremium: boolean,
   ): Promise<RepetitiveTaskTemplate> => {
     const { id } = taskData;
     if (!id) {
@@ -103,8 +103,6 @@ export class RepetitiveTaskTemplateService {
         'Repetitive Task Template ID is required for an update operation.',
       );
     }
-
-    const isPremium = !!userId;
 
     const updatedTemplate = await prisma.$transaction(async (tx) => {
       const template =
@@ -115,7 +113,7 @@ export class RepetitiveTaskTemplateService {
           tx,
         );
 
-      if (isPremium) {
+      if (userId && isPremium) {
         await this.pendingOpRepository.enqueueOperation(
           {
             userId: userId!,
@@ -130,7 +128,7 @@ export class RepetitiveTaskTemplateService {
       return template;
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
 
@@ -184,9 +182,8 @@ export class RepetitiveTaskTemplateService {
   stopRepetitiveTaskTemplate = async (
     templateId: string,
     userId: string | null,
+    isPremium: boolean,
   ): Promise<RepetitiveTaskTemplate> => {
-    const isPremium = !!userId;
-
     const stoppedTemplate = await prisma.$transaction(async (tx) => {
       const template =
         await this.repetitiveTaskTemplateRepository.stopRepetitiveTaskTemplate(
@@ -195,10 +192,10 @@ export class RepetitiveTaskTemplateService {
           tx,
         );
 
-      if (isPremium) {
+      if (userId && isPremium) {
         await this.pendingOpRepository.enqueueOperation(
           {
-            userId: userId!,
+            userId,
             operationType: 'update',
             entityType: 'repetitive_task_template',
             entityId: template.id,
@@ -210,7 +207,7 @@ export class RepetitiveTaskTemplateService {
       return template;
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
 
@@ -241,6 +238,7 @@ export class RepetitiveTaskTemplateService {
     templateId: string,
     lastDate: Date,
     userId: string | null,
+    isPremium: boolean,
     tx: PrismaTransactionalClient,
   ): Promise<RepetitiveTaskTemplate> => {
     const updatedTemplate =
@@ -250,8 +248,7 @@ export class RepetitiveTaskTemplateService {
         tx,
       );
 
-    const isPremium = !!userId;
-    if (isPremium) {
+    if (userId && isPremium) {
       if (!updatedTemplate) {
         throw new Error(
           `[RepetitiveTaskTemplateService] Cannot update last generation date for non-existent template with ID ${templateId}`,
@@ -260,7 +257,7 @@ export class RepetitiveTaskTemplateService {
 
       await this.pendingOpRepository.enqueueOperation(
         {
-          userId: userId!,
+          userId,
           operationType: 'lastGenDateUpdate',
           entityType: 'repetitive_task_template',
           entityId: templateId,
@@ -276,7 +273,10 @@ export class RepetitiveTaskTemplateService {
     return updatedTemplate;
   };
 
-  generateDueTasks = async (userId: string | null): Promise<void> => {
+  generateDueTasks = async (
+    userId: string | null,
+    isPremium: boolean,
+  ): Promise<void> => {
     const dueTemplates =
       await this.repetitiveTaskTemplateRepository.getDueRepetitiveTemplates(
         userId,
@@ -285,8 +285,6 @@ export class RepetitiveTaskTemplateService {
     if (dueTemplates.length === 0) {
       return;
     }
-
-    const isPremium = !!userId;
 
     let writeOperationOccurred = false;
 
@@ -343,7 +341,12 @@ export class RepetitiveTaskTemplateService {
             };
 
             taskCreationPromises.push(
-              this.taskService._createTaskInternal(newTaskData, userId, tx),
+              this.taskService._createTaskInternal(
+                newTaskData,
+                userId,
+                isPremium,
+                tx,
+              ),
             );
 
             latestDueDateForTemplate = targetDueDate.toDate();
@@ -358,6 +361,7 @@ export class RepetitiveTaskTemplateService {
             template.id,
             latestDueDateForTemplate,
             userId,
+            isPremium,
             tx,
           );
         }
@@ -376,7 +380,7 @@ export class RepetitiveTaskTemplateService {
       }
     });
 
-    if (isPremium && writeOperationOccurred) {
+    if (userId && isPremium && writeOperationOccurred) {
       syncService.runSync(userId);
     }
   };

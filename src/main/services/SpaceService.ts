@@ -36,9 +36,11 @@ export class SpaceService {
     return this.spaceRepository.getAllSpaces(userId);
   };
 
-  createSpace = async (name: string, userId: string | null): Promise<Space> => {
-    const isPremium = !!userId;
-
+  createSpace = async (
+    name: string,
+    userId: string | null,
+    isPremium: boolean,
+  ): Promise<Space> => {
     const newSpace = await prisma.$transaction(async (tx) => {
       const createdSpace = await this.spaceRepository.createSpace(
         name,
@@ -46,10 +48,10 @@ export class SpaceService {
         tx,
       );
 
-      if (isPremium) {
+      if (userId && isPremium) {
         await this.pendingOpRepository.enqueueOperation(
           {
-            userId: userId!,
+            userId,
             operationType: 'create',
             entityType: 'space',
             entityId: createdSpace.id,
@@ -61,7 +63,7 @@ export class SpaceService {
       return createdSpace;
     });
 
-    if (isPremium) {
+    if (userId && isPremium) {
       syncService.runSync(userId);
     }
 

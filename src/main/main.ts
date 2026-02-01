@@ -312,45 +312,56 @@ const withUser =
     handler: (
       event: E,
       userId: string | null,
+      isPremium: boolean,
       ...args: any[]
     ) => Promise<any> | any,
   ) =>
   (event: E, ...args: any[]) => {
     const session = getSession();
     const userId = session.user ? session.user.id : null;
-    return handler(event, userId, ...args);
+    const isPremium = session.user ? session.user.isPremium : false;
+
+    return handler(event, userId, isPremium, ...args);
   };
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_TASK,
-  withUser(async (event, userId: string | null, task: ITaskIPC) => {
-    const { schedule } = task;
+  withUser(
+    async (
+      event,
+      userId: string | null,
+      isPremium: boolean,
+      task: ITaskIPC,
+    ) => {
+      const { schedule } = task;
 
-    try {
-      if (
-        schedule === TaskScheduleTypeEnum.Once ||
-        schedule === TaskScheduleTypeEnum.Unscheduled
-      ) {
-        await taskService.createTask(task, userId);
-      } else {
-        await repetitiveTaskTemplateService.createRepetitiveTaskTemplate(
-          task,
-          userId,
-        );
+      try {
+        if (
+          schedule === TaskScheduleTypeEnum.Once ||
+          schedule === TaskScheduleTypeEnum.Unscheduled
+        ) {
+          await taskService.createTask(task, userId, isPremium);
+        } else {
+          await repetitiveTaskTemplateService.createRepetitiveTaskTemplate(
+            task,
+            userId,
+            isPremium,
+          );
+        }
+        event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
+      } catch (err) {
+        log.error(err);
+        throw err;
       }
-      event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
-    } catch (err) {
-      log.error(err);
-      throw err;
-    }
-  }),
+    },
+  ),
 );
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_TASK,
-  withUser(async (event, userId, task: ITaskIPC) => {
+  withUser(async (event, userId, isPremium: boolean, task: ITaskIPC) => {
     try {
-      await taskService.updateTask(task, userId);
+      await taskService.updateTask(task, userId, isPremium);
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
     } catch (err) {
       log.error(err);
@@ -361,11 +372,12 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_UPDATE_REPETITIVE_TASK,
-  withUser(async (event, userId, task: ITaskIPC) => {
+  withUser(async (event, userId, isPremium, task: ITaskIPC) => {
     try {
       await repetitiveTaskTemplateService.updateRepetitiveTaskTemplate(
         task,
         userId,
+        isPremium,
       );
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
     } catch (err) {
@@ -380,9 +392,9 @@ ipcMain.handle(
  */
 ipcMain.on(
   ChannelsEnum.REQUEST_TASKS_FOR_DATE,
-  withUser(async (event, userId, date) => {
+  withUser(async (event, userId, isPremium, date) => {
     try {
-      await repetitiveTaskTemplateService.generateDueTasks(userId);
+      await repetitiveTaskTemplateService.generateDueTasks(userId, isPremium);
       const tasksForToday = await taskService.getTasksForDate(userId, date);
       event.reply(ChannelsEnum.RESPONSE_TASKS_FOR_DATE, tasksForToday);
     } catch (err: any) {
@@ -398,7 +410,7 @@ ipcMain.on(
  */
 ipcMain.on(
   ChannelsEnum.REQUEST_TASKS_OVERDUE,
-  withUser(async (event, userId) => {
+  withUser(async (event, userId, _isPremium) => {
     const tasksOverdue = await taskService.getOverdueTasks(userId);
     event.reply(ChannelsEnum.RESPONSE_TASKS_OVERDUE, tasksOverdue);
   }),
@@ -408,8 +420,9 @@ ipcMain.handle(
   ChannelsEnum.REQUEST_REORDER_TASK,
   withUser(
     async (
-      event,
+      _event,
       userId,
+      isPremium,
       { taskId, newSortOrder, newTimeOfDay, newCompletionStatus },
     ) => {
       try {
@@ -419,6 +432,7 @@ ipcMain.handle(
           newTimeOfDay,
           newCompletionStatus,
           userId,
+          isPremium,
         );
       } catch (err) {
         log.error(err);
@@ -430,9 +444,9 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_REINDEX_TASKS,
-  withUser(async (event, userId, updates) => {
+  withUser(async (_event, userId, isPremium, updates) => {
     try {
-      await taskService.reindexTasks(updates, userId);
+      await taskService.reindexTasks(updates, userId, isPremium);
     } catch (err) {
       log.error(err);
       throw err;
@@ -445,7 +459,7 @@ ipcMain.handle(
  */
 ipcMain.on(
   ChannelsEnum.REQUEST_COUNT_OF_TASKS_OVERDUE,
-  withUser(async (event, userId) => {
+  withUser(async (event, userId, _isPremium) => {
     const count = await taskService.getCountOfTasksOverdue(userId);
     event.reply(ChannelsEnum.RESPONSE_COUNT_OF_TASKS_OVERDUE, count);
   }),
@@ -453,10 +467,16 @@ ipcMain.on(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TOGGLE_TASK_COMPLETION_STATUS,
-  withUser(async (_event, userId, { id, status, score }) => {
+  withUser(async (_event, userId, isPremium, { id, status, score }) => {
     // todo: need to make the one-off task in active
     try {
-      await taskService.toggleTaskCompletionStatus(id, status, score, userId);
+      await taskService.toggleTaskCompletionStatus(
+        id,
+        status,
+        score,
+        userId,
+        isPremium,
+      );
     } catch (err) {
       log.error(err);
       throw err;
@@ -466,9 +486,9 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_FAILURE,
-  withUser(async (_event, userId, { id }) => {
+  withUser(async (_event, userId, isPremium, { id }) => {
     try {
-      await taskService.failTask(id, userId);
+      await taskService.failTask(id, userId, isPremium);
     } catch (err) {
       log.error(err);
       throw err;
@@ -478,7 +498,7 @@ ipcMain.handle(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_ALL_ONE_OFF_ACTIVE_TASKS,
-  withUser(async (event, userId) => {
+  withUser(async (event, userId, _isPremium) => {
     try {
       const tasks = await taskService.getAllActiveOnceTasks(userId);
       event.reply(ChannelsEnum.RESPONSE_ALL_ONE_OFF_ACTIVE_TASKS, tasks);
@@ -490,7 +510,7 @@ ipcMain.on(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_ALL_UNSCHEDULED_ACTIVE_TASKS,
-  withUser(async (event, userId) => {
+  withUser(async (event, userId, _isPremium) => {
     try {
       const tasks = await taskService.getAllActiveUnscheduledTasks(userId);
       event.reply(ChannelsEnum.RESPONSE_ALL_UNSCHEDULED_ACTIVE_TASKS, tasks);
@@ -502,7 +522,7 @@ ipcMain.on(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_ALL_DAILY_ACTIVE_TASKS,
-  withUser(async (event, userId) => {
+  withUser(async (event, userId, _isPremium) => {
     try {
       const tasks =
         await repetitiveTaskTemplateService.getAllActiveDailyTemplates(userId);
@@ -516,7 +536,7 @@ ipcMain.on(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_ALL_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TASKS,
-  withUser(async (event, userId) => {
+  withUser(async (event, userId, _isPremium) => {
     try {
       const tasks =
         await repetitiveTaskTemplateService.getAllActiveSpecificDaysInAWeekTemplates(
@@ -534,9 +554,9 @@ ipcMain.on(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_RESCHEDULE,
-  withUser(async (_event, userId, { id, dueDate }) => {
+  withUser(async (_event, userId, isPremium, { id, dueDate }) => {
     try {
-      await taskService.rescheduleTask(id, dueDate, userId);
+      await taskService.rescheduleTask(id, dueDate, userId, isPremium);
     } catch (err: any) {
       log.error(err.message);
       throw err;
@@ -546,7 +566,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT,
-  withUser(async (_event, userId) => {
+  withUser(async (_event, userId, _isPremium) => {
     try {
       return await repetitiveTaskTemplateService.getDailyTasksMonthlyReport(
         userId,
@@ -560,7 +580,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_TASKS_MONTHLY_REPORT,
-  withUser(async (_event, userId) => {
+  withUser(async (_event, userId, _isPremium) => {
     try {
       return await repetitiveTaskTemplateService.getSpecificDaysInAWeekTasksMonthlyReport(
         userId,
@@ -575,9 +595,9 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_BULK_TASK_FAILURE,
-  withUser(async (_event, userId, tasks: string[]) => {
+  withUser(async (_event, userId, isPremium, tasks: string[]) => {
     try {
-      return await taskService.bulkFailTasks(tasks, userId);
+      return await taskService.bulkFailTasks(tasks, userId, isPremium);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
@@ -587,7 +607,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_TASK_DETAILS,
-  withUser(async (_event, userId, taskId: string) => {
+  withUser(async (_event, userId, _isPremium, taskId: string) => {
     try {
       return await taskService.getTaskDetails(taskId, userId);
     } catch (err: any) {
@@ -599,7 +619,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_REPETITIVE_TASK_DETAILS,
-  withUser(async (_event, userId, templateId: string) => {
+  withUser(async (_event, userId, _isPremium, templateId: string) => {
     try {
       return await repetitiveTaskTemplateService.getRepetitiveTaskTemplateDetails(
         templateId,
@@ -614,11 +634,12 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_STOP_REPETITIVE_TASK,
-  withUser(async (event, userId, templateId: string) => {
+  withUser(async (event, userId, isPremium, templateId: string) => {
     try {
       await repetitiveTaskTemplateService.stopRepetitiveTaskTemplate(
         templateId,
         userId,
+        isPremium,
       );
 
       event.sender.send(ChannelsEnum.RESPONSE_CREATE_OR_UPDATE_TASK);
@@ -658,9 +679,9 @@ ipcMain.handle(ChannelsEnum.REQUEST_ALL_TAGS, async () => {
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_CREATE_SPACE,
-  withUser(async (_event, userId, spaceName: string) => {
+  withUser(async (_event, userId, isPremium, spaceName: string) => {
     try {
-      return await spaceService.createSpace(spaceName, userId);
+      return await spaceService.createSpace(spaceName, userId, isPremium);
     } catch (err: any) {
       log.error(err?.message);
       throw err;
@@ -670,7 +691,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_ALL_SPACES,
-  withUser(async (_event, userId) => {
+  withUser(async (_event, userId, _isPremium) => {
     try {
       return await spaceService.getAllSpaces(userId);
     } catch (err: any) {
@@ -682,7 +703,7 @@ ipcMain.handle(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_UNSCHEDULED_ACTIVE_TASKS_FOR_SPACE,
-  withUser(async (event, userId, spaceId: string) => {
+  withUser(async (event, userId, _isPremium, spaceId: string) => {
     try {
       const tasks = await taskService.getActiveUnscheduledTasksWithSpaceId(
         spaceId,
@@ -701,7 +722,7 @@ ipcMain.on(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_ONE_OFF_ACTIVE_TASKS_FOR_SPACE,
-  withUser(async (event, userId, spaceId: string) => {
+  withUser(async (event, userId, _isPremium, spaceId: string) => {
     try {
       const tasks = await taskService.getActiveOnceTasksWithSpaceId(
         spaceId,
@@ -717,7 +738,7 @@ ipcMain.on(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_DAILY_ACTIVE_TEMPLATES_FOR_SPACE,
-  withUser(async (event, userId, spaceId: string) => {
+  withUser(async (event, userId, _isPremium, spaceId: string) => {
     try {
       const templates =
         await repetitiveTaskTemplateService.getActiveDailyTemplatesWithSpaceId(
@@ -737,7 +758,7 @@ ipcMain.on(
 
 ipcMain.on(
   ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_ACTIVE_TEMPLATES_FOR_SPACE,
-  withUser(async (event, userId, spaceId: string) => {
+  withUser(async (event, userId, _isPremium, spaceId: string) => {
     try {
       const templates =
         await repetitiveTaskTemplateService.getActiveSpecificDaysInAWeekTemplatesWithSpaceId(
@@ -790,7 +811,7 @@ async function handleSuccessfulSignIn(
     refreshToken,
   );
 
-  const user = { email, id: user_id, isPremium: is_premium };
+  const user = { email, id: user_id, isPremium: is_premium ?? false };
   setSession(accessToken, user);
   setInMemoryToken(accessToken);
 
@@ -934,7 +955,7 @@ ipcMain.handle(ChannelsEnum.REQUEST_INITIAL_AUTH_STATUS, async () => {
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_SYNC_START,
-  withUser(async (_event, userId) => {
+  withUser(async (_event, userId, _isPremium) => {
     if (!userId) {
       throw new Error('User not authenticated');
     }
@@ -944,7 +965,7 @@ ipcMain.handle(
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_LAST_SYNC,
-  withUser(async (_event, userId) => {
+  withUser(async (_event, userId, _isPremium) => {
     if (!userId) {
       throw new Error('User not authenticated');
     }
@@ -972,7 +993,7 @@ ipcMain.handle(ChannelsEnum.REQUEST_CHECK_ANONYMOUS_DATA_EXISTS, async () => {
 
 ipcMain.handle(
   ChannelsEnum.REQUEST_ASSIGN_ANONYMOUS_DATA,
-  withUser(async (_event, userId) => {
+  withUser(async (_event, userId, _isPremium) => {
     if (!userId) {
       throw new Error('User not authenticated');
     }
