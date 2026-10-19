@@ -338,6 +338,7 @@ export class RepetitiveTaskTemplateService {
               repetitiveTaskTemplateId: template.id,
               shouldBeScored: template.shouldBeScored,
               spaceId: template.spaceId,
+              sortOrder: template.sortOrder,
             };
 
             taskCreationPromises.push(

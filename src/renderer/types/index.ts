@@ -67,6 +67,7 @@ export interface ITaskIPC {
   days?: DaysInAWeek[]; // only if the schedule is SpecificDaysInAWeek
   dueDate?: string | Date; // only if the schedule is Once
   shouldBeScored?: boolean; // only if the schedule is Daily or SpecificDaysInAWeek
+  sortOrder?: number;
   timeOfDay?: TimeOfDay | null;
   completionStatus?: TaskCompletionStatusEnum;
   tagIds?: { id: number }[];
