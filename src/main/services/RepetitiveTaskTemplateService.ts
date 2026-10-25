@@ -40,6 +40,8 @@ type PrismaTransactionalClient = Omit<
   '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
 >;
 
+const CUT_OFF_DAYS_FOR_REPETITIVE_TASK_GENERATION = 14;
+
 export class RepetitiveTaskTemplateService {
   private repetitiveTaskTemplateRepository: RepetitiveTaskTemplateRepository;
 
@@ -300,6 +302,21 @@ export class RepetitiveTaskTemplateService {
           } else {
             lastGenDate = template.createdAt;
           }
+        }
+
+        if (
+          dayjs(lastGenDate)
+            .startOf('day')
+            .isBefore(
+              todayStart.subtract(
+                CUT_OFF_DAYS_FOR_REPETITIVE_TASK_GENERATION,
+                'day',
+              ),
+            )
+        ) {
+          lastGenDate = todayStart
+            .subtract(CUT_OFF_DAYS_FOR_REPETITIVE_TASK_GENERATION, 'day')
+            .toDate();
         }
 
         const daysToGenerate = todayStart.diff(
