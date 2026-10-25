@@ -180,6 +180,10 @@ const AddTask = forwardRef<HTMLDivElement, IAddTaskProps>((props, ref) => {
     }
   };
 
+  const isRecurringTemplate =
+    selectedScheduleType === TaskScheduleTypeEnum.Daily ||
+    selectedScheduleType === TaskScheduleTypeEnum.SpecificDaysInAWeek;
+
   return (
     <Paper
       ref={ref}
@@ -365,7 +369,7 @@ const AddTask = forwardRef<HTMLDivElement, IAddTaskProps>((props, ref) => {
           onClick={handleAddTask}
           disabled={isAddButtonDisabled}
         >
-          Add
+          {`Add ${isRecurringTemplate ? 'Recurring Task Template' : 'Task'}`}
         </Button>
       </Box>
     </Paper>
