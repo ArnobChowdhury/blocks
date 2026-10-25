@@ -38,6 +38,8 @@ import {
   Collapse,
 } from '@mui/material';
 import { styled } from '@mui/system';
+import EditIcon from '@mui/icons-material/Edit';
+import RepeatIcon from '@mui/icons-material/Repeat';
 import Grid3x3Icon from '@mui/icons-material/Grid3x3';
 import HistoryIcon from '@mui/icons-material/History';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
@@ -128,6 +130,8 @@ function Navigation() {
     setUser,
     showAnonDataMigrationModal,
     setShowAnonDataMigrationModal,
+    repetitiveTaskToBeEdited,
+    setRepetitiveTaskToBeEdited,
   } = useApp();
 
   const navigate = useNavigate();
@@ -420,6 +424,70 @@ function Navigation() {
           <Button onClick={handleDismissMigration}>No, thanks</Button>
           <Button onClick={handleConfirmMigration} autoFocus>
             Import
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={Boolean(repetitiveTaskToBeEdited)}
+        onClose={() => setRepetitiveTaskToBeEdited(null)}
+      >
+        <DialogTitle>Edit Recurring Item</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            This item is generated from a template. What would you like to edit?
+          </DialogContentText>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Button
+              variant="outlined"
+              onClick={() => setTaskIdForEdit(repetitiveTaskToBeEdited?.id)}
+              sx={{
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+                p: 2,
+                textTransform: 'none',
+              }}
+              startIcon={<EditIcon />}
+            >
+              <Box>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  This task only
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Modify today&apos;s entry only
+                </Typography>
+              </Box>
+            </Button>
+
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setRepetitiveTaskTemplateIdForEdit(
+                  repetitiveTaskToBeEdited?.repetitiveTaskTemplateId!,
+                );
+              }}
+              sx={{
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+                p: 2,
+                textTransform: 'none',
+              }}
+              startIcon={<RepeatIcon />}
+            >
+              <Box>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Recurring Template
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Update the recurring template and all upcoming tasks
+                </Typography>
+              </Box>
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRepetitiveTaskToBeEdited(null)}>
+            Cancel
           </Button>
         </DialogActions>
       </Dialog>

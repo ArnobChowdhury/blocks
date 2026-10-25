@@ -14,6 +14,7 @@ import {
   TaskWithTagsAndSpace,
   RepetitiveTaskWithTagsAndSpace,
   Space,
+  TaskWithTags,
 } from '../types';
 
 interface User {
@@ -35,6 +36,9 @@ const AppContextFn = (initialUser: User | null) => {
   const [addTaskToday, setAddTaskToday] = useState(false);
   const [taskIdForEdit, setTaskIdForEdit] = useState<string>();
   const [taskForEdit, setTaskForEdit] = useState<TaskWithTagsAndSpace>();
+
+  const [repetitiveTaskToBeEdited, setRepetitiveTaskToBeEdited] =
+    useState<TaskWithTags | null>(null);
 
   const [repetitiveTaskTemplateIdForEdit, setRepetitiveTaskTemplateIdForEdit] =
     useState<string>();
@@ -321,6 +325,8 @@ const AppContextFn = (initialUser: User | null) => {
     showAnonDataMigrationModal,
     setShouldCheckAnonDataExistence,
     setShowAnonDataMigrationModal,
+    repetitiveTaskToBeEdited,
+    setRepetitiveTaskToBeEdited,
   };
 };
 

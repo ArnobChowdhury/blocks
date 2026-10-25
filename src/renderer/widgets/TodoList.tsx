@@ -41,7 +41,7 @@ function TodoList({
 }: TodoListProps) {
   const [taskForScoring, setTaskForScoring] = useState<TaskWithTags>();
   const [score, setScore] = useState<number | null>(null);
-  const { setTaskIdForEdit } = useApp();
+  const { setTaskIdForEdit, setRepetitiveTaskToBeEdited } = useApp();
 
   const { onToggleTaskCompletionStatus } =
     useToggleTaskCompletionStatus(refreshCallback);
@@ -78,9 +78,11 @@ function TodoList({
     setScore(null);
   };
 
-  const handleTaskEdit = (taskId: string) => {
-    if (taskId) {
-      setTaskIdForEdit(taskId);
+  const handleTaskEdit = (task: TaskWithTags) => {
+    if (task.repetitiveTaskTemplateId) {
+      setRepetitiveTaskToBeEdited(task);
+    } else {
+      setTaskIdForEdit(task.id);
     }
   };
 
@@ -116,7 +118,7 @@ function TodoList({
       onReschedule={(rescheduledTime) =>
         onTaskReschedule(task.id, rescheduledTime)
       }
-      onTaskEdit={() => handleTaskEdit(task.id)}
+      onTaskEdit={() => handleTaskEdit(task)}
       datePickerEndDate={datePickerEndDate}
       setDatePickerEndDate={() => handleDatePickerEndDate(task)}
       resetDatePickerEndDate={resetDatePickerEndDate}
