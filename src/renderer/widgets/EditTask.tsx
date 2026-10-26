@@ -19,7 +19,6 @@ import {
   styled,
   useTheme,
 } from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import {
@@ -52,14 +51,10 @@ const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
 interface IEditTaskProps {
   widgetCloseFunc: () => void;
   task: TaskWithTagsAndSpace | RepetitiveTaskWithTagsAndSpace;
-  openRepetitiveTaskTemplate?: (repetitiveTaskTemplateId: string) => void;
+  // openRepetitiveTaskTemplate?: (repetitiveTaskTemplateId: string) => void;
 }
 
-function EditTask({
-  widgetCloseFunc,
-  task,
-  openRepetitiveTaskTemplate,
-}: IEditTaskProps) {
+function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
   const isRepetitiveTaskTemplate = !('repetitiveTaskTemplateId' in task);
   const isRepetitiveTaskTemplateAndSpecificDaysInAWeek =
     isRepetitiveTaskTemplate &&
@@ -273,46 +268,6 @@ function EditTask({
   return (
     <>
       <Paper sx={{ padding: 2.5, minWidth: '600px' }} variant="outlined">
-        {isRepetitiveTaskButNotTemplate && (
-          <Box mb={2}>
-            <InfoOutlinedIcon
-              sx={{
-                color: 'text.secondary',
-                fontSize: 16,
-                marginRight: 0.5,
-                float: 'left',
-                mt: 0.75,
-              }}
-            />
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'info.main',
-                fontSize: 12,
-              }}
-            >
-              Editing this form will not affect the underlying template of this
-              repetitive task. Would you like to edit the template instead?
-            </Typography>
-            <Button
-              sx={{
-                minWidth: 0,
-                fontSize: 12,
-                minHeight: 0,
-                lineHeight: 1,
-                ml: 1,
-              }}
-              variant="outlined"
-              size="small"
-              onClick={() => {
-                if (task.repetitiveTaskTemplateId && openRepetitiveTaskTemplate)
-                  openRepetitiveTaskTemplate(task.repetitiveTaskTemplateId);
-              }}
-            >
-              Yes
-            </Button>
-          </Box>
-        )}
         <TextField
           placeholder="Task name"
           fullWidth
