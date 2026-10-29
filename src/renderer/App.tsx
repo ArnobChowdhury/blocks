@@ -429,7 +429,10 @@ function Navigation() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <Button
               variant="outlined"
-              onClick={() => setTaskIdForEdit(repetitiveTaskToBeEdited?.id)}
+              onClick={() => {
+                setTaskIdForEdit(repetitiveTaskToBeEdited?.id);
+                setRepetitiveTaskToBeEdited(null);
+              }}
               sx={{
                 justifyContent: 'flex-start',
                 textAlign: 'left',
@@ -454,6 +457,7 @@ function Navigation() {
                 setRepetitiveTaskTemplateIdForEdit(
                   repetitiveTaskToBeEdited?.repetitiveTaskTemplateId!,
                 );
+                setRepetitiveTaskToBeEdited(null);
               }}
               sx={{
                 justifyContent: 'flex-start',

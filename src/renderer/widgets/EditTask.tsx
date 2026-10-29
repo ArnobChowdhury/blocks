@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useEditor, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -41,7 +41,12 @@ import {
 import CustomChip from '../components/CustomChip';
 import { useApp } from '../context/AppProvider';
 import { useSpace } from '../hooks';
-import { getNextIterationDateForRepetitiveTask } from '../utils';
+import {
+  getNextIterationDateForRepetitiveTask,
+  areSameArrays,
+  cleanEmptyDescription,
+  areDatesEqual,
+} from '../utils';
 
 const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
   textTransform: 'capitalize',
@@ -51,7 +56,17 @@ const MenuItemStyled = styled(MenuItem)(({ theme }) => ({
 interface IEditTaskProps {
   widgetCloseFunc: () => void;
   task: TaskWithTagsAndSpace | RepetitiveTaskWithTagsAndSpace;
-  // openRepetitiveTaskTemplate?: (repetitiveTaskTemplateId: string) => void;
+}
+
+interface InitialTaskProps {
+  name: string;
+  description: string | null;
+  dueDate: Dayjs | null;
+  days: DaysInAWeek[];
+  timeOfDay: TimeOfDay | null;
+  shouldBeScored: boolean | null;
+  space: Space | null;
+  completionStatus: TaskCompletionStatusEnum | null;
 }
 
 function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
@@ -72,21 +87,25 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
   }
 
   const [taskTitle, setTaskTitle] = useState(task.title);
+  const [taskDescription, setTaskDescription] = useState(task.description);
   const [selectedDays, setSelectedDays] = useState<DaysInAWeek[]>(days);
+  const dueDateFromProps =
+    'dueDate' in task && task.dueDate ? dayjs(task.dueDate) : null;
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(
-    'dueDate' in task && task.dueDate ? dayjs(task.dueDate) : null,
+    dueDateFromProps,
   );
+  const timeOfDayFromProps = (task.timeOfDay as TimeOfDay) || null;
   const [selectedTimeOfDay, setSelectedTimeOfDay] = useState<TimeOfDay | null>(
-    (task.timeOfDay as TimeOfDay) || null,
+    timeOfDayFromProps,
   );
   const [dateAnchorEl, setDateAnchorEl] = useState<HTMLDivElement | null>(null);
   const [shouldBeScored, setShouldBeScored] = useState(task.shouldBeScored);
+  const completionStatusFromProps =
+    'completionStatus' in task
+      ? (task.completionStatus as TaskCompletionStatusEnum)
+      : null;
   const [completionStatus, setCompletionStatus] =
-    useState<TaskCompletionStatusEnum | null>(
-      'completionStatus' in task
-        ? (task.completionStatus as TaskCompletionStatusEnum)
-        : null,
-    );
+    useState<TaskCompletionStatusEnum | null>(completionStatusFromProps);
   const [datePickerEndDate, setDatePickerEndDate] = useState<Dayjs>();
 
   const [selectedSpace, setSelectedSpace] = useState<Space>(task.space);
@@ -96,8 +115,19 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
 
   const theme = useTheme();
 
+  const initialDataRef = useRef<InitialTaskProps>({
+    name: task.title,
+    description: task.description,
+    dueDate: dueDateFromProps,
+    days,
+    timeOfDay: timeOfDayFromProps,
+    shouldBeScored: task.shouldBeScored,
+    space: task.space,
+    completionStatus: completionStatusFromProps,
+  });
+
   // todo editor to be reused as a hook between AddTask and EditTask
-  const editor: Editor | null = useEditor({
+  const descriptionEditor: Editor | null = useEditor({
     extensions: [
       StarterKit.configure({
         bulletList: {
@@ -114,23 +144,50 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
       }),
     ],
     content: task.description || '',
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      setTaskDescription(cleanEmptyDescription(html));
+    },
   });
 
   const isSaveButtonDisabled = useMemo(() => {
     if (!taskTitle) return true;
 
-    if (task.schedule === TaskScheduleTypeEnum.Once) return !selectedDate;
+    if (task.schedule === TaskScheduleTypeEnum.Once && !selectedDate)
+      return true;
 
-    if (isRepetitiveTaskTemplateAndSpecificDaysInAWeek)
-      return !selectedDays.length;
+    if (
+      isRepetitiveTaskTemplateAndSpecificDaysInAWeek &&
+      selectedDays.length === 0
+    )
+      return true;
 
-    return false;
+    const base = initialDataRef.current;
+    if (!base) return true;
+
+    // sourcery skip: inline-immediately-returned-variable
+    const hasNotChanged =
+      base.name === taskTitle &&
+      (base.description || '') === (taskDescription || '') &&
+      areSameArrays(base.days, selectedDays) &&
+      areDatesEqual(base.dueDate, selectedDate) &&
+      base.shouldBeScored === shouldBeScored &&
+      base.space?.id === selectedSpace?.id &&
+      base.timeOfDay === selectedTimeOfDay &&
+      base.completionStatus === completionStatus;
+
+    return hasNotChanged;
   }, [
     taskTitle,
-    selectedDate,
     task.schedule,
-    selectedDays,
+    selectedDate,
     isRepetitiveTaskTemplateAndSpecificDaysInAWeek,
+    selectedDays,
+    taskDescription,
+    shouldBeScored,
+    selectedSpace?.id,
+    selectedTimeOfDay,
+    completionStatus,
   ]);
 
   /**
@@ -189,16 +246,11 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
       dueDate = selectedDate.toISOString();
     }
 
-    let stringifiedDescription;
-    if (editor) {
-      stringifiedDescription = editor.getHTML();
-    }
-
     // const selectedTagIds = selectedSpace.map((tag) => ({ id: tag.id }));
     const editedTask: Record<string, any> = {
       id: task.id,
       title: taskTitle,
-      description: stringifiedDescription,
+      description: taskDescription,
       shouldBeScored,
       timeOfDay: selectedTimeOfDay,
       schedule: task.schedule,
@@ -281,7 +333,7 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
             },
           }}
         />
-        <DescriptionEditor editor={editor} />
+        <DescriptionEditor editor={descriptionEditor} />
 
         <Box sx={{ mt: 2 }} display="flex">
           <SectionHeader sx={{ marginBottom: 0 }} mr={0.5}>
@@ -451,9 +503,5 @@ function EditTask({ widgetCloseFunc, task }: IEditTaskProps) {
     </>
   );
 }
-
-EditTask.defaultProps = {
-  openRepetitiveTaskTemplate: undefined,
-};
 
 export default EditTask;
