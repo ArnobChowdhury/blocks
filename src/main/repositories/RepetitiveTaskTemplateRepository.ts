@@ -166,6 +166,9 @@ export class RepetitiveTaskTemplateRepository {
           },
         },
       },
+      orderBy: {
+        title: 'asc',
+      },
       include: {
         tasks: {
           orderBy: {
@@ -200,6 +203,9 @@ export class RepetitiveTaskTemplateRepository {
             },
           },
         },
+      },
+      orderBy: {
+        title: 'asc',
       },
       include: {
         tasks: {
