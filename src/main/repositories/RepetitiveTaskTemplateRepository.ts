@@ -126,6 +126,9 @@ export class RepetitiveTaskTemplateRepository {
         isActive: true,
         schedule: TaskScheduleTypeEnum.Daily,
       },
+      orderBy: {
+        title: 'asc',
+      },
     });
   };
 
@@ -137,6 +140,9 @@ export class RepetitiveTaskTemplateRepository {
         userId,
         isActive: true,
         schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+      },
+      orderBy: {
+        title: 'asc',
       },
     });
   };
@@ -256,6 +262,9 @@ export class RepetitiveTaskTemplateRepository {
         isActive: true,
         schedule: TaskScheduleTypeEnum.Daily,
       },
+      orderBy: {
+        title: 'asc',
+      },
     });
   };
 
@@ -269,6 +278,9 @@ export class RepetitiveTaskTemplateRepository {
         userId,
         isActive: true,
         schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
+      },
+      orderBy: {
+        title: 'asc',
       },
     });
   };

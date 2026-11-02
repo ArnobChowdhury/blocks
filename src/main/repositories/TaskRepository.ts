@@ -223,6 +223,9 @@ export class TaskRepository {
         schedule: TaskScheduleTypeEnum.Once,
         completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
       },
+      orderBy: {
+        dueDate: 'asc',
+      },
       include: {
         tags: true,
       },
@@ -238,6 +241,9 @@ export class TaskRepository {
         isActive: true,
         schedule: TaskScheduleTypeEnum.Unscheduled,
         completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
+      },
+      orderBy: {
+        createdAt: 'asc',
       },
       include: {
         tags: true,
@@ -329,6 +335,9 @@ export class TaskRepository {
         completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
         schedule: TaskScheduleTypeEnum.Unscheduled,
       },
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
   };
 
@@ -343,6 +352,9 @@ export class TaskRepository {
         isActive: true,
         completionStatus: TaskCompletionStatusEnum.INCOMPLETE,
         schedule: TaskScheduleTypeEnum.Once,
+      },
+      orderBy: {
+        dueDate: 'asc',
       },
     });
   };
