@@ -140,7 +140,7 @@ export class RepetitiveTaskTemplateService {
   getAllActiveDailyTemplates = async (
     userId: string | null,
   ): Promise<RepetitiveTaskTemplate[]> => {
-    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    // await this.taskRepository.deactivateCompletedOnceTasks(userId);
     return this.repetitiveTaskTemplateRepository.getAllActiveDailyTemplates(
       userId,
     );
@@ -149,7 +149,7 @@ export class RepetitiveTaskTemplateService {
   getAllActiveSpecificDaysInAWeekTemplates = async (
     userId: string | null,
   ): Promise<RepetitiveTaskTemplate[]> => {
-    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    // await this.taskRepository.deactivateCompletedOnceTasks(userId);
     return this.repetitiveTaskTemplateRepository.getAllActiveSpecificDaysInAWeekTemplates(
       userId,
     );

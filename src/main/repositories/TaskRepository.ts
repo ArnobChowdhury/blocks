@@ -191,29 +191,29 @@ export class TaskRepository {
     });
   };
 
-  deactivateCompletedOnceTasks = async (
-    userId: string | null,
-    tx?: PrismaTransactionalClient,
-  ): Promise<void> => {
-    const todayStart = getTodayStart();
+  // deactivateCompletedOnceTasks = async (
+  //   userId: string | null,
+  //   tx?: PrismaTransactionalClient,
+  // ): Promise<void> => {
+  //   const todayStart = getTodayStart();
 
-    const db = tx || prisma;
+  //   const db = tx || prisma;
 
-    await db.task.updateMany({
-      where: {
-        userId,
-        isActive: true,
-        schedule: TaskScheduleTypeEnum.Once,
-        dueDate: {
-          lt: todayStart,
-        },
-        completionStatus: TaskCompletionStatusEnum.COMPLETE,
-      },
-      data: {
-        isActive: false,
-      },
-    });
-  };
+  //   await db.task.updateMany({
+  //     where: {
+  //       userId,
+  //       isActive: true,
+  //       schedule: TaskScheduleTypeEnum.Once,
+  //       dueDate: {
+  //         lt: todayStart,
+  //       },
+  //       completionStatus: TaskCompletionStatusEnum.COMPLETE,
+  //     },
+  //     data: {
+  //       isActive: false,
+  //     },
+  //   });
+  // };
 
   getAllActiveOnceTasks = async (userId: string | null): Promise<Task[]> => {
     return prisma.task.findMany({

@@ -229,14 +229,14 @@ export class TaskService {
   };
 
   getAllActiveOnceTasks = async (userId: string | null): Promise<Task[]> => {
-    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    // await this.taskRepository.deactivateCompletedOnceTasks(userId);
     return this.taskRepository.getAllActiveOnceTasks(userId);
   };
 
   getAllActiveUnscheduledTasks = async (
     userId: string | null,
   ): Promise<Task[]> => {
-    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    // await this.taskRepository.deactivateCompletedOnceTasks(userId);
     return this.taskRepository.getAllActiveUnscheduledTasks(userId);
   };
 
@@ -350,7 +350,7 @@ export class TaskService {
     spaceId: string,
     userId: string | null,
   ): Promise<Task[]> => {
-    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    // await this.taskRepository.deactivateCompletedOnceTasks(userId);
     return this.taskRepository.getActiveUnscheduledTasksWithSpaceId(
       spaceId,
       userId,
@@ -361,7 +361,7 @@ export class TaskService {
     spaceId: string,
     userId: string | null,
   ): Promise<Task[]> => {
-    await this.taskRepository.deactivateCompletedOnceTasks(userId);
+    // await this.taskRepository.deactivateCompletedOnceTasks(userId);
     return this.taskRepository.getActiveOnceTasksWithSpaceId(spaceId, userId);
   };
 
