@@ -5,6 +5,8 @@ import { Add as AddIcon } from '@mui/icons-material';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import dayjs from 'dayjs';
+import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import { TodoList } from '../widgets';
 import { PageHeader, SectionHeader } from '../components';
 import { refreshTodayPageForDate, formatDate } from '../utils';
@@ -18,11 +20,42 @@ import {
 } from '../types';
 import { ROUTE_OVERDUE, SectionColors } from '../constants';
 import NoTaskToday from '../images/NoTaskToday';
+import MorningIcon from '../icons/Morning';
+import AfternoonIcon from '../icons/Afternoon';
+import EveningIcon from '../icons/Evening';
+import NightIcon from '../icons/Night';
 
 type TasksBySection = {
   [key: string]: TaskWithTags[];
 };
 
+function FailedIcon() {
+  return (
+    <Box
+      width="32px"
+      height="32px"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+    >
+      <ThumbDownIcon fontSize="small" color="error" />
+    </Box>
+  );
+}
+
+function AnyTimeIcon() {
+  return (
+    <Box
+      width="32px"
+      height="32px"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+    >
+      <ScheduleIcon fontSize="small" />
+    </Box>
+  );
+}
 function Today() {
   const { themeMode } = useAppTheme();
   const isDarkMode = themeMode === 'dark';
@@ -139,12 +172,12 @@ function Today() {
   const todayFormatted = formatDate(todayPageDisplayDate);
 
   const orderedSections = [
-    { header: 'Morning', bg: SectionColors.morning },
-    { header: 'Afternoon', bg: SectionColors.afternoon },
-    { header: 'Evening', bg: SectionColors.evening },
-    { header: 'Night', bg: SectionColors.night },
-    { header: 'Any Time', bg: SectionColors.anytime },
-    { header: 'Failed', bg: SectionColors.failed },
+    { header: 'Morning', bg: SectionColors.morning, icon: MorningIcon },
+    { header: 'Afternoon', bg: SectionColors.afternoon, icon: AfternoonIcon },
+    { header: 'Evening', bg: SectionColors.evening, icon: EveningIcon },
+    { header: 'Night', bg: SectionColors.night, icon: NightIcon },
+    { header: 'Any Time', bg: SectionColors.anytime, icon: AnyTimeIcon },
+    { header: 'Failed', bg: SectionColors.failed, icon: FailedIcon },
   ];
 
   const onDragEnd = async (result: DropResult) => {
@@ -286,7 +319,7 @@ function Today() {
         <Typography variant="h6" mt={2}>
           {todayFormatted}
         </Typography>
-        {orderedSections.map(({ header, bg }) => {
+        {orderedSections.map(({ header, bg, icon: Icon }) => {
           const tasks = tasksBySection[header];
           if (tasks.length === 0) return null;
 
@@ -302,9 +335,16 @@ function Today() {
               }}
               key={bg}
             >
-              <SectionHeader sx={{ textTransform: 'capitalize' }}>
-                {header}
-              </SectionHeader>
+              <Box display="flex" alignItems="center">
+                <Box sx={{ mr: 1 }} display="flex">
+                  <Icon />
+                </Box>
+                <SectionHeader
+                  sx={{ textTransform: 'capitalize', marginBottom: 0 }}
+                >
+                  {header}
+                </SectionHeader>
+              </Box>
               <TodoList
                 tasks={tasks}
                 refreshCallback={refreshTodayPageForDate}
