@@ -517,4 +517,16 @@ export class TaskService {
       syncService.runSync(userId);
     }
   };
+
+  getActiveTasksByRepetitiveTaskTemplateId = async (
+    repetitiveTaskTemplateId: string,
+    days: number,
+    userId: string | null,
+  ): Promise<Task[]> => {
+    return this.taskRepository.getActiveTasksByRepetitiveTaskTemplateId(
+      repetitiveTaskTemplateId,
+      days,
+      userId,
+    );
+  };
 }

@@ -565,32 +565,45 @@ ipcMain.handle(
 );
 
 ipcMain.handle(
-  ChannelsEnum.REQUEST_DAILY_TASKS_MONTHLY_REPORT,
-  withUser(async (_event, userId, _isPremium) => {
-    try {
-      return await repetitiveTaskTemplateService.getDailyTasksMonthlyReport(
-        userId,
-      );
-    } catch (err: any) {
-      log.error(err?.message);
-      throw err;
-    }
-  }),
+  ChannelsEnum.REQUEST_TEMPLATES_WITH_RECENT_TASKS,
+  withUser(
+    async (
+      _event,
+      userId,
+      _isPremium,
+      schedule: TaskScheduleTypeEnum,
+      days: number,
+    ) => {
+      try {
+        return await repetitiveTaskTemplateService.findTemplatesWithRecentTasks(
+          userId,
+          schedule,
+          days,
+        );
+      } catch (err: any) {
+        log.error(err?.message);
+        throw err;
+      }
+    },
+  ),
 );
 
 ipcMain.handle(
-  ChannelsEnum.REQUEST_SPECIFIC_DAYS_IN_A_WEEK_TASKS_MONTHLY_REPORT,
-  withUser(async (_event, userId, _isPremium) => {
-    try {
-      return await repetitiveTaskTemplateService.getSpecificDaysInAWeekTasksMonthlyReport(
-        userId,
-      );
-    } catch (err: any) {
-      // we do something here
-      log.error(err?.message);
-      throw err;
-    }
-  }),
+  ChannelsEnum.REQUEST_ACTIVE_TASKS_BY_TEMPLATE_ID,
+  withUser(
+    async (_event, userId, _isPremium, templateId: string, days: number) => {
+      try {
+        return await taskService.getActiveTasksByRepetitiveTaskTemplateId(
+          templateId,
+          days,
+          userId,
+        );
+      } catch (err: any) {
+        log.error(err?.message);
+        throw err;
+      }
+    },
+  ),
 );
 
 ipcMain.handle(

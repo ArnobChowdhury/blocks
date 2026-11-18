@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, IconButton } from '@mui/material';
 import { styled } from '@mui/system';
-import { scoreColors } from '../../constants';
+import { scoreColorConfigs } from '../../constants';
 
 interface CircleProps {
   bgcolor: string;
@@ -27,6 +27,14 @@ interface ITaskScoringProps {
   onScoreSelection: (index: number) => void;
   selected: number | null;
 }
+
+export const scoreColors = [
+  scoreColorConfigs.score1,
+  scoreColorConfigs.score2,
+  scoreColorConfigs.score3,
+  scoreColorConfigs.score4,
+  scoreColorConfigs.score5,
+];
 
 function TaskScoring({ selected, onScoreSelection }: ITaskScoringProps) {
   return (

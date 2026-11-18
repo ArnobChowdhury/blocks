@@ -54,6 +54,7 @@ import {
   Auth,
   Settings,
   Overdue,
+  Habits,
 } from './pages';
 import ArrowLeft from './icons/ArrowLeft';
 import ArrowRight from './icons/ArrowRight';
@@ -73,11 +74,13 @@ import { formatErrorMessage } from './utils';
 import {
   ROUTE_ROOT,
   ROUTE_ACTIVE,
-  ROUTE_TRACKER,
+  ROUTE_HABITS,
   ROUTE_TASKS_WITHOUT_A_SPACE,
+  ROUTE_TASKS_WITH_A_SPACE,
   ROUTE_AUTH,
   ROUTE_SETTINGS,
   ROUTE_OVERDUE,
+  ROUTE_TRACKER,
 } from './constants';
 import { ChannelsEnum } from './types';
 import { SyncIndicator } from './components';
@@ -238,8 +241,8 @@ function Navigation() {
           </ListItemButton>
           <ListItemButton
             component={Link}
-            to={ROUTE_TRACKER}
-            selected={location.pathname === ROUTE_TRACKER}
+            to={ROUTE_HABITS}
+            selected={location.pathname === ROUTE_HABITS}
           >
             <ListItemIcon>
               <TrackerIcon />
@@ -600,11 +603,9 @@ function App() {
                 <Routes>
                   <Route path={ROUTE_ROOT} element={<Today />} />
                   <Route path={ROUTE_ACTIVE} element={<Active />} />
+                  <Route path={ROUTE_HABITS} element={<Habits />} />
                   <Route path={ROUTE_TRACKER} element={<Tracker />} />
-                  <Route
-                    path="/space/:spaceId/:spaceName"
-                    element={<Space />}
-                  />
+                  <Route path={ROUTE_TASKS_WITH_A_SPACE} element={<Space />} />
                   <Route
                     path={ROUTE_TASKS_WITHOUT_A_SPACE}
                     element={<Space />}

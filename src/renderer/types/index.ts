@@ -124,8 +124,9 @@ export enum ChannelsEnum {
 
   REQUEST_TOGGLE_TASK_COMPLETION_STATUS = 'request-toggle-task-completion-status',
 
-  REQUEST_DAILY_TASKS_MONTHLY_REPORT = 'request_daily_tasks_monthly_report',
-  REQUEST_SPECIFIC_DAYS_IN_A_WEEK_TASKS_MONTHLY_REPORT = 'request_specific_days_in_a_week_daily_tasks_monthly_report',
+  REQUEST_TEMPLATES_WITH_RECENT_TASKS = 'request_templates_with_recent_tasks',
+
+  REQUEST_ACTIVE_TASKS_BY_TEMPLATE_ID = 'request_active_tasks_by_template_id',
 
   REQUEST_TASKS_OVERDUE = 'request-tasks-overdue',
   RESPONSE_TASKS_OVERDUE = 'response-tasks-overdue',

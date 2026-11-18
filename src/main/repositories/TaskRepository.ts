@@ -462,4 +462,29 @@ export class TaskRepository {
     );
     await Promise.all(promises);
   };
+
+  getActiveTasksByRepetitiveTaskTemplateId = async (
+    repetitiveTaskTemplateId: string,
+    days: number = 91,
+    userId: string | null = null,
+  ): Promise<Task[]> => {
+    const startDate = dayjs()
+      .subtract(days - 1, 'day')
+      .startOf('day')
+      .toDate();
+
+    return prisma.task.findMany({
+      where: {
+        repetitiveTaskTemplateId,
+        userId,
+        isActive: true,
+        dueDate: {
+          gte: startDate,
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+  };
 }

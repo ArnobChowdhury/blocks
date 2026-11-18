@@ -155,19 +155,15 @@ export class RepetitiveTaskTemplateService {
     );
   };
 
-  getDailyTasksMonthlyReport = async (
+  findTemplatesWithRecentTasks = async (
     userId: string | null,
+    schedule: TaskScheduleTypeEnum,
+    day: number,
   ): Promise<RepetitiveTaskTemplate[]> => {
-    return this.repetitiveTaskTemplateRepository.getDailyTasksMonthlyReport(
+    return this.repetitiveTaskTemplateRepository.findTemplatesWithRecentTasks(
       userId,
-    );
-  };
-
-  getSpecificDaysInAWeekTasksMonthlyReport = async (
-    userId: string | null,
-  ): Promise<RepetitiveTaskTemplate[]> => {
-    return this.repetitiveTaskTemplateRepository.getSpecificDaysInAWeekTasksMonthlyReport(
-      userId,
+      schedule,
+      day,
     );
   };
 

@@ -147,16 +147,23 @@ export class RepetitiveTaskTemplateRepository {
     });
   };
 
-  getDailyTasksMonthlyReport = async (
+  findTemplatesWithRecentTasks = async (
     userId: string | null,
+    schedule: TaskScheduleTypeEnum,
+    day: number,
   ): Promise<RepetitiveTaskTemplate[]> => {
-    const startDate = dayjs().subtract(30, 'day').toDate();
-    const endDate = getTodayEnd();
+    const startDate = dayjs().subtract(day, 'day').startOf('day').toDate();
+    const endDate = dayjs().endOf('day').toDate();
+
+    console.log(
+      '[DB Repo] Getting list of repetitive task templates with recent tasks for schedule:',
+      schedule,
+    );
 
     return prisma.repetitiveTaskTemplate.findMany({
       where: {
+        schedule,
         userId,
-        schedule: TaskScheduleTypeEnum.Daily,
         tasks: {
           some: {
             dueDate: {
@@ -168,57 +175,6 @@ export class RepetitiveTaskTemplateRepository {
       },
       orderBy: {
         title: 'asc',
-      },
-      include: {
-        tasks: {
-          orderBy: {
-            dueDate: 'asc',
-          },
-          where: {
-            dueDate: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-        },
-      },
-    });
-  };
-
-  getSpecificDaysInAWeekTasksMonthlyReport = async (
-    userId: string | null,
-  ): Promise<RepetitiveTaskTemplate[]> => {
-    const startDate = dayjs().subtract(30, 'day').toDate();
-    const endDate = getTodayEnd();
-
-    return prisma.repetitiveTaskTemplate.findMany({
-      where: {
-        userId,
-        schedule: TaskScheduleTypeEnum.SpecificDaysInAWeek,
-        tasks: {
-          some: {
-            dueDate: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-        },
-      },
-      orderBy: {
-        title: 'asc',
-      },
-      include: {
-        tasks: {
-          orderBy: {
-            dueDate: 'asc',
-          },
-          where: {
-            dueDate: {
-              gte: startDate,
-              lte: endDate,
-            },
-          },
-        },
       },
     });
   };
